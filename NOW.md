@@ -3,21 +3,19 @@
 <!-- codex-handoff:start -->
 ## CONTEXT FOR /work
 
-**Last handoff**: 2026-07-22 10:00:33 CST
+**Last handoff**: 2026-07-22 10:01:17 CST
 **Branch**: `codex/commissioning-recovery`
 **Active ticket**: `None found`
-**Summary**: Commissioning recovery slice is complete at e02b424 and published as draft PR #1: https://github.com/TrackerXXX23/cellforge/pull/1. Repo-local continue and handoff helpers are installed; verification passed.
+**Summary**: Commissioning recovery slice is complete at e02b424; handoff tooling is installed at 589628d; draft PR #1 is https://github.com/TrackerXXX23/cellforge/pull/1.
 **Next exact action**: Review CI on PR #1, merge it into develop when green, then branch from updated develop to replace prototype-clearance-heuristic/v1 with geometry-derived P02 keep-out and swept-path clearance.
 **Blocker**: None
 
 **Git status at handoff**:
 
 ```text
- M AGENTS.md
 ?? "AGENTS 2.md"
 ?? "NOW 2.md"
 ?? "continue 2"
-?? handoff
 ?? "tests/r3f-skill-guardrails.test 2.ts"
 ```
 
