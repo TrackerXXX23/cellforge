@@ -3,31 +3,22 @@
 <!-- codex-handoff:start -->
 ## CONTEXT FOR /work
 
-**Last handoff**: 2026-07-22 15:02:07 CST
+**Last handoff**: 2026-07-22 15:42:42 CST
 **Branch**: `codex/real-robotiq-eoat`
 **Active ticket**: `None found`
-**Summary**: Replaced the invented primitive gripper with the BSD-licensed Robotiq 2F-85 mesh/linkage, corrected tool/material isolation, matched the 60 mm blank to the gripper, retimed the first pickup, and changed the viewport to track the TCP. npm run check passes with 30 tests; browser inspection shows a stationary close/verify pose inside the 18 mm TCP tolerance.
-**Next exact action**: Review PR for the sourced Robotiq 2F-85 pickup flow, then merge it into develop after CI passes.
+**Summary**: PR #10 is green and mergeable with the sourced Robotiq 2F-85, corrected pickup timing, and TCP-tracking camera. Known remaining visual defect: the carried blank appears magnetically attached to one gripper jaw rather than visibly clamped between opposing pads. The user explicitly requested that this remain recorded after PR #10 merges. PR #5 (codex/cnc-vmc-asset) is the pending CNC-machine work and currently conflicts with develop.
+**Next exact action**: Center the carried blank between both Robotiq pad faces during close/verify; it currently reads as attached to one jaw. Then continue integration review of PR #5 for the new CNC machine.
 **Blocker**: None
 
 **Git status at handoff**:
 
 ```text
- M src/App.tsx
- M src/Scene.tsx
- M src/Ur20Robot.tsx
- M src/simulation.test.ts
- M src/simulation.ts
 ?? "AGENTS 2.md"
 ?? "NOW 2.md"
 ?? "continue 2"
 ?? "handoff 2"
-?? public/tools/
-?? src/Robotiq2F85.tsx
 ?? "src/commissioning 2.ts"
 ?? "src/commissioning.test 2.ts"
-?? src/eoat.ts
-?? src/workpiece.ts
 ?? "tests/r3f-skill-guardrails.test 2.ts"
 ```
 
