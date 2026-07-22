@@ -3,11 +3,11 @@
 <!-- codex-handoff:start -->
 ## CONTEXT FOR /work
 
-**Last handoff**: 2026-07-22 12:24:54 CST
-**Branch**: `develop`
+**Last handoff**: 2026-07-22 14:16:52 CST
+**Branch**: `codex/ur20-wrist-mount`
 **Active ticket**: `None found`
-**Summary**: Merged PR #6 (f339934) into develop. Replaced the scaled UR5e with a full-scale licensed UR20, reachable task poses, off-frame multistart IK, UR20-rated velocity and bounded-acceleration following, corrected gripper/payload geometry, settled grip/release timing, and a complete 24-second return-home cycle. npm run check passes with 29 tests; R3F guardrails pass; browser acceptance is 6.2 mm pickup, 11.9 mm machine release, 9.6 mm outfeed release, and 11.3 mm home with no errors. Remaining work is full-body mesh collision gating beyond the current P02/tool-envelope clearance model.
-**Next exact action**: Branch from updated develop to add sampled full-body collision and actual-chain TCP acceptance to the deploy gate.
+**Summary**: PR #8 fixes the UR20 wrist/gripper visual separation by adding a continuous tool-axis flange adapter, rotating the gripper body correctly, and moving carried parts onto the TCP between the fingertips. npm run check and R3F guardrails pass; browser close-up has zero errors. Remaining product milestone after merge is sampled full-body collision and actual-chain TCP gating.
+**Next exact action**: Review CI on PR #8 and merge it into develop when green.
 **Blocker**: None
 
 **Git status at handoff**:
