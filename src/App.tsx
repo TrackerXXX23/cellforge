@@ -31,8 +31,8 @@ const objectDetails: Record<CellObject, { name: string; eyebrow: string; specs: 
   },
   cnc: {
     name: 'CNC mill · Machine 01',
-    eyebrow: 'Process equipment',
-    specs: [['Door', 'Discrete I/O'], ['Chuck', 'PLC handshake'], ['Cycle', '42.0 s'], ['Frame', 'cnc_work']],
+    eyebrow: 'CellForge-authored GLB',
+    specs: [['Door', 'Discrete I/O'], ['Vise', 'Pneumatic fixture'], ['Cycle', '42.0 s'], ['Frame', 'cnc_work']],
   },
   infeed: {
     name: 'Raw-part fixture A',
@@ -356,7 +356,7 @@ export default function App() {
 
         <section className="viewport" aria-label="Interactive 3D robotic cell">
           <SceneErrorBoundary>
-            <Suspense fallback={<div className="scene-loading"><span /><strong>Loading UR20 digital twin</strong></div>}>
+            <Suspense fallback={<div className="scene-loading"><span /><strong>Loading cell digital twin</strong></div>}>
               <CommissioningScene
                 selected={selected}
                 onSelect={setSelected}

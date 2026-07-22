@@ -3,23 +3,17 @@
 <!-- codex-handoff:start -->
 ## CONTEXT FOR /work
 
-**Last handoff**: 2026-07-22 15:42:42 CST
-**Branch**: `codex/real-robotiq-eoat`
+**Last handoff**: 2026-07-22 15:55:47 CST
+**Branch**: `codex/cnc-vmc-asset`
 **Active ticket**: `None found`
-**Summary**: PR #10 is green and mergeable with the sourced Robotiq 2F-85, corrected pickup timing, and TCP-tracking camera. Known remaining visual defect: the carried blank appears magnetically attached to one gripper jaw rather than visibly clamped between opposing pads. The user explicitly requested that this remain recorded after PR #10 merges. PR #5 (codex/cnc-vmc-asset) is the pending CNC-machine work and currently conflicts with develop.
-**Next exact action**: Center the carried blank between both Robotiq pad faces during close/verify; it currently reads as attached to one jaw. Then continue integration review of PR #5 for the new CNC machine.
+**Summary**: PR #10 is merged. PR #5 now integrates the CellForge-authored VMC with the UR20 and sourced Robotiq 2F-85; its enclosure approach, vise-centered 60 x 35 mm blank, load, clamp, and unload states passed browser review and npm run check. Known remaining visual defect: during the first pickup, the carried blank still appears attached to one Robotiq jaw instead of clamped between both opposing pads.
+**Next exact action**: After PR #5 merges, branch from updated develop, center the carried blank between the two inner Robotiq pad faces, and verify the first pickup with a close tracking-camera replay.
 **Blocker**: None
 
 **Git status at handoff**:
 
 ```text
-?? "AGENTS 2.md"
-?? "NOW 2.md"
-?? "continue 2"
-?? "handoff 2"
-?? "src/commissioning 2.ts"
-?? "src/commissioning.test 2.ts"
-?? "tests/r3f-skill-guardrails.test 2.ts"
+clean
 ```
 
 ---

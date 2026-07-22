@@ -1,7 +1,8 @@
 import { ContactShadows, Grid, Line, OrbitControls } from '@react-three/drei'
-import { Canvas, ThreeEvent, useFrame } from '@react-three/fiber'
-import { Suspense, useMemo, useRef } from 'react'
+import { Canvas, ThreeEvent } from '@react-three/fiber'
+import { Suspense, useMemo } from 'react'
 import * as THREE from 'three'
+import { CncMachine } from './CncMachine'
 import {
   FINISHED_WORKPIECE_COLOR,
   RAW_WORKPIECE_COLOR,
@@ -10,7 +11,7 @@ import {
   WORKPIECE_TABLE_CENTER_Y,
 } from './workpiece'
 import { INFEED_FIXTURE_ORIGIN, P02_KEEP_OUT_LOCAL_BOUNDS } from './commissioning'
-import { sampleMotion, type MotionPlan, type MotionState, type Vec3 } from './simulation'
+import { sampleMotion, type MotionPlan, type Vec3 } from './simulation'
 import type { CellObject, RunState } from './types'
 import { Ur20Robot } from './Ur20Robot'
 
@@ -35,7 +36,6 @@ interface SelectableProps {
 }
 
 const graphite = '#26302f'
-const machine = '#aeb8b6'
 const steel = '#d8dedc'
 const cobalt = '#245df3'
 const amber = '#f08a24'
@@ -65,65 +65,6 @@ function SelectionHalo({ radius = 0.72 }: { radius?: number }) {
       <ringGeometry args={[radius, radius + 0.025, 64]} />
       <meshBasicMaterial color={cobalt} transparent opacity={0.9} />
     </mesh>
-  )
-}
-
-function CncMachine({ selected, onSelect, motion }: SelectableProps & { motion: MotionState }) {
-  const door = useRef<THREE.Mesh>(null!)
-
-  useFrame((_, delta) => {
-    const target = motion.doorOpen ? 0.62 : 0
-    door.current.position.z = THREE.MathUtils.damp(door.current.position.z, target, 8, delta)
-  })
-
-  return (
-    <group position={[2.25, 0, -0.25]} onClick={(event) => select(event, onSelect)}>
-      {selected && <SelectionHalo radius={1.32} />}
-      <mesh position={[0, 1.13, 0]} castShadow receiveShadow>
-        <boxGeometry args={[2.25, 2.26, 1.72]} />
-        <meshStandardMaterial color={machine} roughness={0.58} metalness={0.16} />
-      </mesh>
-      <mesh position={[-0.01, 2.18, 0]} castShadow>
-        <boxGeometry args={[2.3, 0.18, 1.77]} />
-        <meshStandardMaterial color={graphite} roughness={0.5} />
-      </mesh>
-      <mesh position={[-1.14, 0.38, 0]} rotation-y={Math.PI / 2}>
-        <planeGeometry args={[1.46, 0.18]} />
-        <meshStandardMaterial color={cobalt} />
-      </mesh>
-      <mesh position={[-1.135, 1.12, 0]} rotation-y={Math.PI / 2}>
-        <planeGeometry args={[1.24, 1.5]} />
-        <meshStandardMaterial color="#1a2222" roughness={0.3} />
-      </mesh>
-      <mesh ref={door} position={[-1.15, 1.12, 0.08]} rotation-y={Math.PI / 2} castShadow>
-        <boxGeometry args={[1.35, 1.65, 0.08]} />
-        <meshStandardMaterial color={steel} metalness={0.18} roughness={0.4} />
-      </mesh>
-      <mesh position={[-1.2, 1.12, -0.01]} rotation-y={Math.PI / 2}>
-        <planeGeometry args={[0.82, 0.98]} />
-        <meshPhysicalMaterial color="#1c3135" transparent opacity={0.52} roughness={0.15} />
-      </mesh>
-      <mesh position={[-1.18, 1.64, -0.69]} rotation-y={Math.PI / 2}>
-        <boxGeometry args={[0.26, 0.42, 0.12]} />
-        <meshStandardMaterial color={graphite} />
-      </mesh>
-      <mesh position={[-1.25, 1.7, -0.7]} rotation-y={Math.PI / 2}>
-        <boxGeometry args={[0.16, 0.25, 0.02]} />
-        <meshBasicMaterial color="#63b9a0" />
-      </mesh>
-      <mesh position={[-1.25, 1.53, -0.7]} rotation-y={Math.PI / 2}>
-        <cylinderGeometry args={[0.055, 0.055, 0.04, 24]} />
-        <meshStandardMaterial color={amber} />
-      </mesh>
-      <mesh position={[-0.78, 2.36, -0.58]}>
-        <cylinderGeometry args={[0.045, 0.045, 0.36, 18]} />
-        <meshStandardMaterial color={graphite} />
-      </mesh>
-      <mesh position={[-0.78, 2.58, -0.58]}>
-        <cylinderGeometry args={[0.09, 0.09, 0.16, 18]} />
-        <meshBasicMaterial color={motion.machineRunning ? '#3ec58f' : amber} />
-      </mesh>
-    </group>
   )
 }
 
@@ -285,7 +226,14 @@ function Cell({
   return (
     <>
       <ambientLight intensity={1.3} />
-      <directionalLight position={[-4, 8, 5]} intensity={2.2} castShadow shadow-mapSize={[2048, 2048]} />
+      <directionalLight
+        position={[-4, 8, 5]}
+        intensity={2.2}
+        castShadow
+        shadow-mapSize={[2048, 2048]}
+        shadow-bias={-0.0002}
+        shadow-normalBias={0.04}
+      />
       <directionalLight position={[5, 3, -4]} intensity={0.7} color="#c9ddff" />
       <Ur20Robot selected={selected === 'robot'} onSelect={(event) => select(event, () => onSelect('robot'))} motion={motion} />
       <CncMachine selected={selected === 'cnc'} onSelect={() => onSelect('cnc')} motion={motion} />
@@ -328,13 +276,6 @@ function Cell({
             />
           </mesh>
         </group>
-      )}
-
-      {motion.partAtMachine && (
-        <mesh position={[1.34, 1.06, -0.25]} rotation-z={Math.PI / 2} castShadow>
-          <cylinderGeometry args={[WORKPIECE_RADIUS, WORKPIECE_RADIUS, WORKPIECE_HEIGHT, 32]} />
-          <meshStandardMaterial color={motion.partFinished ? FINISHED_WORKPIECE_COLOR : RAW_WORKPIECE_COLOR} metalness={0.56} roughness={0.31} />
-        </mesh>
       )}
 
       {showEnvelope && (

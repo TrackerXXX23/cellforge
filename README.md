@@ -22,7 +22,7 @@ The workflow follows the same path as a commissioning task: configure → valida
 
 - React + TypeScript product shell with a responsive, keyboard-accessible control surface
 - Three.js scene rendered through React Three Fiber
-- Licensed UR20 URDF joint hierarchy with official visual and collision link geometry, plus the CNC enclosure, material fixtures, parts, and safety scanner
+- Licensed full-scale UR20 URDF joint hierarchy with official visual and collision geometry, a sourced Robotiq 2F-85 end effector, and a CellForge-authored VMC GLB with a functional door, visible spindle, table, vise, controls, and interior
 - Target-driven machine-tending state machine with duration-weighted sequence stages
 - Target-driven damped-least-squares IK on the actual URDF joint chain, with TCP position and tool-direction tracking at every machine-tending waypoint
 - Hard motion gate for joint limits, floor height, reach, and the CNC solid volume/door aperture
@@ -53,7 +53,7 @@ Job intent + cell config
  Simulated runtime clock ───► Sequence + machine + robot state
 ```
 
-The deterministic process state and kinematics live outside the scene graph. Three.js consumes validated targets and limits animation-specific transforms to `useFrame` callbacks, keeping process behavior independent from rendering. The UR20 asset loads behind in-canvas Suspense and an external error boundary; its asset licenses and pinned source are recorded in [`public/robots/ur20/PROVENANCE.md`](public/robots/ur20/PROVENANCE.md).
+The deterministic process state and kinematics live outside the scene graph. Three.js consumes validated targets and limits animation-specific transforms to `useFrame` callbacks, keeping process behavior independent from rendering. The UR20, Robotiq, and VMC assets load behind in-canvas Suspense and an external error boundary. Robot licensing and pinned sources are recorded in [`public/robots/ur20/PROVENANCE.md`](public/robots/ur20/PROVENANCE.md) and [`public/tools/robotiq-2f85/README.md`](public/tools/robotiq-2f85/README.md); the project-authored machine source, node contract, and rebuild command are recorded in [`public/machines/cellforge-vmc/PROVENANCE.md`](public/machines/cellforge-vmc/PROVENANCE.md).
 
 ## Scope and limitations
 
@@ -61,6 +61,7 @@ The current robot and checks are a product prototype, not a certified engineerin
 
 - The visible robot uses the licensed, full-scale UR20 URDF hierarchy and official visual meshes with an off-frame IK planner and bounded joint-velocity/acceleration follower. Runtime TCP tracking is prototype evidence only; physical calibration, controller-specific planning, and hardware acceptance are not implemented.
 - The deploy gate still uses the deterministic analytic reachability model rather than replaying the URDF solve across every sampled path state.
+- The CellForge-authored VMC is a visual and interaction asset aligned to the existing Machine 01 envelope; it is not manufacturer CAD, a certified collision body, or a machining-process model.
 - P02 clearance is geometry-derived from one axis-aligned fixture keep-out and a spherical tool envelope; it does not yet cover the full robot body or arbitrary mesh collisions.
 - The “planner” sequence is seeded data; no hosted LLM is represented as running.
 - Runtime synchronization is local and deterministic; there is no PLC or robot-driver connection.

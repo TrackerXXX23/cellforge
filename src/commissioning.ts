@@ -188,7 +188,7 @@ export function evaluateCommissioning(config: CommissioningConfiguration): Commi
     {
       id: 'safety-interlocks',
       label: 'Safety interlocks',
-      detail: 'Door, chuck, and scanner mappings are unchanged by this candidate revision.',
+      detail: 'Door, workholding fixture, and scanner mappings are unchanged by this candidate revision.',
       status: 'pass',
     },
     {
