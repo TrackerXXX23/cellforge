@@ -30,7 +30,8 @@ The workflow follows the same path as a commissioning task: configure → valida
 - Interlocked CNC door, machine handshake, gripper state, and unsafe-run blocking
 - Revision-aware fixture changes with before/after ghost geometry and spatial delta evidence
 - Linked causal trace across physical object, motion segment, sequence step, and release gate
-- Two deterministic repair candidates with distinct paths, clearance, and cycle-time tradeoffs
+- Exact segment-to-AABB clearance for P02 using the fixture guide-rail keep-out and swept tool envelope
+- Two deterministic repair candidates with distinct paths, computed clearance, and cycle-time tradeoffs
 - Repair preview, validation gating, full-cycle evidence, and Revision 08 release workflow
 - Component selection with domain-specific configuration data
 - Reach-envelope and planned-path overlays
@@ -59,7 +60,7 @@ The deterministic process state and kinematics live outside the scene graph. Thr
 The current robot and checks are a product prototype, not a certified engineering simulator:
 
 - Motion uses analytic IK against the procedural arm, not a manufacturer URDF or controller-specific motion planner.
-- Reach and clearance findings are scenario-derived, not yet computed by a physics engine.
+- P02 clearance is geometry-derived from one axis-aligned fixture keep-out and a spherical tool envelope; it does not yet cover the full robot body or arbitrary mesh collisions.
 - The “planner” sequence is seeded data; no hosted LLM is represented as running.
 - Runtime synchronization is local and deterministic; there is no PLC or robot-driver connection.
 

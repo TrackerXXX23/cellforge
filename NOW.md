@@ -3,19 +3,26 @@
 <!-- codex-handoff:start -->
 ## CONTEXT FOR /work
 
-**Last handoff**: 2026-07-22 10:01:17 CST
-**Branch**: `codex/commissioning-recovery`
+**Last handoff**: 2026-07-22 10:09:54 CST
+**Branch**: `codex/geometry-clearance`
 **Active ticket**: `None found`
-**Summary**: Commissioning recovery slice is complete at e02b424; handoff tooling is installed at 589628d; draft PR #1 is https://github.com/TrackerXXX23/cellforge/pull/1.
-**Next exact action**: Review CI on PR #1, merge it into develop when green, then branch from updated develop to replace prototype-clearance-heuristic/v1 with geometry-derived P02 keep-out and swept-path clearance.
+**Summary**: Implemented exact P02 segment-to-AABB swept-envelope clearance, corrected disturbed-target semantics, added fixture keep-out visualization and evidence, and verified the full Revision 08 browser workflow. npm run check passes with 17 tests; only the existing large scene-chunk warning remains.
+**Next exact action**: Review the geometry-clearance diff, then commit and push codex/geometry-clearance for a pull request into develop.
 **Blocker**: None
 
 **Git status at handoff**:
 
 ```text
+ M README.md
+ M src/App.tsx
+ M src/Scene.tsx
+ M src/commissioning.test.ts
+ M src/commissioning.ts
 ?? "AGENTS 2.md"
 ?? "NOW 2.md"
 ?? "continue 2"
+?? src/clearance.test.ts
+?? src/clearance.ts
 ?? "tests/r3f-skill-guardrails.test 2.ts"
 ```
 

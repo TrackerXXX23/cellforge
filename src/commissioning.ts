@@ -4,6 +4,7 @@ import {
   solveRobotIk,
   type Vec3,
 } from './simulation'
+import { getSweptSegmentClearance, translateBox, type AxisAlignedBox } from './clearance'
 
 export type RepairId = 'lifted-approach' | 'side-entry'
 
@@ -70,7 +71,13 @@ export interface CommissioningEvaluation {
   affectedSegment: AffectedSegment
   causalTrace: readonly CausalTraceEntry[]
   revisionDelta: RevisionDelta
-  clearanceMethod: 'prototype-clearance-heuristic/v1'
+  clearanceMethod: 'segment-aabb-swept-sphere/v1'
+  clearanceEvidence: {
+    keepOutId: 'fixture-a-guide-rail'
+    sweepRadiusMm: number
+    centerlineDistanceMm: number
+    closestPathPoint: Vec3
+  }
 }
 
 export const recoveryProposals: readonly RecoveryProposal[] = [
@@ -79,7 +86,7 @@ export const recoveryProposals: readonly RecoveryProposal[] = [
     label: 'Lift the infeed approach',
     description: 'Raise P02 before descending vertically onto the shifted pick target.',
     changedWaypointIds: ['infeed-approach'],
-    expectedClearanceMmAt180Shift: 72,
+    expectedClearanceMmAt180Shift: 84,
     expectedCycleImpactSecondsAt180Shift: 0.4,
   },
   {
@@ -96,8 +103,12 @@ const BASELINE_CLEARANCE_MM = 84
 const BASELINE_CYCLE_SECONDS = 14.8
 const MINIMUM_APPROVED_CLEARANCE_MM = 50
 const MAXIMUM_APPROVED_CYCLE_SECONDS = 16
-const REFERENCE_SHIFT_MM = 180
-const CLEARANCE_LOSS_AT_REFERENCE_SHIFT_MM = 75
+export const INFEED_FIXTURE_ORIGIN: Vec3 = [-1.55, 0, 1.15]
+export const P02_SWEEP_RADIUS_METERS = 0.0555
+export const P02_KEEP_OUT_LOCAL_BOUNDS: AxisAlignedBox = {
+  min: [0.28, 0.62, -0.1794],
+  max: [0.29, 1.5, 0.3],
+}
 
 function round(value: number, digits = 1) {
   const factor = 10 ** digits
@@ -114,29 +125,17 @@ function getApproachTarget(pickTarget: Vec3, repairId: RepairId | null): Vec3 {
   }
 
   if (repairId === 'side-entry') {
-    return [pickTarget[0] - 0.18, 1.24, pickTarget[2] + 0.42]
+    return [pickTarget[0] - 0.0165, 1.24, pickTarget[2] + 0.42]
   }
 
   return [pickTarget[0], 1.42, pickTarget[2]]
-}
-
-function getClearanceMm(fixtureShiftMm: number, repairId: RepairId | null) {
-  const shiftRatio = Math.abs(fixtureShiftMm) / REFERENCE_SHIFT_MM
-  const clearanceLoss = CLEARANCE_LOSS_AT_REFERENCE_SHIFT_MM * shiftRatio
-  const strategyBaseline = repairId === 'lifted-approach'
-    ? 147
-    : repairId === 'side-entry'
-      ? 133
-      : BASELINE_CLEARANCE_MM
-
-  return round(Math.max(0, strategyBaseline - clearanceLoss))
 }
 
 function getCycleSeconds(fixtureShiftMm: number, repairId: RepairId | null) {
   if (!repairId) return BASELINE_CYCLE_SECONDS
 
   const proposal = recoveryProposals.find((candidate) => candidate.id === repairId)
-  const shiftRatio = Math.abs(fixtureShiftMm) / REFERENCE_SHIFT_MM
+  const shiftRatio = Math.abs(fixtureShiftMm) / 180
   return round(BASELINE_CYCLE_SECONDS + (proposal?.expectedCycleImpactSecondsAt180Shift ?? 0) * shiftRatio)
 }
 
@@ -148,15 +147,24 @@ function getModifiedWaypointIds(config: CommissioningConfiguration): readonly st
 }
 
 /**
- * Evaluates the fixture-shift recovery story with deterministic prototype rules.
- * Clearance values are product-design heuristics for this demonstrator, not a
- * collision engine, safety calculation, or certified commissioning result.
+ * Evaluates the fixture-shift recovery story with deterministic geometry and
+ * prototype kinematics. Results remain engineering aids, not certified safety
+ * calculations or controller-ready commissioning evidence.
  */
 export function evaluateCommissioning(config: CommissioningConfiguration): CommissioningEvaluation {
-  const pickTarget = shiftTarget(INFEED_PICK_TARGET, config.fixtureShiftMm)
+  const pickTarget = config.repairId
+    ? shiftTarget(INFEED_PICK_TARGET, config.fixtureShiftMm)
+    : INFEED_PICK_TARGET
   const approachTarget = getApproachTarget(pickTarget, config.repairId)
   const pathPoints: readonly Vec3[] = [HOME_TARGET, approachTarget, pickTarget]
-  const minimumClearanceMm = getClearanceMm(config.fixtureShiftMm, config.repairId)
+  const fixtureOffset: Vec3 = [config.fixtureShiftMm / 1000, 0, 0]
+  const keepOut = translateBox(P02_KEEP_OUT_LOCAL_BOUNDS, [
+    INFEED_FIXTURE_ORIGIN[0] + fixtureOffset[0],
+    INFEED_FIXTURE_ORIGIN[1],
+    INFEED_FIXTURE_ORIGIN[2],
+  ])
+  const clearance = getSweptSegmentClearance(approachTarget, pickTarget, keepOut, P02_SWEEP_RADIUS_METERS)
+  const minimumClearanceMm = round(clearance.minimumClearanceMm)
   const cycleSeconds = getCycleSeconds(config.fixtureShiftMm, config.repairId)
   const pathIsClear = minimumClearanceMm >= MINIMUM_APPROVED_CLEARANCE_MM
   const targetsAreReachable = pathPoints.every((target) => solveRobotIk(target).withinBoundaries)
@@ -174,7 +182,7 @@ export function evaluateCommissioning(config: CommissioningConfiguration): Commi
     {
       id: 'path-clearance',
       label: 'Path clearance',
-      detail: `${minimumClearanceMm} mm estimated minimum; prototype gate requires ${MINIMUM_APPROVED_CLEARANCE_MM} mm.`,
+      detail: `${minimumClearanceMm} mm swept-envelope minimum; prototype gate requires ${MINIMUM_APPROVED_CLEARANCE_MM} mm.`,
       status: pathIsClear ? 'pass' : 'fail',
     },
     {
@@ -244,6 +252,12 @@ export function evaluateCommissioning(config: CommissioningConfiguration): Commi
       cycleDeltaSeconds: round(cycleSeconds - BASELINE_CYCLE_SECONDS),
       clearanceDeltaMm: round(minimumClearanceMm - BASELINE_CLEARANCE_MM),
     },
-    clearanceMethod: 'prototype-clearance-heuristic/v1',
+    clearanceMethod: 'segment-aabb-swept-sphere/v1',
+    clearanceEvidence: {
+      keepOutId: 'fixture-a-guide-rail',
+      sweepRadiusMm: P02_SWEEP_RADIUS_METERS * 1000,
+      centerlineDistanceMm: round(clearance.centerlineDistanceMm),
+      closestPathPoint: clearance.closestPathPoint,
+    },
   }
 }
