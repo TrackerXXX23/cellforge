@@ -27,8 +27,14 @@ export interface JointSolution {
 
 interface MotionKeyframe {
   at: number
-  target: Vec3
+  target?: Vec3
+  targetKey?: 'infeed-approach' | 'infeed-pick'
   action: string
+}
+
+export interface MotionPlan {
+  infeedApproachTarget: Vec3
+  infeedPickTarget: Vec3
 }
 
 export const CYCLE_DURATION_SECONDS = 14.8
@@ -47,15 +53,21 @@ export const sequenceBoundaries = [
 
 export const HOME_TARGET: Vec3 = [0.75, 1.65, 0.3]
 export const INFEED_PICK_TARGET: Vec3 = [-1.13, 0.78, 0.92]
+export const INFEED_APPROACH_TARGET: Vec3 = [-1.13, 1.42, 0.92]
 export const CNC_CHUCK_TARGET: Vec3 = [1.34, 1.06, -0.25]
 export const OUTFEED_PLACE_TARGET: Vec3 = [-1.13, 0.78, -0.92]
 
+export const BASELINE_MOTION_PLAN: MotionPlan = {
+  infeedApproachTarget: INFEED_APPROACH_TARGET,
+  infeedPickTarget: INFEED_PICK_TARGET,
+}
+
 const keyframes: MotionKeyframe[] = [
   { at: 0, target: HOME_TARGET, action: 'Moving to infeed approach' },
-  { at: 0.1, target: [-1.13, 1.42, 0.92], action: 'Moving to infeed approach' },
-  { at: 0.15, target: INFEED_PICK_TARGET, action: 'Descending to raw part' },
-  { at: 0.18, target: INFEED_PICK_TARGET, action: 'Gripping raw part' },
-  { at: 0.24, target: [-1.13, 1.42, 0.92], action: 'Lifting raw part' },
+  { at: 0.1, targetKey: 'infeed-approach', action: 'Moving to infeed approach' },
+  { at: 0.15, targetKey: 'infeed-pick', action: 'Descending to raw part' },
+  { at: 0.18, targetKey: 'infeed-pick', action: 'Gripping raw part' },
+  { at: 0.24, targetKey: 'infeed-approach', action: 'Lifting raw part' },
   { at: 0.34, target: [0.72, 1.55, -0.25], action: 'Moving to CNC approach' },
   { at: 0.42, target: CNC_CHUCK_TARGET, action: 'Loading CNC chuck' },
   { at: 0.46, target: CNC_CHUCK_TARGET, action: 'Releasing raw part' },
@@ -70,6 +82,12 @@ const keyframes: MotionKeyframe[] = [
   { at: 0.96, target: OUTFEED_PLACE_TARGET, action: 'Releasing finished part' },
   { at: 1, target: HOME_TARGET, action: 'Returning home' },
 ]
+
+function resolveTarget(frame: MotionKeyframe, plan: MotionPlan): Vec3 {
+  if (frame.targetKey === 'infeed-approach') return plan.infeedApproachTarget
+  if (frame.targetKey === 'infeed-pick') return plan.infeedPickTarget
+  return frame.target ?? HOME_TARGET
+}
 
 function clamp01(value: number) {
   return Math.min(1, Math.max(0, value))
@@ -94,7 +112,11 @@ export function getActiveSequenceIndex(progress: number) {
   return index === -1 ? sequenceBoundaries.length - 1 : index
 }
 
-export function sampleMotion(progress: number, runState: RunState): MotionState {
+export function sampleMotion(
+  progress: number,
+  runState: RunState,
+  plan: MotionPlan = BASELINE_MOTION_PLAN,
+): MotionState {
   const normalized = runState === 'ready' ? 0 : clamp01(progress)
   const endIndex = Math.max(1, keyframes.findIndex((frame) => frame.at >= normalized))
   const from = keyframes[endIndex - 1]
@@ -106,7 +128,7 @@ export function sampleMotion(progress: number, runState: RunState): MotionState 
   const doorOpen = normalized < 0.49 || (normalized >= 0.575 && normalized < 0.78)
 
   return {
-    target: interpolateTarget(from.target, to.target, segmentProgress),
+    target: interpolateTarget(resolveTarget(from, plan), resolveTarget(to, plan), segmentProgress),
     action: runState === 'complete' ? 'Cycle complete · robot home' : to.action,
     gripperClosed: carryingRaw || carryingFinished || (normalized >= 0.15 && normalized < 0.18) || (normalized >= 0.65 && normalized < 0.68),
     carrying: carryingRaw ? 'raw' : carryingFinished ? 'finished' : null,

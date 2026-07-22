@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  BASELINE_MOTION_PLAN,
   TOOL_TIP_OFFSET,
   forwardWristPosition,
   getActiveSequenceIndex,
@@ -52,5 +53,16 @@ describe('machine-tending motion plan', () => {
     expect(getActiveSequenceIndex(sequenceBoundaries[2] + 0.001)).toBe(3)
     expect(getActiveSequenceIndex(sequenceBoundaries[3] + 0.001)).toBe(4)
     expect(getActiveSequenceIndex(1)).toBe(4)
+  })
+
+  it('executes a validated revision against its configured infeed targets', () => {
+    const revisedPlan = {
+      ...BASELINE_MOTION_PLAN,
+      infeedApproachTarget: [-0.95, 1.68, 1.05] as const,
+      infeedPickTarget: [-0.95, 0.78, 0.92] as const,
+    }
+
+    expect(sampleMotion(0.1, 'running', revisedPlan).target).toEqual(revisedPlan.infeedApproachTarget)
+    expect(sampleMotion(0.15, 'running', revisedPlan).target).toEqual(revisedPlan.infeedPickTarget)
   })
 })

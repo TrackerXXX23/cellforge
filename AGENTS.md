@@ -33,3 +33,15 @@ CI runs `npm run check` for pushes and pull requests involving `develop` or `mai
 - Keep `NOW.md` current with changes, blockers, the next exact action, and the active branch or PR.
 - Run `./continue` to print the branch, working tree, current handoff, and likely active tickets.
 - Follow the global commit format: `type(scope): summary` with `Why`, `What`, and `Notes` sections.
+
+<!-- Shared Codex/Claude handoff standard -->
+## Agent Handoff
+
+Start resumed sessions with:
+
+```bash
+./continue
+```
+
+Before stopping substantial work, run `./handoff --next "next exact action" "what changed and what remains"` to update `NOW.md` plus the active ticket when available. If `./handoff` is missing, update `NOW.md`, an active ticket, or the closest repo handoff document manually with the next exact action, current branch, blockers, and any PR/commit to continue from.
+<!-- /Shared Codex/Claude handoff standard -->
