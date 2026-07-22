@@ -3,17 +3,16 @@
 <!-- codex-handoff:start -->
 ## CONTEXT FOR /work
 
-**Last handoff**: 2026-07-22 11:21:46 CST
-**Branch**: `codex/ur5e-urdf`
+**Last handoff**: 2026-07-22 11:41:16 CST
+**Branch**: `codex/ur5e-motion`
 **Active ticket**: `None found`
-**Summary**: Published the completed UR5e asset/loading milestone at commit 129abd4 on draft PR https://github.com/TrackerXXX23/cellforge/pull/3. The branch adds the licensed UR5e 4.3.1 URDF hierarchy, official DAE/STL assets, pinned provenance, urdf-loader, in-canvas Suspense and error handling, the temporary six-joint commissioning adapter, tests, documentation, and the new default publish-completion rule in AGENTS.md. npm run check passes with 22 tests and the production build; Playwright verified the full recovery/release flow with zero console errors and stable WebGL. Physical UR5e FK/IK and TCP acceptance remain the next product slice.
-**Next exact action**: Wait for CI on draft PR #3, review the UR5e visual and licensing evidence, then mark it ready and merge it into develop.
+**Summary**: Replaced the temporary UR5e angle adapter with target-driven damped-least-squares IK on the actual URDF chain. The gripper TCP now reaches and orients at pick, CNC, and outfeed targets; npm run check passes with 26 tests; Playwright verified baseline and full Revision 08 repair/release with zero console errors. Draft PR: https://github.com/TrackerXXX23/cellforge/pull/4. No blocker.
+**Next exact action**: Wait for CI on draft PR #4, then mark it ready and merge it into develop when green.
 **Blocker**: None
 
 **Git status at handoff**:
 
 ```text
- M NOW.md
 ?? "AGENTS 2.md"
 ?? "NOW 2.md"
 ?? "continue 2"
