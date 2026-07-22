@@ -14,20 +14,20 @@ const CommissioningScene = lazy(() =>
 )
 
 const sequence: SequenceStep[] = [
-  { id: 'locate', label: 'Locate raw part', target: 'Infeed A', duration: 1.8, accent: '#65706e' },
-  { id: 'pick', label: 'Pick part', target: 'Parallel gripper', duration: 2.4, accent: '#245df3' },
-  { id: 'load', label: 'Load CNC', target: 'Machine 01', duration: 4.2, accent: '#245df3' },
-  { id: 'unload', label: 'Unload finished part', target: 'Machine 01', duration: 4.0, accent: '#245df3' },
-  { id: 'place', label: 'Place finished part', target: 'Outfeed B', duration: 2.4, accent: '#245df3' },
+  { id: 'locate', label: 'Locate raw part', target: 'Infeed A', duration: 2.8, accent: '#65706e' },
+  { id: 'pick', label: 'Pick part', target: 'Robotiq 2F-85', duration: 3.8, accent: '#245df3' },
+  { id: 'load', label: 'Load CNC', target: 'Machine 01', duration: 6.8, accent: '#245df3' },
+  { id: 'unload', label: 'Unload finished part', target: 'Machine 01', duration: 6.4, accent: '#245df3' },
+  { id: 'place', label: 'Place finished part', target: 'Outfeed B', duration: 4.2, accent: '#245df3' },
 ]
 
 const baselineEvaluation = evaluateCommissioning({ fixtureShiftMm: 0, repairId: null })
 
 const objectDetails: Record<CellObject, { name: string; eyebrow: string; specs: [string, string][] }> = {
   robot: {
-    name: 'Universal Robots UR5e',
+    name: 'Universal Robots UR20',
     eyebrow: 'Licensed URDF model',
-    specs: [['Payload', '5 kg'], ['Reach', '850 mm'], ['TCP', 'tool0 + grip'], ['Frame', 'base_link']],
+    specs: [['Payload', '20 kg'], ['Reach', '1,750 mm'], ['EOAT', 'Robotiq 2F-85'], ['TCP', '145 mm']],
   },
   cnc: {
     name: 'CNC mill · Machine 01',
@@ -120,11 +120,15 @@ export default function App() {
     if (runState !== 'running') return
 
     let frame = 0
+    let lastProgressUpdate = 0
     startedAt.current = performance.now() - progress * committedEvaluation.cycleSeconds * 1000
 
     const tick = (now: number) => {
       const nextProgress = Math.min(1, (now - startedAt.current) / (committedEvaluation.cycleSeconds * 1000))
-      setProgress(nextProgress)
+      if (nextProgress >= 1 || now - lastProgressUpdate >= 1000 / 30) {
+        setProgress(nextProgress)
+        lastProgressUpdate = now
+      }
 
       if (nextProgress >= 1) {
         setRunState('complete')
@@ -371,7 +375,7 @@ export default function App() {
           </SceneErrorBoundary>
 
           <div className="viewport-meta">
-            <span className="view-chip"><Icon name="cube" size={14} />Perspective · mm</span>
+            <span className="view-chip"><Icon name="cube" size={14} />Tool tracking · mm</span>
             <button className={`view-chip toggle ${showEnvelope ? 'on' : ''}`} onClick={() => setShowEnvelope((current) => !current)}>
               <Icon name="eye" size={14} />Reach envelope
             </button>
@@ -416,7 +420,7 @@ export default function App() {
               <div className="baseline-evidence">
                 <span className="micro-label">COMMISSIONED EVIDENCE</span>
                 <strong>Revision 07 passes all gates</strong>
-                <p>14.8 s cycle · 84 mm minimum clearance · {checksPassed}/{activeEvaluation.checks.length} checks passed</p>
+                <p>{baselineEvaluation.cycleSeconds.toFixed(1)} s cycle · 84 mm minimum clearance · {checksPassed}/{activeEvaluation.checks.length} checks passed</p>
               </div>
               <div className="change-action">
                 <span className="micro-label">RECORD A FLOOR CHANGE</span>
@@ -495,7 +499,7 @@ export default function App() {
 
       <footer className="statusbar">
         <div><span className="status-dot" />{released ? 'Runtime acknowledged OP-1042-r08' : 'Simulation runtime ready'}</div>
-        <div>Robot <strong>UR5e</strong></div>
+        <div>Robot <strong>UR20</strong></div>
         <div>Controller <strong>SimRT 4.8</strong></div>
         <div className="statusbar-spacer" />
         <div>Revision <strong>{released ? '08 released' : isChanged ? '08 draft' : '07 validated'}</strong></div>

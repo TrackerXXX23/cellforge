@@ -3,10 +3,17 @@ import { Canvas, ThreeEvent } from '@react-three/fiber'
 import { Suspense, useMemo } from 'react'
 import * as THREE from 'three'
 import { CncMachine } from './CncMachine'
+import {
+  FINISHED_WORKPIECE_COLOR,
+  RAW_WORKPIECE_COLOR,
+  WORKPIECE_HEIGHT,
+  WORKPIECE_RADIUS,
+  WORKPIECE_TABLE_CENTER_Y,
+} from './workpiece'
 import { INFEED_FIXTURE_ORIGIN, P02_KEEP_OUT_LOCAL_BOUNDS } from './commissioning'
 import { sampleMotion, type MotionPlan, type Vec3 } from './simulation'
 import type { CellObject, RunState } from './types'
-import { Ur5eRobot } from './Ur5eRobot'
+import { Ur20Robot } from './Ur20Robot'
 
 interface SceneProps {
   selected: CellObject
@@ -101,9 +108,9 @@ function PartTable({
         const column = index % 3
         const row = Math.floor(index / 3)
         return (
-          <mesh key={index} position={[-0.42 + column * 0.42, 0.69, -0.23 + row * 0.46]} castShadow>
-            <cylinderGeometry args={[0.12, 0.12, 0.16, 32]} />
-            <meshStandardMaterial color={kind === 'infeed' ? '#556260' : '#79a998'} metalness={0.56} roughness={0.31} />
+          <mesh key={index} position={[-0.42 + column * 0.42, WORKPIECE_TABLE_CENTER_Y, -0.23 + row * 0.46]} castShadow>
+            <cylinderGeometry args={[WORKPIECE_RADIUS, WORKPIECE_RADIUS, WORKPIECE_HEIGHT, 32]} />
+            <meshStandardMaterial color={kind === 'infeed' ? RAW_WORKPIECE_COLOR : FINISHED_WORKPIECE_COLOR} metalness={0.56} roughness={0.31} />
           </mesh>
         )
       })}
@@ -228,7 +235,7 @@ function Cell({
         shadow-normalBias={0.04}
       />
       <directionalLight position={[5, 3, -4]} intensity={0.7} color="#c9ddff" />
-      <Ur5eRobot selected={selected === 'robot'} onSelect={(event) => select(event, () => onSelect('robot'))} motion={motion} />
+      <Ur20Robot selected={selected === 'robot'} onSelect={(event) => select(event, () => onSelect('robot'))} motion={motion} />
       <CncMachine selected={selected === 'cnc'} onSelect={() => onSelect('cnc')} motion={motion} />
       {showRevisionGhost && <InfeedRevisionGhost />}
       <PartTable
@@ -320,7 +327,7 @@ function Cell({
         infiniteGrid={false}
       />
       <ContactShadows position={[0, 0.005, 0]} opacity={0.34} scale={9} blur={2.5} far={4.5} />
-      <OrbitControls makeDefault target={[0.1, 0.85, 0]} minDistance={5.2} maxDistance={11} maxPolarAngle={Math.PI / 2.05} />
+      <OrbitControls makeDefault target={motion.target} minDistance={1.2} maxDistance={8.5} maxPolarAngle={Math.PI / 2.05} />
     </>
   )
 }
@@ -329,7 +336,7 @@ export function CommissioningScene(props: SceneProps) {
   return (
     <Canvas
       shadows="basic"
-      camera={{ position: [-6.9, 5.6, 7.4], fov: 36, near: 0.1, far: 100 }}
+      camera={{ position: [-2.5, 2.7, 3.5], fov: 32, near: 0.1, far: 100 }}
       gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping }}
       dpr={[1, 1.75]}
       onPointerMissed={() => props.onSelect('robot')}

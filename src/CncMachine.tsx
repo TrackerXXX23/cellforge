@@ -12,10 +12,14 @@ import {
   CNC_WORKPIECE_LOCAL_POSITION,
 } from './cnc'
 import type { MotionState } from './simulation'
+import {
+  FINISHED_WORKPIECE_COLOR,
+  RAW_WORKPIECE_COLOR,
+  WORKPIECE_HEIGHT,
+  WORKPIECE_RADIUS,
+} from './workpiece'
 
 const cobalt = '#245df3'
-const rawPart = '#c4873e'
-const finishedPart = '#79a998'
 const cutawayOpacity = 0.14
 
 interface CncMachineProps {
@@ -40,7 +44,7 @@ function collectMaterials(root: THREE.Object3D) {
   return [...materials]
 }
 
-function cloneShellMaterials(root: THREE.Object3D) {
+function cloneMaterials(root: THREE.Object3D) {
   const replacements = new Map<THREE.Material, THREE.Material>()
   const cloneMaterial = (source: THREE.Material) => {
     const existing = replacements.get(source)
@@ -74,7 +78,7 @@ export function CncMachine({ motion, selected, onSelect }: CncMachineProps) {
   const { scene } = useGLTF(CNC_ASSET_URL)
   const machineScene = useMemo(() => {
     const instance = scene.clone(true)
-    cloneShellMaterials(requireNode(instance, CNC_ASSET_NODES.shell))
+    cloneMaterials(instance)
     return instance
   }, [scene])
   const nodes = useMemo(() => {
@@ -144,12 +148,13 @@ export function CncMachine({ motion, selected, onSelect }: CncMachineProps) {
       />
       <mesh
         position={CNC_WORKPIECE_LOCAL_POSITION}
+        rotation-z={Math.PI / 2}
         visible={motion.partAtMachine}
         castShadow
       >
-        <cylinderGeometry args={[0.12, 0.12, 0.16, 32]} />
+        <cylinderGeometry args={[WORKPIECE_RADIUS, WORKPIECE_RADIUS, WORKPIECE_HEIGHT, 32]} />
         <meshStandardMaterial
-          color={motion.partFinished ? finishedPart : rawPart}
+          color={motion.partFinished ? FINISHED_WORKPIECE_COLOR : RAW_WORKPIECE_COLOR}
           metalness={0.62}
           roughness={0.25}
         />

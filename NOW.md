@@ -3,11 +3,11 @@
 <!-- codex-handoff:start -->
 ## CONTEXT FOR /work
 
-**Last handoff**: 2026-07-22 11:50:05 CST
+**Last handoff**: 2026-07-22 15:55:47 CST
 **Branch**: `codex/cnc-vmc-asset`
 **Active ticket**: `None found`
-**Summary**: Published the CNC-only VMC asset slice on draft PR https://github.com/TrackerXXX23/cellforge/pull/5 and resolved it against current develop at merge commit e0ef767. The branch replaces the procedural placeholder with a CellForge-authored GLB and editable Blender source, including the visible spindle, T-slot table, vise, safety-glass door, controls, stack light, work light, CNC-selected cutaway, provenance, tests, and refreshed preview. CNC-specific commits do not modify robot IK, targets, path timing, or arm motion. Post-merge npm run check passes with 29 tests, Playwright found zero console errors, and GitHub CI run 29943979876 passed.
-**Next exact action**: Review the ready/open-door/selected-cutaway VMC visuals on draft PR #5, then mark ready and merge into develop when approved.
+**Summary**: PR #10 is merged. PR #5 now integrates the CellForge-authored VMC with the UR20 and sourced Robotiq 2F-85; its enclosure approach, vise-centered 60 x 35 mm blank, load, clamp, and unload states passed browser review and npm run check. Known remaining visual defect: during the first pickup, the carried blank still appears attached to one Robotiq jaw instead of clamped between both opposing pads.
+**Next exact action**: After PR #5 merges, branch from updated develop, center the carried blank between the two inner Robotiq pad faces, and verify the first pickup with a close tracking-camera replay.
 **Blocker**: None
 
 **Git status at handoff**:

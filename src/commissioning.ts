@@ -100,9 +100,9 @@ export const recoveryProposals: readonly RecoveryProposal[] = [
 ] as const
 
 const BASELINE_CLEARANCE_MM = 84
-const BASELINE_CYCLE_SECONDS = 14.8
+const BASELINE_CYCLE_SECONDS = 24
 const MINIMUM_APPROVED_CLEARANCE_MM = 50
-const MAXIMUM_APPROVED_CYCLE_SECONDS = 16
+const MAXIMUM_APPROVED_CYCLE_SECONDS = 25.5
 export const INFEED_FIXTURE_ORIGIN: Vec3 = [-1.55, 0, 1.15]
 export const P02_SWEEP_RADIUS_METERS = 0.0555
 export const P02_KEEP_OUT_LOCAL_BOUNDS: AxisAlignedBox = {
@@ -121,14 +121,14 @@ function shiftTarget(target: Vec3, fixtureShiftMm: number): Vec3 {
 
 function getApproachTarget(pickTarget: Vec3, repairId: RepairId | null): Vec3 {
   if (repairId === 'lifted-approach') {
-    return [pickTarget[0], 1.74, pickTarget[2]]
+    return [pickTarget[0], 1.02, pickTarget[2]]
   }
 
   if (repairId === 'side-entry') {
-    return [pickTarget[0] - 0.0165, 1.24, pickTarget[2] + 0.42]
+    return [pickTarget[0] - 0.0165, 0.88, pickTarget[2] + 0.15]
   }
 
-  return [pickTarget[0], 1.42, pickTarget[2]]
+  return [pickTarget[0], 0.88, pickTarget[2]]
 }
 
 function getCycleSeconds(fixtureShiftMm: number, repairId: RepairId | null) {

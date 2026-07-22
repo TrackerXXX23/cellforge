@@ -1,6 +1,12 @@
 import { readFileSync, statSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { CNC_REQUIRED_NODE_NAMES } from '../src/cnc'
+import {
+  CNC_MACHINE_POSITION,
+  CNC_REQUIRED_NODE_NAMES,
+  CNC_VISE_CENTER_LOCAL_POSITION,
+  CNC_WORKPIECE_LOCAL_POSITION,
+} from '../src/cnc'
+import { CNC_CHUCK_TARGET } from '../src/simulation'
 
 const assetPath = 'public/machines/cellforge-vmc/cellforge-vmc.glb'
 const sourcePath = 'assets/cnc/cellforge-vmc.blend'
@@ -58,6 +64,21 @@ describe('CellForge VMC browser asset', () => {
     for (const name of CNC_REQUIRED_NODE_NAMES) {
       expect(names.has(name), `Missing CNC node ${name}`).toBe(true)
     }
+  })
+
+  it('centers the CNC vise and rendered blank on the commissioned chuck target', () => {
+    const worldViseCenter = CNC_MACHINE_POSITION.map(
+      (coordinate, index) => coordinate + CNC_VISE_CENTER_LOCAL_POSITION[index],
+    )
+    const worldWorkpieceCenter = CNC_MACHINE_POSITION.map(
+      (coordinate, index) => coordinate + CNC_WORKPIECE_LOCAL_POSITION[index],
+    )
+
+    expect(worldViseCenter[0]).toBeCloseTo(CNC_CHUCK_TARGET[0])
+    expect(worldViseCenter[2]).toBeCloseTo(CNC_CHUCK_TARGET[2])
+    worldWorkpieceCenter.forEach((coordinate, index) => {
+      expect(coordinate).toBeCloseTo(CNC_CHUCK_TARGET[index])
+    })
   })
 
   it('retains editable source, a reproducible generator, and asset notes', () => {

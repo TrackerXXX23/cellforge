@@ -10,7 +10,7 @@ Before a workcell reaches the shop floor, an integrator should be able to verify
 
 ## The 60-second demo
 
-1. Open the validated Revision 07 machine-tending job and replay its 14.8-second baseline cycle.
+1. Open the validated Revision 07 machine-tending job and replay its 24-second baseline cycle.
 2. Record a measured `+180 mm` change to the infeed-fixture position and create the Revision 08 draft.
 3. Trace the resulting 9 mm clearance failure from the fixture to path P02, the pick step, and the release gate.
 4. Compare two constraint-derived repairs, preview their paths and tradeoffs, then apply one to the draft.
@@ -22,7 +22,7 @@ The workflow follows the same path as a commissioning task: configure → valida
 
 - React + TypeScript product shell with a responsive, keyboard-accessible control surface
 - Three.js scene rendered through React Three Fiber
-- Licensed UR5e URDF joint hierarchy with official visual and collision link geometry, plus a CellForge-authored VMC GLB with a functional door, visible spindle, table, vise, controls, and interior
+- Licensed full-scale UR20 URDF joint hierarchy with official visual and collision geometry, a sourced Robotiq 2F-85 end effector, and a CellForge-authored VMC GLB with a functional door, visible spindle, table, vise, controls, and interior
 - Target-driven machine-tending state machine with duration-weighted sequence stages
 - Target-driven damped-least-squares IK on the actual URDF joint chain, with TCP position and tool-direction tracking at every machine-tending waypoint
 - Hard motion gate for joint limits, floor height, reach, and the CNC solid volume/door aperture
@@ -53,13 +53,13 @@ Job intent + cell config
  Simulated runtime clock ───► Sequence + machine + robot state
 ```
 
-The deterministic process state and kinematics live outside the scene graph. Three.js consumes validated targets and limits animation-specific transforms to `useFrame` callbacks, keeping process behavior independent from rendering. The UR5e and VMC assets load behind in-canvas Suspense and an external error boundary. Robot licensing and pinned sources are recorded in [`public/robots/ur5e/PROVENANCE.md`](public/robots/ur5e/PROVENANCE.md); the project-authored machine source, node contract, and rebuild command are recorded in [`public/machines/cellforge-vmc/PROVENANCE.md`](public/machines/cellforge-vmc/PROVENANCE.md).
+The deterministic process state and kinematics live outside the scene graph. Three.js consumes validated targets and limits animation-specific transforms to `useFrame` callbacks, keeping process behavior independent from rendering. The UR20, Robotiq, and VMC assets load behind in-canvas Suspense and an external error boundary. Robot licensing and pinned sources are recorded in [`public/robots/ur20/PROVENANCE.md`](public/robots/ur20/PROVENANCE.md) and [`public/tools/robotiq-2f85/README.md`](public/tools/robotiq-2f85/README.md); the project-authored machine source, node contract, and rebuild command are recorded in [`public/machines/cellforge-vmc/PROVENANCE.md`](public/machines/cellforge-vmc/PROVENANCE.md).
 
 ## Scope and limitations
 
 The current robot and checks are a product prototype, not a certified engineering simulator:
 
-- The visible robot uses the licensed UR5e URDF hierarchy, official visual meshes, and an actual-chain browser IK solve, but it is scaled to the existing demo cell. Runtime TCP tracking is prototype evidence only; physical calibration, controller-specific planning, and hardware acceptance are not implemented.
+- The visible robot uses the licensed, full-scale UR20 URDF hierarchy and official visual meshes with an off-frame IK planner and bounded joint-velocity/acceleration follower. Runtime TCP tracking is prototype evidence only; physical calibration, controller-specific planning, and hardware acceptance are not implemented.
 - The deploy gate still uses the deterministic analytic reachability model rather than replaying the URDF solve across every sampled path state.
 - The CellForge-authored VMC is a visual and interaction asset aligned to the existing Machine 01 envelope; it is not manufacturer CAD, a certified collision body, or a machining-process model.
 - P02 clearance is geometry-derived from one axis-aligned fixture keep-out and a spherical tool envelope; it does not yet cover the full robot body or arbitrary mesh collisions.
@@ -70,7 +70,7 @@ The current robot and checks are a product prototype, not a certified engineerin
 
 ### 1. Real geometry and kinematics
 
-The licensed UR5e asset, browser loader, six-joint hierarchy, limits, provenance, and target-driven actual-chain IK are integrated. Next, replay the URDF solve outside the renderer so reachability and sampled TCP acceptance become deploy-gate evidence.
+The licensed UR20 asset, browser loader, six-joint hierarchy, limits, provenance, off-frame target solve, and bounded joint follower are integrated. Next, feed sampled actual-chain TCP acceptance into the deploy gate.
 
 ### 2. Computed commissioning checks
 

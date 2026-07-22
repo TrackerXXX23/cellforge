@@ -235,12 +235,13 @@ def build_machine() -> None:
             bevel=0.003,
         )
 
-    # Pneumatic vise centered on the existing rendered workpiece location.
+    # Pneumatic vise centered on the commissioned CNC chuck target.
     add_box("Vise_Base", (0.5, 0.34, 0.1), (0, -0.82, 0.86), graphite, parent=vise, bevel=0.016)
-    add_box("Vise_FixedJaw", (0.5, 0.09, 0.22), (0, -0.69, 0.96), brushed_steel, parent=vise, bevel=0.012)
-    add_box("Vise_MovingJaw", (0.5, 0.09, 0.22), (0, -0.97, 0.96), brushed_steel, parent=vise, bevel=0.012)
-    add_box("Vise_JawPad_Fixed", (0.42, 0.025, 0.12), (0, -0.745, 1.01), graphite, parent=vise, bevel=0.004)
-    add_box("Vise_JawPad_Moving", (0.42, 0.025, 0.12), (0, -0.915, 1.01), graphite, parent=vise, bevel=0.004)
+    # Close the opposing pads around the commissioned 35 mm blank thickness.
+    add_box("Vise_FixedJaw", (0.5, 0.09, 0.22), (0, -0.745, 0.96), brushed_steel, parent=vise, bevel=0.012)
+    add_box("Vise_MovingJaw", (0.5, 0.09, 0.22), (0, -0.915, 0.96), brushed_steel, parent=vise, bevel=0.012)
+    add_box("Vise_JawPad_Fixed", (0.42, 0.025, 0.12), (0, -0.8, 1.01), graphite, parent=vise, bevel=0.004)
+    add_box("Vise_JawPad_Moving", (0.42, 0.025, 0.12), (0, -0.86, 1.01), graphite, parent=vise, bevel=0.004)
 
     # Stationary spindle housing plus a separately named rotating spindle/tool node.
     add_box("SpindleHousing", (0.46, 0.36, 0.48), (0, -0.82, 1.61), panel_paint, parent=interior, bevel=0.045)
