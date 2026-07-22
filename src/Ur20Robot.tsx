@@ -103,8 +103,12 @@ function ParallelGripper({
 
   return (
     <group scale={1 / UR20_RENDER_SCALE}>
+      <mesh position-z={0.04} rotation-x={Math.PI / 2} castShadow>
+        <cylinderGeometry args={[0.042, 0.042, 0.08, 28]} />
+        <meshStandardMaterial color={graphite} metalness={0.28} roughness={0.36} />
+      </mesh>
       <group position-z={0.08}>
-        <mesh position-z={0.025} castShadow>
+        <mesh position-z={0.025} rotation-x={Math.PI / 2} castShadow>
           <cylinderGeometry args={[0.055, 0.065, 0.05, 28]} />
           <meshStandardMaterial color={graphite} roughness={0.42} />
         </mesh>
@@ -116,7 +120,7 @@ function ParallelGripper({
           <boxGeometry args={[0.025, 0.04, 0.18]} />
           <meshStandardMaterial color={graphite} roughness={0.48} />
         </mesh>
-        <mesh position-z={0.31} rotation-x={Math.PI / 2} visible={motion.carrying !== null} castShadow>
+        <mesh position-z={0.23} rotation-x={Math.PI / 2} visible={motion.carrying !== null} castShadow>
           <cylinderGeometry args={[0.055, 0.055, 0.075, 28]} />
           <meshStandardMaterial
             color={motion.carrying === 'finished' ? '#79a998' : '#c4873e'}
