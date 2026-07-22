@@ -2,6 +2,13 @@ import { ContactShadows, Grid, Line, OrbitControls } from '@react-three/drei'
 import { Canvas, ThreeEvent, useFrame } from '@react-three/fiber'
 import { Suspense, useMemo, useRef } from 'react'
 import * as THREE from 'three'
+import {
+  FINISHED_WORKPIECE_COLOR,
+  RAW_WORKPIECE_COLOR,
+  WORKPIECE_HEIGHT,
+  WORKPIECE_RADIUS,
+  WORKPIECE_TABLE_CENTER_Y,
+} from './workpiece'
 import { INFEED_FIXTURE_ORIGIN, P02_KEEP_OUT_LOCAL_BOUNDS } from './commissioning'
 import { sampleMotion, type MotionPlan, type MotionState, type Vec3 } from './simulation'
 import type { CellObject, RunState } from './types'
@@ -160,9 +167,9 @@ function PartTable({
         const column = index % 3
         const row = Math.floor(index / 3)
         return (
-          <mesh key={index} position={[-0.42 + column * 0.42, 0.69, -0.23 + row * 0.46]} castShadow>
-            <cylinderGeometry args={[0.12, 0.12, 0.16, 32]} />
-            <meshStandardMaterial color={kind === 'infeed' ? '#556260' : '#79a998'} metalness={0.56} roughness={0.31} />
+          <mesh key={index} position={[-0.42 + column * 0.42, WORKPIECE_TABLE_CENTER_Y, -0.23 + row * 0.46]} castShadow>
+            <cylinderGeometry args={[WORKPIECE_RADIUS, WORKPIECE_RADIUS, WORKPIECE_HEIGHT, 32]} />
+            <meshStandardMaterial color={kind === 'infeed' ? RAW_WORKPIECE_COLOR : FINISHED_WORKPIECE_COLOR} metalness={0.56} roughness={0.31} />
           </mesh>
         )
       })}
@@ -325,8 +332,8 @@ function Cell({
 
       {motion.partAtMachine && (
         <mesh position={[1.34, 1.06, -0.25]} rotation-z={Math.PI / 2} castShadow>
-          <cylinderGeometry args={[0.12, 0.12, 0.16, 32]} />
-          <meshStandardMaterial color={motion.partFinished ? '#79a998' : '#c4873e'} metalness={0.56} roughness={0.31} />
+          <cylinderGeometry args={[WORKPIECE_RADIUS, WORKPIECE_RADIUS, WORKPIECE_HEIGHT, 32]} />
+          <meshStandardMaterial color={motion.partFinished ? FINISHED_WORKPIECE_COLOR : RAW_WORKPIECE_COLOR} metalness={0.56} roughness={0.31} />
         </mesh>
       )}
 
@@ -379,7 +386,7 @@ function Cell({
         infiniteGrid={false}
       />
       <ContactShadows position={[0, 0.005, 0]} opacity={0.34} scale={9} blur={2.5} far={4.5} />
-      <OrbitControls makeDefault target={[0.1, 0.85, 0]} minDistance={5.2} maxDistance={11} maxPolarAngle={Math.PI / 2.05} />
+      <OrbitControls makeDefault target={motion.target} minDistance={1.2} maxDistance={8.5} maxPolarAngle={Math.PI / 2.05} />
     </>
   )
 }
@@ -388,7 +395,7 @@ export function CommissioningScene(props: SceneProps) {
   return (
     <Canvas
       shadows="basic"
-      camera={{ position: [-6.9, 5.6, 7.4], fov: 36, near: 0.1, far: 100 }}
+      camera={{ position: [-2.5, 2.7, 3.5], fov: 32, near: 0.1, far: 100 }}
       gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping }}
       dpr={[1, 1.75]}
       onPointerMissed={() => props.onSelect('robot')}

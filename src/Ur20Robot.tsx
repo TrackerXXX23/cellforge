@@ -1,7 +1,9 @@
 import { createPortal, useFrame, useLoader } from '@react-three/fiber'
-import { useEffect, useMemo, useRef, type RefObject } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import URDFLoader, { type URDFRobot } from 'urdf-loader'
+import { ROBOTIQ_2F85_TCP_OFFSET } from './eoat'
+import { Robotiq2F85 } from './Robotiq2F85'
 import type { MotionState } from './simulation'
 import {
   UR20_PACKAGE_URL,
@@ -88,52 +90,15 @@ function getUrdfLinkName(object: THREE.Object3D) {
   return ''
 }
 
-function ParallelGripper({
-  motion,
-  tcpRef,
-}: Pick<Ur20RobotProps, 'motion'> & { tcpRef: RefObject<THREE.Object3D | null> }) {
-  const leftFinger = useRef<THREE.Mesh>(null!)
-  const rightFinger = useRef<THREE.Mesh>(null!)
+function preservesAttachedMaterial(object: THREE.Object3D) {
+  let current: THREE.Object3D | null = object
 
-  useFrame((_, delta) => {
-    const fingerOffset = motion.gripperClosed ? 0.07 : 0.11
-    leftFinger.current.position.x = THREE.MathUtils.damp(leftFinger.current.position.x, -fingerOffset, 16, delta)
-    rightFinger.current.position.x = THREE.MathUtils.damp(rightFinger.current.position.x, fingerOffset, 16, delta)
-  })
+  while (current) {
+    if (current.userData.preserveMaterial === true) return true
+    current = current.parent
+  }
 
-  return (
-    <group scale={1 / UR20_RENDER_SCALE}>
-      <mesh position-z={0.04} rotation-x={Math.PI / 2} castShadow>
-        <cylinderGeometry args={[0.042, 0.042, 0.08, 28]} />
-        <meshStandardMaterial color={graphite} metalness={0.28} roughness={0.36} />
-      </mesh>
-      <group position-z={0.08}>
-        <mesh position-z={0.025} rotation-x={Math.PI / 2} castShadow>
-          <cylinderGeometry args={[0.055, 0.065, 0.05, 28]} />
-          <meshStandardMaterial color={graphite} roughness={0.42} />
-        </mesh>
-        <mesh ref={leftFinger} position={[-0.11, 0, 0.13]} castShadow>
-          <boxGeometry args={[0.025, 0.04, 0.18]} />
-          <meshStandardMaterial color={graphite} roughness={0.48} />
-        </mesh>
-        <mesh ref={rightFinger} position={[0.11, 0, 0.13]} castShadow>
-          <boxGeometry args={[0.025, 0.04, 0.18]} />
-          <meshStandardMaterial color={graphite} roughness={0.48} />
-        </mesh>
-        <mesh position-z={0.23} rotation-x={Math.PI / 2} visible={motion.carrying !== null} castShadow>
-          <cylinderGeometry args={[0.055, 0.055, 0.075, 28]} />
-          <meshStandardMaterial
-            color={motion.carrying === 'finished' ? '#79a998' : '#c4873e'}
-            emissive={motion.carrying === 'finished' ? '#183f34' : '#4a280d'}
-            emissiveIntensity={0.14}
-            metalness={0.5}
-            roughness={0.28}
-          />
-        </mesh>
-        <object3D ref={tcpRef} position-z={0.23} />
-      </group>
-    </group>
-  )
+  return false
 }
 
 export function Ur20Robot({ motion, selected, onSelect }: Ur20RobotProps) {
@@ -154,7 +119,7 @@ export function Ur20Robot({ motion, selected, onSelect }: Ur20RobotProps) {
     root.scale.setScalar(UR20_RENDER_SCALE)
     root.add(plannerRobot)
     plannerRobot.frames.tool0?.add(tcp)
-    tcp.position.z = 0.31 / UR20_RENDER_SCALE
+    tcp.position.z = ROBOTIQ_2F85_TCP_OFFSET / UR20_RENDER_SCALE
     plannerRobot.setJointValues(UR20_READY_JOINTS)
     root.updateMatrixWorld(true)
     return {
@@ -171,7 +136,7 @@ export function Ur20Robot({ motion, selected, onSelect }: Ur20RobotProps) {
     if (import.meta.env.DEV) window.__CELLFORGE_UR20_MOTION__ = motionDebug
     robot.setJointValues(UR20_READY_JOINTS)
     robot.traverse((object) => {
-      if (!(object instanceof THREE.Mesh)) return
+      if (!(object instanceof THREE.Mesh) || preservesAttachedMaterial(object)) return
       const linkName = getUrdfLinkName(object)
       object.castShadow = true
       object.receiveShadow = true
@@ -258,7 +223,7 @@ export function Ur20Robot({ motion, selected, onSelect }: Ur20RobotProps) {
         scale={UR20_RENDER_SCALE}
         dispose={null}
       />
-      {toolFrame && createPortal(<ParallelGripper motion={motion} tcpRef={tcpRef} />, toolFrame)}
+      {toolFrame && createPortal(<Robotiq2F85 motion={motion} tcpRef={tcpRef} />, toolFrame)}
     </group>
   )
 }

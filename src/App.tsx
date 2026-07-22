@@ -15,7 +15,7 @@ const CommissioningScene = lazy(() =>
 
 const sequence: SequenceStep[] = [
   { id: 'locate', label: 'Locate raw part', target: 'Infeed A', duration: 2.8, accent: '#65706e' },
-  { id: 'pick', label: 'Pick part', target: 'Parallel gripper', duration: 3.8, accent: '#245df3' },
+  { id: 'pick', label: 'Pick part', target: 'Robotiq 2F-85', duration: 3.8, accent: '#245df3' },
   { id: 'load', label: 'Load CNC', target: 'Machine 01', duration: 6.8, accent: '#245df3' },
   { id: 'unload', label: 'Unload finished part', target: 'Machine 01', duration: 6.4, accent: '#245df3' },
   { id: 'place', label: 'Place finished part', target: 'Outfeed B', duration: 4.2, accent: '#245df3' },
@@ -27,7 +27,7 @@ const objectDetails: Record<CellObject, { name: string; eyebrow: string; specs: 
   robot: {
     name: 'Universal Robots UR20',
     eyebrow: 'Licensed URDF model',
-    specs: [['Payload', '20 kg'], ['Reach', '1,750 mm'], ['TCP', 'tool0 + grip'], ['Frame', 'base_link']],
+    specs: [['Payload', '20 kg'], ['Reach', '1,750 mm'], ['EOAT', 'Robotiq 2F-85'], ['TCP', '145 mm']],
   },
   cnc: {
     name: 'CNC mill · Machine 01',
@@ -375,7 +375,7 @@ export default function App() {
           </SceneErrorBoundary>
 
           <div className="viewport-meta">
-            <span className="view-chip"><Icon name="cube" size={14} />Perspective · mm</span>
+            <span className="view-chip"><Icon name="cube" size={14} />Tool tracking · mm</span>
             <button className={`view-chip toggle ${showEnvelope ? 'on' : ''}`} onClick={() => setShowEnvelope((current) => !current)}>
               <Icon name="eye" size={14} />Reach envelope
             </button>

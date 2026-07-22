@@ -3,11 +3,11 @@
 <!-- codex-handoff:start -->
 ## CONTEXT FOR /work
 
-**Last handoff**: 2026-07-22 14:18:12 CST
-**Branch**: `codex/ur20-wrist-handoff`
+**Last handoff**: 2026-07-22 15:42:42 CST
+**Branch**: `codex/real-robotiq-eoat`
 **Active ticket**: `None found`
-**Summary**: Merged PR #8 into develop at becd2f7. The UR20 wrist, flange adapter, gripper, TCP grasp point, and CNC released-part pose are now visually continuous and aligned. npm run check passes with 29 tests; R3F guardrails and CI pass; browser close-up reports zero errors. Remaining milestone is sampled full-body collision and actual-chain TCP gating.
-**Next exact action**: Branch from updated develop to add sampled full-body collision and actual-chain TCP acceptance to the deploy gate.
+**Summary**: PR #10 is green and mergeable with the sourced Robotiq 2F-85, corrected pickup timing, and TCP-tracking camera. Known remaining visual defect: the carried blank appears magnetically attached to one gripper jaw rather than visibly clamped between opposing pads. The user explicitly requested that this remain recorded after PR #10 merges. PR #5 (codex/cnc-vmc-asset) is the pending CNC-machine work and currently conflicts with develop.
+**Next exact action**: Center the carried blank between both Robotiq pad faces during close/verify; it currently reads as attached to one jaw. Then continue integration review of PR #5 for the new CNC machine.
 **Blocker**: None
 
 **Git status at handoff**:

@@ -39,6 +39,35 @@ describe('machine-tending motion plan', () => {
     expect(placed).toMatchObject({ carrying: null, gripperClosed: false, finishedPlaced: true })
   })
 
+  it('settles, closes, verifies, and lifts without moving the blank at transfer', () => {
+    const settled = sampleMotion(0.16, 'running')
+    const closing = sampleMotion(0.18, 'running')
+    const verified = sampleMotion(0.2, 'running')
+    const lifting = sampleMotion(0.24, 'running')
+
+    expect(settled).toMatchObject({
+      target: BASELINE_MOTION_PLAN.infeedPickTarget,
+      gripperClosed: false,
+      carrying: null,
+      rawRemoved: false,
+    })
+    expect(closing).toMatchObject({
+      target: BASELINE_MOTION_PLAN.infeedPickTarget,
+      gripperClosed: true,
+      carrying: null,
+      rawRemoved: false,
+    })
+    expect(verified).toMatchObject({
+      target: BASELINE_MOTION_PLAN.infeedPickTarget,
+      gripperClosed: true,
+      carrying: 'raw',
+      rawRemoved: true,
+    })
+    expect(lifting.target[0]).toBe(BASELINE_MOTION_PLAN.infeedPickTarget[0])
+    expect(lifting.target[1]).toBeGreaterThan(BASELINE_MOTION_PLAN.infeedPickTarget[1])
+    expect(lifting.target[2]).toBe(BASELINE_MOTION_PLAN.infeedPickTarget[2])
+  })
+
   it('opens the CNC door only for load and unload access', () => {
     expect(sampleMotion(0.44, 'running').doorOpen).toBe(true)
     expect(sampleMotion(0.54, 'running').doorOpen).toBe(false)
@@ -68,7 +97,7 @@ describe('machine-tending motion plan', () => {
       infeedPickTarget: [-0.95, 0.78, 0.92] as const,
     }
 
-    expect(sampleMotion(0.06, 'running', revisedPlan).target).toEqual(revisedPlan.infeedApproachTarget)
-    expect(sampleMotion(0.11, 'running', revisedPlan).target).toEqual(revisedPlan.infeedPickTarget)
+    expect(sampleMotion(0.07, 'running', revisedPlan).target).toEqual(revisedPlan.infeedApproachTarget)
+    expect(sampleMotion(0.15, 'running', revisedPlan).target).toEqual(revisedPlan.infeedPickTarget)
   })
 })
