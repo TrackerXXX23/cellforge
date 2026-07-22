@@ -3,11 +3,11 @@
 <!-- codex-handoff:start -->
 ## CONTEXT FOR /work
 
-**Last handoff**: 2026-07-22 10:01:17 CST
-**Branch**: `codex/commissioning-recovery`
+**Last handoff**: 2026-07-22 10:33:17 CST
+**Branch**: `codex/geometry-clearance`
 **Active ticket**: `None found`
-**Summary**: Commissioning recovery slice is complete at e02b424; handoff tooling is installed at 589628d; draft PR #1 is https://github.com/TrackerXXX23/cellforge/pull/1.
-**Next exact action**: Review CI on PR #1, merge it into develop when green, then branch from updated develop to replace prototype-clearance-heuristic/v1 with geometry-derived P02 keep-out and swept-path clearance.
+**Summary**: Replaced the poor PR artifacts at b3f18b1: focused blocked-versus-repaired 3D captures, separate 9 mm and 84 mm evidence panels, verified-cycle evidence, and a clean 16:9 2x flow GIF. Removed every prior repetitive screenshot and the first GIF. PR: https://github.com/TrackerXXX23/cellforge/pull/2.
+**Next exact action**: Review the focused visual evidence on draft PR #2, wait for CI, then mark it ready and merge it into develop.
 **Blocker**: None
 
 **Git status at handoff**:
@@ -16,6 +16,9 @@
 ?? "AGENTS 2.md"
 ?? "NOW 2.md"
 ?? "continue 2"
+?? "handoff 2"
+?? "src/commissioning 2.ts"
+?? "src/commissioning.test 2.ts"
 ?? "tests/r3f-skill-guardrails.test 2.ts"
 ```
 

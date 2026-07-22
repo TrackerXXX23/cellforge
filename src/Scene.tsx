@@ -2,6 +2,7 @@ import { ContactShadows, Grid, Line, OrbitControls } from '@react-three/drei'
 import { Canvas, ThreeEvent, useFrame } from '@react-three/fiber'
 import { useMemo, useRef } from 'react'
 import * as THREE from 'three'
+import { INFEED_FIXTURE_ORIGIN, P02_KEEP_OUT_LOCAL_BOUNDS } from './commissioning'
 import { sampleMotion, solveRobotIk, type MotionPlan, type MotionState, type Vec3 } from './simulation'
 import type { CellObject, RunState } from './types'
 
@@ -32,8 +33,18 @@ const cobalt = '#245df3'
 const amber = '#f08a24'
 const danger = '#e54835'
 const success = '#2f9e75'
-const infeedBaseX = -1.55
-const infeedZ = 1.15
+const infeedBaseX = INFEED_FIXTURE_ORIGIN[0]
+const infeedZ = INFEED_FIXTURE_ORIGIN[2]
+const p02KeepOutCenter: Vec3 = [
+  (P02_KEEP_OUT_LOCAL_BOUNDS.min[0] + P02_KEEP_OUT_LOCAL_BOUNDS.max[0]) / 2,
+  (P02_KEEP_OUT_LOCAL_BOUNDS.min[1] + P02_KEEP_OUT_LOCAL_BOUNDS.max[1]) / 2,
+  (P02_KEEP_OUT_LOCAL_BOUNDS.min[2] + P02_KEEP_OUT_LOCAL_BOUNDS.max[2]) / 2,
+]
+const p02KeepOutSize: Vec3 = [
+  P02_KEEP_OUT_LOCAL_BOUNDS.max[0] - P02_KEEP_OUT_LOCAL_BOUNDS.min[0],
+  P02_KEEP_OUT_LOCAL_BOUNDS.max[1] - P02_KEEP_OUT_LOCAL_BOUNDS.min[1],
+  P02_KEEP_OUT_LOCAL_BOUNDS.max[2] - P02_KEEP_OUT_LOCAL_BOUNDS.min[2],
+]
 
 function select(event: ThreeEvent<MouseEvent>, onSelect: () => void) {
   event.stopPropagation()
@@ -368,6 +379,21 @@ function Cell({
           <mesh position-x={infeedBaseX + fixtureShiftMeters} position-y={0.82} position-z={infeedZ}>
             <sphereGeometry args={[0.055, 18, 18]} />
             <meshBasicMaterial color={amber} />
+          </mesh>
+        </group>
+      )}
+
+      {showRevisionGhost && (
+        <group position-x={infeedBaseX + fixtureShiftMeters} position-z={infeedZ}>
+          <mesh position={p02KeepOutCenter}>
+            <boxGeometry args={p02KeepOutSize} />
+            <meshBasicMaterial
+              color={pathState === 'blocked' ? danger : amber}
+              wireframe
+              transparent
+              opacity={pathState === 'blocked' ? 0.72 : 0.3}
+              depthWrite={false}
+            />
           </mesh>
         </group>
       )}

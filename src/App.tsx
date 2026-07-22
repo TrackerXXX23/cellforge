@@ -427,7 +427,7 @@ export default function App() {
               <div className="panel-heading impact-heading">
                 <div>
                   <span className="micro-label">{released ? 'REVISION 08 · RELEASED' : appliedRepair ? 'REVISION 08 · REPAIRED' : previewRepair ? 'REPAIR PREVIEW · NOT APPLIED' : 'BLOCKING FINDING · V-014'}</span>
-                  <strong>{released ? 'Runtime acknowledged the repaired job' : appliedRepair ? 'Repair passes commissioning gates' : previewRepair ? `${recoveryProposals.find((proposal) => proposal.id === previewRepair)?.label} clears P02` : 'Approach path enters Fixture A keep-out'}</strong>
+                  <strong>{released ? 'Runtime acknowledged the repaired job' : appliedRepair ? 'Repair passes commissioning gates' : previewRepair ? `${recoveryProposals.find((proposal) => proposal.id === previewRepair)?.label} clears P02` : 'P02 swept envelope enters Fixture A keep-out'}</strong>
                   <p>{released ? `${activeEvaluation.cycleSeconds.toFixed(1)} s cycle evidence and ${activeEvaluation.minimumClearanceMm} mm clearance were attached to the release.` : appliedRepair ? `${activeEvaluation.minimumClearanceMm} mm predicted clearance · ${activeEvaluation.cycleSeconds.toFixed(1)} s cycle. ${runState === 'complete' ? 'The verification run passed and the draft is ready for release.' : 'The repair is saved in the draft and must complete a verification run.'}` : previewRepair ? `${activeEvaluation.minimumClearanceMm} mm predicted clearance · ${activeEvaluation.cycleSeconds.toFixed(1)} s cycle. The commissioned job is unchanged until this candidate is applied.` : 'Fixture A moved 180 mm. The pick remains reachable, but P02 now violates the 50 mm clearance rule.'}</p>
                 </div>
               </div>
