@@ -7,7 +7,7 @@ describe('fixture-shift commissioning evaluation', () => {
 
     expect(result.deployable).toBe(true)
     expect(result.minimumClearanceMm).toBe(84)
-    expect(result.cycleSeconds).toBe(14.8)
+    expect(result.cycleSeconds).toBe(24)
     expect(result.checks.every((check) => check.status === 'pass')).toBe(true)
     expect(result.revisionDelta).toMatchObject({ fromRevision: 7, toRevision: 7 })
   })
@@ -38,12 +38,12 @@ describe('fixture-shift commissioning evaluation', () => {
     expect(results['lifted-approach']).toMatchObject({
       deployable: true,
       minimumClearanceMm: 84,
-      cycleSeconds: 15.2,
+      cycleSeconds: 24.4,
     })
     expect(results['side-entry']).toMatchObject({
       deployable: true,
       minimumClearanceMm: 58,
-      cycleSeconds: 14.9,
+      cycleSeconds: 24.1,
     })
     expect(results['lifted-approach'].approachTarget).not.toEqual(results['side-entry'].approachTarget)
     expect(results['lifted-approach'].pathPoints).not.toEqual(results['side-entry'].pathPoints)

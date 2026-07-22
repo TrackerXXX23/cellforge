@@ -24,7 +24,7 @@ export class SceneErrorBoundary extends Component<SceneErrorBoundaryProps, Scene
       return (
         <div className="scene-error" role="alert">
           <strong>Digital twin unavailable</strong>
-          <span>The UR5e asset could not be loaded.</span>
+          <span>The UR20 asset could not be loaded.</span>
           <button type="button" onClick={() => this.setState({ error: null })}>Retry</button>
         </div>
       )

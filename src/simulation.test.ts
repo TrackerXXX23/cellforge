@@ -14,14 +14,14 @@ describe('machine-tending motion plan', () => {
     for (let index = 0; index <= 200; index += 1) {
       const progress = index / 200
       const motion = sampleMotion(progress, progress === 1 ? 'complete' : 'running')
-      const joints = solveRobotIk(motion.target)
+      const joints = solveRobotIk(motion.target, motion.toolDirection)
       expect(joints.reachable, `target at progress ${progress}`).toBe(true)
       expect(joints.withinBoundaries, `boundary at progress ${progress}`).toBe(true)
 
       const wrist = forwardWristPosition(joints)
-      expect(wrist[0]).toBeCloseTo(motion.target[0], 6)
-      expect(wrist[1]).toBeCloseTo(motion.target[1] + TOOL_TIP_OFFSET, 6)
-      expect(wrist[2]).toBeCloseTo(motion.target[2], 6)
+      expect(wrist[0]).toBeCloseTo(motion.target[0] - motion.toolDirection[0] * TOOL_TIP_OFFSET, 6)
+      expect(wrist[1]).toBeCloseTo(motion.target[1] - motion.toolDirection[1] * TOOL_TIP_OFFSET, 6)
+      expect(wrist[2]).toBeCloseTo(motion.target[2] - motion.toolDirection[2] * TOOL_TIP_OFFSET, 6)
     }
   })
 
@@ -64,11 +64,11 @@ describe('machine-tending motion plan', () => {
   it('executes a validated revision against its configured infeed targets', () => {
     const revisedPlan = {
       ...BASELINE_MOTION_PLAN,
-      infeedApproachTarget: [-0.95, 1.68, 1.05] as const,
+      infeedApproachTarget: [-0.95, 1.02, 1.05] as const,
       infeedPickTarget: [-0.95, 0.78, 0.92] as const,
     }
 
-    expect(sampleMotion(0.1, 'running', revisedPlan).target).toEqual(revisedPlan.infeedApproachTarget)
-    expect(sampleMotion(0.15, 'running', revisedPlan).target).toEqual(revisedPlan.infeedPickTarget)
+    expect(sampleMotion(0.06, 'running', revisedPlan).target).toEqual(revisedPlan.infeedApproachTarget)
+    expect(sampleMotion(0.11, 'running', revisedPlan).target).toEqual(revisedPlan.infeedPickTarget)
   })
 })
