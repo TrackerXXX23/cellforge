@@ -1,17 +1,15 @@
 import { createPortal, useFrame, useLoader } from '@react-three/fiber'
-import { useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef, type RefObject } from 'react'
 import * as THREE from 'three'
 import URDFLoader, { type URDFRobot } from 'urdf-loader'
-import { solveRobotIk, type MotionState } from './simulation'
+import type { MotionState } from './simulation'
 import {
-  clampUr5eJoint,
-  prototypeJointTarget,
-  UR5E_JOINT_NAMES,
   UR5E_PACKAGE_URL,
+  UR5E_READY_JOINTS,
   UR5E_RENDER_SCALE,
   UR5E_URDF_URL,
-  type Ur5eJointName,
 } from './ur5e'
+import { createUr5eIkWorkspace, stepUr5eIk } from './ur5eIk'
 
 const graphite = '#26302f'
 const shellMaterial = new THREE.MeshStandardMaterial({
@@ -33,23 +31,30 @@ const R3fUrdfLoader = URDFLoader as unknown as new (
   manager?: THREE.LoadingManager,
 ) => THREE.Loader<URDFRobot>
 
+interface Ur5eMotionDebug {
+  tcpError: number
+  directionError: number
+  target: [number, number, number]
+  tcp: [number, number, number]
+}
+
+declare global {
+  interface Window {
+    __CELLFORGE_UR5E_MOTION__?: Ur5eMotionDebug
+  }
+}
+
+const motionDebug: Ur5eMotionDebug = {
+  tcpError: Number.POSITIVE_INFINITY,
+  directionError: Number.POSITIVE_INFINITY,
+  target: [0, 0, 0],
+  tcp: [0, 0, 0],
+}
+
 interface Ur5eRobotProps {
   motion: MotionState
   selected: boolean
   onSelect: (event: import('@react-three/fiber').ThreeEvent<MouseEvent>) => void
-}
-
-function dampJoint(
-  robot: URDFRobot,
-  name: Ur5eJointName,
-  target: number,
-  delta: number,
-) {
-  const joint = robot.joints[name]
-  if (!joint) return
-
-  const next = THREE.MathUtils.damp(joint.angle, clampUr5eJoint(name, target), 10, delta)
-  robot.setJointValue(name, next)
 }
 
 function getUrdfLinkName(object: THREE.Object3D) {
@@ -64,7 +69,10 @@ function getUrdfLinkName(object: THREE.Object3D) {
   return ''
 }
 
-function ParallelGripper({ motion }: Pick<Ur5eRobotProps, 'motion'>) {
+function ParallelGripper({
+  motion,
+  tcpRef,
+}: Pick<Ur5eRobotProps, 'motion'> & { tcpRef: RefObject<THREE.Object3D | null> }) {
   const leftFinger = useRef<THREE.Mesh>(null!)
   const rightFinger = useRef<THREE.Mesh>(null!)
 
@@ -98,6 +106,7 @@ function ParallelGripper({ motion }: Pick<Ur5eRobotProps, 'motion'>) {
           roughness={0.28}
         />
       </mesh>
+      <object3D ref={tcpRef} position-z={0.23} />
     </group>
   )
 }
@@ -110,8 +119,12 @@ export function Ur5eRobot({ motion, selected, onSelect }: Ur5eRobotProps) {
     urdfLoader.parseCollision = false
   })
   const toolFrame = robot.frames.tool0
+  const tcpRef = useRef<THREE.Object3D>(null)
+  const ikWorkspace = useMemo(createUr5eIkWorkspace, [])
 
   useEffect(() => {
+    if (import.meta.env.DEV) window.__CELLFORGE_UR5E_MOTION__ = motionDebug
+    robot.setJointValues(UR5E_READY_JOINTS)
     robot.traverse((object) => {
       if (!(object instanceof THREE.Mesh)) return
       const linkName = getUrdfLinkName(object)
@@ -123,14 +136,29 @@ export function Ur5eRobot({ motion, selected, onSelect }: Ur5eRobotProps) {
           ? jointMaterial
           : shellMaterial
     })
+    return () => {
+      if (import.meta.env.DEV) delete window.__CELLFORGE_UR5E_MOTION__
+    }
   }, [robot])
 
   useFrame((_, delta) => {
-    const solution = solveRobotIk(motion.target)
-    if (!solution.withinBoundaries) return
-
-    for (const name of UR5E_JOINT_NAMES) {
-      dampJoint(robot, name, prototypeJointTarget(name, solution), delta)
+    const tcpError = stepUr5eIk(
+      robot,
+      tcpRef.current,
+      motion.target,
+      motion.toolDirection,
+      delta,
+      ikWorkspace,
+    )
+    if (import.meta.env.DEV) {
+      motionDebug.tcpError = tcpError
+      motionDebug.directionError = ikWorkspace.directionError
+      motionDebug.target[0] = motion.target[0]
+      motionDebug.target[1] = motion.target[1]
+      motionDebug.target[2] = motion.target[2]
+      motionDebug.tcp[0] = ikWorkspace.toolPosition.x
+      motionDebug.tcp[1] = ikWorkspace.toolPosition.y
+      motionDebug.tcp[2] = ikWorkspace.toolPosition.z
     }
   })
 
@@ -148,7 +176,7 @@ export function Ur5eRobot({ motion, selected, onSelect }: Ur5eRobotProps) {
         scale={UR5E_RENDER_SCALE}
         dispose={null}
       />
-      {toolFrame && createPortal(<ParallelGripper motion={motion} />, toolFrame)}
+      {toolFrame && createPortal(<ParallelGripper motion={motion} tcpRef={tcpRef} />, toolFrame)}
     </group>
   )
 }
