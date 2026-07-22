@@ -324,7 +324,7 @@ function Cell({
       )}
 
       {motion.partAtMachine && (
-        <mesh position={[1.42, 1.06, -0.25]} rotation-z={Math.PI / 2} castShadow>
+        <mesh position={[1.34, 1.06, -0.25]} rotation-z={Math.PI / 2} castShadow>
           <cylinderGeometry args={[0.12, 0.12, 0.16, 32]} />
           <meshStandardMaterial color={motion.partFinished ? '#79a998' : '#c4873e'} metalness={0.56} roughness={0.31} />
         </mesh>
