@@ -3,26 +3,19 @@
 <!-- codex-handoff:start -->
 ## CONTEXT FOR /work
 
-**Last handoff**: 2026-07-22 10:09:54 CST
+**Last handoff**: 2026-07-22 10:17:20 CST
 **Branch**: `codex/geometry-clearance`
 **Active ticket**: `None found`
-**Summary**: Implemented exact P02 segment-to-AABB swept-envelope clearance, corrected disturbed-target semantics, added fixture keep-out visualization and evidence, and verified the full Revision 08 browser workflow. npm run check passes with 17 tests; only the existing large scene-chunk warning remains.
-**Next exact action**: Review the geometry-clearance diff, then commit and push codex/geometry-clearance for a pull request into develop.
+**Summary**: Geometry-derived P02 clearance is implemented and verified at 831cd73. Baseline, blocked, repair-preview, verified screenshots, and an annotated full-flow WebM are committed and embedded in draft PR #2: https://github.com/TrackerXXX23/cellforge/pull/2.
+**Next exact action**: Wait for CI on draft PR #2, address any failures, then mark it ready and merge it into develop.
 **Blocker**: None
 
 **Git status at handoff**:
 
 ```text
- M README.md
- M src/App.tsx
- M src/Scene.tsx
- M src/commissioning.test.ts
- M src/commissioning.ts
 ?? "AGENTS 2.md"
 ?? "NOW 2.md"
 ?? "continue 2"
-?? src/clearance.test.ts
-?? src/clearance.ts
 ?? "tests/r3f-skill-guardrails.test 2.ts"
 ```
 
