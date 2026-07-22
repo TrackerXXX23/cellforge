@@ -1,31 +1,34 @@
 import { describe, expect, it } from 'vitest'
 import {
-  getRobotiqPadCenterOffset,
-  getRobotiqPadOpening,
-  ROBOTIQ_2F85_BASE_OFFSET,
-  ROBOTIQ_2F85_FINGER_ADVANCE,
-  ROBOTIQ_2F85_FINGER_TRAVEL,
-  ROBOTIQ_2F85_GRASP_ANGLE,
-  ROBOTIQ_2F85_PINCH_OFFSET,
-  ROBOTIQ_2F85_TCP_OFFSET,
+  getThreeJawContactPoints,
+  getThreeJawContactRadius,
+  THREE_JAW_CLOSED_RADIUS,
+  THREE_JAW_OPEN_RADIUS,
+  THREE_JAW_TCP_OFFSET,
+  THREE_JAW_TWIST_ANGLE,
 } from './eoat'
 import { WORKPIECE_RADIUS } from './workpiece'
 
-describe('Robotiq 2F-85 grasp geometry', () => {
-  it('places the TCP at the sourced pinch site beyond the mounting flange', () => {
-    expect(ROBOTIQ_2F85_TCP_OFFSET).toBeCloseTo(
-      ROBOTIQ_2F85_BASE_OFFSET + ROBOTIQ_2F85_PINCH_OFFSET,
-      8,
-    )
+describe('three-jaw centric grasp geometry', () => {
+  it('places the TCP at the center of the jaw contact length', () => {
+    expect(THREE_JAW_TCP_OFFSET).toBe(0.14)
   })
 
-  it('closes both pad faces evenly around the 60 mm blank', () => {
-    const padOpening = getRobotiqPadOpening(ROBOTIQ_2F85_GRASP_ANGLE)
-      - ROBOTIQ_2F85_FINGER_TRAVEL * 2
-    const padCenter = getRobotiqPadCenterOffset(ROBOTIQ_2F85_GRASP_ANGLE)
-      + ROBOTIQ_2F85_FINGER_ADVANCE
+  it('lands all three contact faces on the 60 mm blank radius', () => {
+    expect(getThreeJawContactRadius(THREE_JAW_CLOSED_RADIUS)).toBeCloseTo(WORKPIECE_RADIUS, 8)
+    expect(getThreeJawContactRadius(THREE_JAW_OPEN_RADIUS)).toBeGreaterThan(WORKPIECE_RADIUS)
+  })
 
-    expect(padOpening).toBeCloseTo(WORKPIECE_RADIUS * 2, 8)
-    expect(padCenter).toBeCloseTo(ROBOTIQ_2F85_PINCH_OFFSET, 3)
+  it('keeps the three twisted contact points centered around the tool axis', () => {
+    const contacts = getThreeJawContactPoints(WORKPIECE_RADIUS, THREE_JAW_TWIST_ANGLE)
+    const center = contacts.reduce(
+      (sum, point) => [sum[0] + point[0], sum[1] + point[1]] as const,
+      [0, 0] as const,
+    )
+
+    expect(center[0] / contacts.length).toBeCloseTo(0, 8)
+    expect(center[1] / contacts.length).toBeCloseTo(0, 8)
+    expect(Math.atan2(contacts[0][1], contacts[0][0])).toBeCloseTo(THREE_JAW_TWIST_ANGLE, 8)
+    expect(THREE_JAW_TWIST_ANGLE).toBeCloseTo(Math.PI / 12, 8)
   })
 })

@@ -3,22 +3,28 @@
 <!-- codex-handoff:start -->
 ## CONTEXT FOR /work
 
-**Last handoff**: 2026-07-22 16:46:26 CST
+**Last handoff**: 2026-07-22 16:55:53 CST
 **Branch**: `codex/two-finger-gripper-pinch`
 **Active ticket**: `None found`
-**Summary**: Added Space-bar pause/resume to the CellForge workflow on codex/two-finger-gripper-pinch. Running cycles can now be paused from the keyboard or ribbon button without losing progress; the paused UI keeps the active sequence step and motion pose visible. Playwright verified progress stayed at 4.97958% during a 1.5 s pause and resumed to 8.60417%; npm run check passes with 36 tests.
-**Next exact action**: Have the user pause the baseline at the gripper close with Space, inspect the jaw alignment, and provide the desired pinch geometry adjustment.
-**Blocker**: none
+**Summary**: Replaced the Robotiq two-finger EOAT with a procedural twisting three-jaw centric gripper for 60 mm round stock. All three jaws damp radially inward while the jaw rotor twists 15 degrees, the contact faces close at the workpiece radius, and the TCP/IK offset is updated to 140 mm. Space-bar pause/resume remains active and Playwright verified progress freezes at 19.7108% while paused, then advances after resume. npm run check passes with 37 tests and the production build; npm run test:skill passes all 4 R3F guardrails.
+**Next exact action**: Review the draft PR's three-jaw close replay and CI; merge to develop only when the user approves the visual result.
+**Blocker**: None
 
 **Git status at handoff**:
 
 ```text
+ M README.md
  M src/App.tsx
- M src/types.ts
+ D src/Robotiq2F85.tsx
+ M src/Ur20Robot.tsx
+ M src/eoat.test.ts
+ M src/eoat.ts
+ M src/simulation.ts
 ?? "AGENTS 2.md"
 ?? "NOW 2.md"
 ?? "continue 2"
 ?? "handoff 2"
+?? src/ThreeJawGripper.tsx
 ?? "src/commissioning 2.ts"
 ?? "src/commissioning.test 2.ts"
 ?? "tests/r3f-skill-guardrails.test 2.ts"

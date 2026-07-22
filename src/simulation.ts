@@ -1,5 +1,5 @@
 import type { RunState } from './types'
-import { ROBOTIQ_2F85_TCP_OFFSET } from './eoat'
+import { THREE_JAW_TCP_OFFSET } from './eoat'
 import { WORKPIECE_TABLE_CENTER_Y } from './workpiece'
 
 export type Vec3 = readonly [number, number, number]
@@ -45,7 +45,7 @@ export const CYCLE_DURATION_SECONDS = 24
 export const SHOULDER_HEIGHT = 0.2363
 export const UPPER_ARM_LENGTH = 0.862
 export const FOREARM_LENGTH = 0.888
-export const TOOL_TIP_OFFSET = ROBOTIQ_2F85_TCP_OFFSET
+export const TOOL_TIP_OFFSET = THREE_JAW_TCP_OFFSET
 
 export const sequenceBoundaries = [
   2.8 / CYCLE_DURATION_SECONDS,

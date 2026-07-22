@@ -2,8 +2,8 @@ import { createPortal, useFrame, useLoader } from '@react-three/fiber'
 import { useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import URDFLoader, { type URDFRobot } from 'urdf-loader'
-import { ROBOTIQ_2F85_TCP_OFFSET } from './eoat'
-import { Robotiq2F85 } from './Robotiq2F85'
+import { THREE_JAW_TCP_OFFSET } from './eoat'
+import { ThreeJawGripper } from './ThreeJawGripper'
 import type { MotionState } from './simulation'
 import {
   UR20_PACKAGE_URL,
@@ -119,7 +119,7 @@ export function Ur20Robot({ motion, selected, onSelect }: Ur20RobotProps) {
     root.scale.setScalar(UR20_RENDER_SCALE)
     root.add(plannerRobot)
     plannerRobot.frames.tool0?.add(tcp)
-    tcp.position.z = ROBOTIQ_2F85_TCP_OFFSET / UR20_RENDER_SCALE
+    tcp.position.z = THREE_JAW_TCP_OFFSET / UR20_RENDER_SCALE
     plannerRobot.setJointValues(UR20_READY_JOINTS)
     root.updateMatrixWorld(true)
     return {
@@ -223,7 +223,7 @@ export function Ur20Robot({ motion, selected, onSelect }: Ur20RobotProps) {
         scale={UR20_RENDER_SCALE}
         dispose={null}
       />
-      {toolFrame && createPortal(<Robotiq2F85 motion={motion} tcpRef={tcpRef} />, toolFrame)}
+      {toolFrame && createPortal(<ThreeJawGripper motion={motion} tcpRef={tcpRef} />, toolFrame)}
     </group>
   )
 }
