@@ -3,22 +3,31 @@
 <!-- codex-handoff:start -->
 ## CONTEXT FOR /work
 
-**Last handoff**: 2026-07-22 14:18:12 CST
-**Branch**: `codex/ur20-wrist-handoff`
+**Last handoff**: 2026-07-22 15:02:07 CST
+**Branch**: `codex/real-robotiq-eoat`
 **Active ticket**: `None found`
-**Summary**: Merged PR #8 into develop at becd2f7. The UR20 wrist, flange adapter, gripper, TCP grasp point, and CNC released-part pose are now visually continuous and aligned. npm run check passes with 29 tests; R3F guardrails and CI pass; browser close-up reports zero errors. Remaining milestone is sampled full-body collision and actual-chain TCP gating.
-**Next exact action**: Branch from updated develop to add sampled full-body collision and actual-chain TCP acceptance to the deploy gate.
+**Summary**: Replaced the invented primitive gripper with the BSD-licensed Robotiq 2F-85 mesh/linkage, corrected tool/material isolation, matched the 60 mm blank to the gripper, retimed the first pickup, and changed the viewport to track the TCP. npm run check passes with 30 tests; browser inspection shows a stationary close/verify pose inside the 18 mm TCP tolerance.
+**Next exact action**: Review PR for the sourced Robotiq 2F-85 pickup flow, then merge it into develop after CI passes.
 **Blocker**: None
 
 **Git status at handoff**:
 
 ```text
+ M src/App.tsx
+ M src/Scene.tsx
+ M src/Ur20Robot.tsx
+ M src/simulation.test.ts
+ M src/simulation.ts
 ?? "AGENTS 2.md"
 ?? "NOW 2.md"
 ?? "continue 2"
 ?? "handoff 2"
+?? public/tools/
+?? src/Robotiq2F85.tsx
 ?? "src/commissioning 2.ts"
 ?? "src/commissioning.test 2.ts"
+?? src/eoat.ts
+?? src/workpiece.ts
 ?? "tests/r3f-skill-guardrails.test 2.ts"
 ```
 

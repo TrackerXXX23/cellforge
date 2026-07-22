@@ -1,4 +1,6 @@
 import type { RunState } from './types'
+import { ROBOTIQ_2F85_TCP_OFFSET } from './eoat'
+import { WORKPIECE_TABLE_CENTER_Y } from './workpiece'
 
 export type Vec3 = readonly [number, number, number]
 export type PayloadState = 'raw' | 'finished' | null
@@ -43,7 +45,7 @@ export const CYCLE_DURATION_SECONDS = 24
 export const SHOULDER_HEIGHT = 0.2363
 export const UPPER_ARM_LENGTH = 0.862
 export const FOREARM_LENGTH = 0.888
-export const TOOL_TIP_OFFSET = 0.31
+export const TOOL_TIP_OFFSET = ROBOTIQ_2F85_TCP_OFFSET
 
 export const sequenceBoundaries = [
   2.8 / CYCLE_DURATION_SECONDS,
@@ -54,10 +56,10 @@ export const sequenceBoundaries = [
 ] as const
 
 export const HOME_TARGET: Vec3 = [0.55, 1.15, 0.25]
-export const INFEED_PICK_TARGET: Vec3 = [-1.13, 0.78, 0.92]
-export const INFEED_APPROACH_TARGET: Vec3 = [-1.13, 0.88, 0.92]
+export const INFEED_PICK_TARGET: Vec3 = [-1.13, WORKPIECE_TABLE_CENTER_Y, 0.92]
+export const INFEED_APPROACH_TARGET: Vec3 = [-1.13, WORKPIECE_TABLE_CENTER_Y + 0.3, 0.92]
 export const CNC_CHUCK_TARGET: Vec3 = [1.34, 1.06, -0.25]
-export const OUTFEED_PLACE_TARGET: Vec3 = [-1.13, 0.78, -0.92]
+export const OUTFEED_PLACE_TARGET: Vec3 = [-1.13, WORKPIECE_TABLE_CENTER_Y, -0.92]
 
 export const BASELINE_MOTION_PLAN: MotionPlan = {
   infeedApproachTarget: INFEED_APPROACH_TARGET,
@@ -66,11 +68,13 @@ export const BASELINE_MOTION_PLAN: MotionPlan = {
 
 const keyframes: MotionKeyframe[] = [
   { at: 0, target: HOME_TARGET, toolDirection: [0, -1, 0], action: 'Moving to infeed approach' },
-  { at: 0.06, targetKey: 'infeed-approach', toolDirection: [0, -1, 0], action: 'Moving to infeed approach' },
-  { at: 0.11, targetKey: 'infeed-pick', toolDirection: [0, -1, 0], action: 'Descending to raw part' },
-  { at: 0.17, targetKey: 'infeed-pick', toolDirection: [0, -1, 0], action: 'Gripping raw part' },
-  { at: 0.2, targetKey: 'infeed-pick', toolDirection: [0, -1, 0], action: 'Confirming raw-part grip' },
-  { at: 0.26, targetKey: 'infeed-approach', toolDirection: [0, -1, 0], action: 'Lifting raw part' },
+  { at: 0.07, targetKey: 'infeed-approach', toolDirection: [0, -1, 0], action: 'Moving to infeed approach' },
+  { at: 0.115, targetKey: 'infeed-approach', toolDirection: [0, -1, 0], action: 'Aligning above raw part' },
+  { at: 0.15, targetKey: 'infeed-pick', toolDirection: [0, -1, 0], action: 'Descending vertically to raw part' },
+  { at: 0.17, targetKey: 'infeed-pick', toolDirection: [0, -1, 0], action: 'Settling at raw-part grip pose' },
+  { at: 0.19, targetKey: 'infeed-pick', toolDirection: [0, -1, 0], action: 'Closing gripper on raw part' },
+  { at: 0.21, targetKey: 'infeed-pick', toolDirection: [0, -1, 0], action: 'Verifying raw-part grip' },
+  { at: 0.27, targetKey: 'infeed-approach', toolDirection: [0, -1, 0], action: 'Lifting raw part vertically' },
   { at: 0.34, target: [0.72, 1.55, -0.25], toolDirection: [1, 0, 0], action: 'Moving to CNC approach' },
   { at: 0.4, target: CNC_CHUCK_TARGET, toolDirection: [1, 0, 0], action: 'Loading CNC chuck' },
   { at: 0.46, target: CNC_CHUCK_TARGET, toolDirection: [1, 0, 0], action: 'Releasing raw part' },
@@ -134,7 +138,7 @@ export function sampleMotion(
   const to = keyframes[endIndex]
   const segmentProgress = from.at === to.at ? 1 : smoothstep((normalized - from.at) / (to.at - from.at))
 
-  const carryingRaw = normalized >= 0.2 && normalized < 0.46
+  const carryingRaw = normalized >= 0.19 && normalized < 0.46
   const carryingFinished = normalized >= 0.68 && normalized < 0.86
   const doorOpen = normalized < 0.49 || (normalized >= 0.575 && normalized < 0.78)
 
@@ -142,11 +146,14 @@ export function sampleMotion(
     target: interpolateTarget(resolveTarget(from, plan), resolveTarget(to, plan), segmentProgress),
     toolDirection: interpolateDirection(from.toolDirection, to.toolDirection, segmentProgress),
     action: runState === 'complete' ? 'Cycle complete · robot home' : to.action,
-    gripperClosed: carryingRaw || carryingFinished || (normalized >= 0.17 && normalized < 0.2) || (normalized >= 0.65 && normalized < 0.68),
+    gripperClosed: carryingRaw
+      || carryingFinished
+      || (normalized >= 0.17 && normalized < 0.19)
+      || (normalized >= 0.65 && normalized < 0.68),
     carrying: carryingRaw ? 'raw' : carryingFinished ? 'finished' : null,
     doorOpen,
     machineRunning: normalized >= 0.51 && normalized < 0.575,
-    rawRemoved: normalized >= 0.2,
+    rawRemoved: normalized >= 0.19,
     partAtMachine: normalized >= 0.46 && normalized < 0.68,
     partFinished: normalized >= 0.56,
     finishedPlaced: normalized >= 0.86,
@@ -178,7 +185,7 @@ export function solveRobotIk(target: Vec3, toolDirection: Vec3 = [0, -1, 0]): Jo
   const base = Math.atan2(-wristZ, wristX)
   const wrist = Math.PI - shoulder - elbow
   const insideJointLimits = base >= -Math.PI && base <= Math.PI
-    && shoulder >= -2.6 && shoulder <= 0.8
+    && shoulder >= -2.6 && shoulder <= 1
     && elbow >= -2.75 && elbow <= 0
   const withinBoundaries = reachable && insideJointLimits && isToolTargetPermitted(target)
 
@@ -186,7 +193,7 @@ export function solveRobotIk(target: Vec3, toolDirection: Vec3 = [0, -1, 0]): Jo
 }
 
 export function isToolTargetPermitted([x, y, z]: Vec3) {
-  if (y < 0.72) return false
+  if (y < 0.64) return false
 
   const insideMachineBody = x >= 1.125 && x <= 3.375
     && y >= 0 && y <= 2.26
