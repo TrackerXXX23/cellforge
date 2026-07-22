@@ -102,9 +102,9 @@ A capable generalized IK solver, including arbitrary and closed chains. It is un
 
 ## Recommended implementation sequence
 
-1. Add one browser-ready, permissively usable six-axis URDF and record asset provenance.
-2. Load it with `urdf-loader` inside the existing R3F scene.
-3. Replace the procedural arm hierarchy with the URDF joint chain while preserving the current authored motion and UI.
+1. **Complete:** add one browser-ready, permissively usable six-axis URDF and record asset provenance.
+2. **Complete:** load it with `urdf-loader` inside the existing R3F scene.
+3. **Complete:** replace the procedural arm hierarchy with the URDF joint chain while preserving the current authored motion and UI through an explicitly temporary render adapter.
 4. Enforce URDF joint limits and compute the displayed TCP from the actual chain.
 5. Add `three-mesh-bvh` collision pairs for robot self-collision and robot-to-fixture checks.
 6. Derive reachability, collision, and sampled minimum-clearance findings from the actual motion states.

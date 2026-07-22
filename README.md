@@ -22,9 +22,9 @@ The workflow follows the same path as a commissioning task: configure → valida
 
 - React + TypeScript product shell with a responsive, keyboard-accessible control surface
 - Three.js scene rendered through React Three Fiber
-- Procedural six-axis arm, CNC enclosure, material fixtures, parts, and safety scanner
+- Licensed UR5e URDF joint hierarchy with official visual and collision link geometry, plus the CNC enclosure, material fixtures, parts, and safety scanner
 - Target-driven machine-tending state machine with duration-weighted sequence stages
-- Analytic inverse kinematics for each tool target, with workspace reconstruction tests
+- Existing analytic commissioning IK mapped onto all six URDF joints while physical UR5e FK/IK remains the next acceptance milestone
 - Hard motion gate for joint limits, floor height, reach, and the CNC solid volume/door aperture
 - Real payload transfer: fixture → gripper → CNC → gripper → outfeed
 - Interlocked CNC door, machine handshake, gripper state, and unsafe-run blocking
@@ -53,13 +53,13 @@ Job intent + cell config
  Simulated runtime clock ───► Sequence + machine + robot state
 ```
 
-The deterministic process state and kinematics live outside the scene graph. Three.js consumes validated targets and limits animation-specific transforms to `useFrame` callbacks, keeping process behavior independent from rendering.
+The deterministic process state and kinematics live outside the scene graph. Three.js consumes validated targets and limits animation-specific transforms to `useFrame` callbacks, keeping process behavior independent from rendering. The UR5e asset loads behind in-canvas Suspense and an external error boundary; its asset license and pinned sources are recorded in [`public/robots/ur5e/PROVENANCE.md`](public/robots/ur5e/PROVENANCE.md).
 
 ## Scope and limitations
 
 The current robot and checks are a product prototype, not a certified engineering simulator:
 
-- Motion uses analytic IK against the procedural arm, not a manufacturer URDF or controller-specific motion planner.
+- The visible robot uses the licensed UR5e URDF hierarchy and official visual meshes, but it is scaled to the existing demo cell and driven by the prototype analytic IK adapter. Actual UR5e FK/IK, TCP acceptance, calibration, and controller-specific planning are not implemented yet.
 - P02 clearance is geometry-derived from one axis-aligned fixture keep-out and a spherical tool envelope; it does not yet cover the full robot body or arbitrary mesh collisions.
 - The “planner” sequence is seeded data; no hosted LLM is represented as running.
 - Runtime synchronization is local and deterministic; there is no PLC or robot-driver connection.
@@ -68,7 +68,7 @@ The current robot and checks are a product prototype, not a certified engineerin
 
 ### 1. Real geometry and kinematics
 
-Load a permissively licensed URDF, implement forward/inverse kinematics, expose joint limits, and calculate TCP poses from the actual chain.
+The licensed UR5e asset, browser loader, six-joint hierarchy, limits, and provenance are now integrated. Next, replace the prototype render adapter with physical UR5e forward/inverse kinematics and calculate accepted TCP poses from the actual chain.
 
 ### 2. Computed commissioning checks
 

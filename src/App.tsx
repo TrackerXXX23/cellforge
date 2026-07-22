@@ -6,6 +6,7 @@ import {
   type RepairId,
 } from './commissioning'
 import { getActiveSequenceIndex, sampleMotion, type MotionPlan } from './simulation'
+import { SceneErrorBoundary } from './SceneErrorBoundary'
 import type { CellObject, RunState, SequenceStep } from './types'
 
 const CommissioningScene = lazy(() =>
@@ -24,9 +25,9 @@ const baselineEvaluation = evaluateCommissioning({ fixtureShiftMm: 0, repairId: 
 
 const objectDetails: Record<CellObject, { name: string; eyebrow: string; specs: [string, string][] }> = {
   robot: {
-    name: 'CF–12 collaborative arm',
-    eyebrow: 'Motion device',
-    specs: [['Payload', '12.5 kg'], ['Reach', '1,300 mm'], ['TCP', 'Parallel grip'], ['Frame', 'robot_base']],
+    name: 'Universal Robots UR5e',
+    eyebrow: 'Licensed URDF model',
+    specs: [['Payload', '5 kg'], ['Reach', '850 mm'], ['TCP', 'tool0 + grip'], ['Frame', 'base_link']],
   },
   cnc: {
     name: 'CNC mill · Machine 01',
@@ -350,22 +351,24 @@ export default function App() {
         </aside>
 
         <section className="viewport" aria-label="Interactive 3D robotic cell">
-          <Suspense fallback={<div className="scene-loading"><span /><strong>Loading digital twin</strong></div>}>
-            <CommissioningScene
-              selected={selected}
-              onSelect={setSelected}
-              progress={progress}
-              runState={runState}
-              faultInjected={false}
-              showEnvelope={showEnvelope}
-              fixtureShiftMm={fixtureShiftMm}
-              baselinePath={baselineEvaluation.pathPoints}
-              activePath={activeEvaluation.pathPoints}
-              pathState={pathState}
-              showRevisionGhost={isChanged}
-              motionPlan={motionPlan}
-            />
-          </Suspense>
+          <SceneErrorBoundary>
+            <Suspense fallback={<div className="scene-loading"><span /><strong>Loading UR5e digital twin</strong></div>}>
+              <CommissioningScene
+                selected={selected}
+                onSelect={setSelected}
+                progress={progress}
+                runState={runState}
+                faultInjected={false}
+                showEnvelope={showEnvelope}
+                fixtureShiftMm={fixtureShiftMm}
+                baselinePath={baselineEvaluation.pathPoints}
+                activePath={activeEvaluation.pathPoints}
+                pathState={pathState}
+                showRevisionGhost={isChanged}
+                motionPlan={motionPlan}
+              />
+            </Suspense>
+          </SceneErrorBoundary>
 
           <div className="viewport-meta">
             <span className="view-chip"><Icon name="cube" size={14} />Perspective · mm</span>
@@ -492,7 +495,7 @@ export default function App() {
 
       <footer className="statusbar">
         <div><span className="status-dot" />{released ? 'Runtime acknowledged OP-1042-r08' : 'Simulation runtime ready'}</div>
-        <div>Robot <strong>CF-12</strong></div>
+        <div>Robot <strong>UR5e</strong></div>
         <div>Controller <strong>SimRT 4.8</strong></div>
         <div className="statusbar-spacer" />
         <div>Revision <strong>{released ? '08 released' : isChanged ? '08 draft' : '07 validated'}</strong></div>

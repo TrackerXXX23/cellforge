@@ -1,10 +1,11 @@
 import { ContactShadows, Grid, Line, OrbitControls } from '@react-three/drei'
 import { Canvas, ThreeEvent, useFrame } from '@react-three/fiber'
-import { useMemo, useRef } from 'react'
+import { Suspense, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { INFEED_FIXTURE_ORIGIN, P02_KEEP_OUT_LOCAL_BOUNDS } from './commissioning'
-import { sampleMotion, solveRobotIk, type MotionPlan, type MotionState, type Vec3 } from './simulation'
+import { sampleMotion, type MotionPlan, type MotionState, type Vec3 } from './simulation'
 import type { CellObject, RunState } from './types'
+import { Ur5eRobot } from './Ur5eRobot'
 
 interface SceneProps {
   selected: CellObject
@@ -57,95 +58,6 @@ function SelectionHalo({ radius = 0.72 }: { radius?: number }) {
       <ringGeometry args={[radius, radius + 0.025, 64]} />
       <meshBasicMaterial color={cobalt} transparent opacity={0.9} />
     </mesh>
-  )
-}
-
-function RobotArm({ selected, onSelect, motion }: SelectableProps & { motion: MotionState }) {
-  const base = useRef<THREE.Group>(null!)
-  const shoulder = useRef<THREE.Group>(null!)
-  const elbow = useRef<THREE.Group>(null!)
-  const wrist = useRef<THREE.Group>(null!)
-  const leftFinger = useRef<THREE.Mesh>(null!)
-  const rightFinger = useRef<THREE.Mesh>(null!)
-
-  useFrame((_, delta) => {
-    const joints = solveRobotIk(motion.target)
-    const fingerOffset = motion.gripperClosed ? 0.052 : 0.105
-
-    if (!joints.withinBoundaries) return
-
-    base.current.rotation.y = THREE.MathUtils.damp(base.current.rotation.y, joints.base, 10, delta)
-    shoulder.current.rotation.z = THREE.MathUtils.damp(shoulder.current.rotation.z, joints.shoulder, 10, delta)
-    elbow.current.rotation.z = THREE.MathUtils.damp(elbow.current.rotation.z, joints.elbow, 10, delta)
-    wrist.current.rotation.z = THREE.MathUtils.damp(wrist.current.rotation.z, joints.wrist, 12, delta)
-    leftFinger.current.position.x = THREE.MathUtils.damp(leftFinger.current.position.x, -fingerOffset, 16, delta)
-    rightFinger.current.position.x = THREE.MathUtils.damp(rightFinger.current.position.x, fingerOffset, 16, delta)
-  })
-
-  return (
-    <group onClick={(event) => select(event, onSelect)}>
-      {selected && <SelectionHalo radius={0.68} />}
-      <mesh position-y={0.12} castShadow receiveShadow>
-        <cylinderGeometry args={[0.49, 0.56, 0.24, 48]} />
-        <meshStandardMaterial color={graphite} roughness={0.58} />
-      </mesh>
-      <group ref={base} position-y={0.24}>
-        <mesh position-y={0.2} castShadow>
-          <cylinderGeometry args={[0.34, 0.4, 0.4, 48]} />
-          <meshStandardMaterial color={cobalt} roughness={0.38} />
-        </mesh>
-        <group ref={shoulder} position-y={0.4}>
-          <mesh rotation-x={Math.PI / 2} castShadow>
-            <cylinderGeometry args={[0.27, 0.27, 0.44, 40]} />
-            <meshStandardMaterial color={graphite} />
-          </mesh>
-          <mesh position-y={0.65} castShadow>
-            <capsuleGeometry args={[0.19, 0.96, 12, 24]} />
-            <meshStandardMaterial color={steel} metalness={0.08} roughness={0.38} />
-          </mesh>
-          <group ref={elbow} position-y={1.3}>
-            <mesh rotation-x={Math.PI / 2} castShadow>
-              <cylinderGeometry args={[0.24, 0.24, 0.42, 40]} />
-              <meshStandardMaterial color={cobalt} />
-            </mesh>
-            <mesh position-y={0.55} castShadow>
-              <capsuleGeometry args={[0.16, 0.78, 12, 24]} />
-              <meshStandardMaterial color={steel} metalness={0.08} roughness={0.38} />
-            </mesh>
-            <group ref={wrist} position-y={1.1}>
-              <mesh rotation-x={Math.PI / 2} castShadow>
-                <cylinderGeometry args={[0.19, 0.19, 0.34, 32]} />
-                <meshStandardMaterial color={graphite} />
-              </mesh>
-              <mesh position-y={0.22} castShadow>
-                <cylinderGeometry args={[0.12, 0.16, 0.3, 32]} />
-                <meshStandardMaterial color={cobalt} />
-              </mesh>
-              <group position-y={0.46}>
-                <mesh ref={leftFinger} position-x={-0.105} castShadow>
-                  <boxGeometry args={[0.07, 0.31, 0.13]} />
-                  <meshStandardMaterial color={graphite} />
-                </mesh>
-                <mesh ref={rightFinger} position-x={0.105} castShadow>
-                  <boxGeometry args={[0.07, 0.31, 0.13]} />
-                  <meshStandardMaterial color={graphite} />
-                </mesh>
-              </group>
-              <mesh position-y={0.67} visible={motion.carrying !== null} castShadow>
-                <cylinderGeometry args={[0.12, 0.12, 0.16, 32]} />
-                <meshStandardMaterial
-                  color={motion.carrying === 'finished' ? '#79a998' : '#c4873e'}
-                  emissive={motion.carrying === 'finished' ? '#183f34' : '#4a280d'}
-                  emissiveIntensity={0.14}
-                  metalness={0.5}
-                  roughness={0.28}
-                />
-              </mesh>
-            </group>
-          </group>
-        </group>
-      </group>
-    </group>
   )
 }
 
@@ -304,6 +216,19 @@ function SafetyScanner({ faultInjected }: Pick<SceneProps, 'faultInjected'>) {
   )
 }
 
+function CellLoadingFallback() {
+  return (
+    <>
+      <ambientLight intensity={1.3} />
+      <directionalLight position={[-4, 8, 5]} intensity={2.2} />
+      <mesh position-y={0.72}>
+        <boxGeometry args={[0.72, 1.44, 0.72]} />
+        <meshStandardMaterial color={cobalt} wireframe transparent opacity={0.38} />
+      </mesh>
+    </>
+  )
+}
+
 function Cell({
   selected,
   onSelect,
@@ -355,7 +280,7 @@ function Cell({
       <ambientLight intensity={1.3} />
       <directionalLight position={[-4, 8, 5]} intensity={2.2} castShadow shadow-mapSize={[2048, 2048]} />
       <directionalLight position={[5, 3, -4]} intensity={0.7} color="#c9ddff" />
-      <RobotArm selected={selected === 'robot'} onSelect={() => onSelect('robot')} motion={motion} />
+      <Ur5eRobot selected={selected === 'robot'} onSelect={(event) => select(event, () => onSelect('robot'))} motion={motion} />
       <CncMachine selected={selected === 'cnc'} onSelect={() => onSelect('cnc')} motion={motion} />
       {showRevisionGhost && <InfeedRevisionGhost />}
       <PartTable
@@ -470,7 +395,9 @@ export function CommissioningScene(props: SceneProps) {
     >
       <color attach="background" args={['#e7ebea']} />
       <fog attach="fog" args={['#e7ebea', 10, 17]} />
-      <Cell {...props} />
+      <Suspense fallback={<CellLoadingFallback />}>
+        <Cell {...props} />
+      </Suspense>
     </Canvas>
   )
 }
