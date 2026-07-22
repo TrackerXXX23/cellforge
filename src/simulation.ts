@@ -5,6 +5,7 @@ export type PayloadState = 'raw' | 'finished' | null
 
 export interface MotionState {
   target: Vec3
+  toolDirection: Vec3
   action: string
   gripperClosed: boolean
   carrying: PayloadState
@@ -29,6 +30,7 @@ interface MotionKeyframe {
   at: number
   target?: Vec3
   targetKey?: 'infeed-approach' | 'infeed-pick'
+  toolDirection: Vec3
   action: string
 }
 
@@ -63,24 +65,24 @@ export const BASELINE_MOTION_PLAN: MotionPlan = {
 }
 
 const keyframes: MotionKeyframe[] = [
-  { at: 0, target: HOME_TARGET, action: 'Moving to infeed approach' },
-  { at: 0.1, targetKey: 'infeed-approach', action: 'Moving to infeed approach' },
-  { at: 0.15, targetKey: 'infeed-pick', action: 'Descending to raw part' },
-  { at: 0.18, targetKey: 'infeed-pick', action: 'Gripping raw part' },
-  { at: 0.24, targetKey: 'infeed-approach', action: 'Lifting raw part' },
-  { at: 0.34, target: [0.72, 1.55, -0.25], action: 'Moving to CNC approach' },
-  { at: 0.42, target: CNC_CHUCK_TARGET, action: 'Loading CNC chuck' },
-  { at: 0.46, target: CNC_CHUCK_TARGET, action: 'Releasing raw part' },
-  { at: 0.51, target: [0.72, 1.62, -0.25], action: 'Clearing CNC door' },
-  { at: 0.57, target: [0.72, 1.62, -0.25], action: 'Running machine handshake' },
-  { at: 0.61, target: [0.72, 1.55, -0.25], action: 'Returning to CNC approach' },
-  { at: 0.65, target: CNC_CHUCK_TARGET, action: 'Gripping finished part' },
-  { at: 0.68, target: CNC_CHUCK_TARGET, action: 'Confirming finished-part grip' },
-  { at: 0.74, target: [0.72, 1.55, -0.25], action: 'Unloading CNC' },
-  { at: 0.86, target: [-1.13, 1.42, -0.92], action: 'Moving to outfeed approach' },
-  { at: 0.93, target: OUTFEED_PLACE_TARGET, action: 'Descending to outfeed slot' },
-  { at: 0.96, target: OUTFEED_PLACE_TARGET, action: 'Releasing finished part' },
-  { at: 1, target: HOME_TARGET, action: 'Returning home' },
+  { at: 0, target: HOME_TARGET, toolDirection: [0, -1, 0], action: 'Moving to infeed approach' },
+  { at: 0.1, targetKey: 'infeed-approach', toolDirection: [0, -1, 0], action: 'Moving to infeed approach' },
+  { at: 0.15, targetKey: 'infeed-pick', toolDirection: [0, -1, 0], action: 'Descending to raw part' },
+  { at: 0.18, targetKey: 'infeed-pick', toolDirection: [0, -1, 0], action: 'Gripping raw part' },
+  { at: 0.24, targetKey: 'infeed-approach', toolDirection: [0, -1, 0], action: 'Lifting raw part' },
+  { at: 0.34, target: [0.72, 1.55, -0.25], toolDirection: [1, 0, 0], action: 'Moving to CNC approach' },
+  { at: 0.42, target: CNC_CHUCK_TARGET, toolDirection: [1, 0, 0], action: 'Loading CNC chuck' },
+  { at: 0.46, target: CNC_CHUCK_TARGET, toolDirection: [1, 0, 0], action: 'Releasing raw part' },
+  { at: 0.51, target: [0.72, 1.62, -0.25], toolDirection: [1, 0, 0], action: 'Clearing CNC door' },
+  { at: 0.57, target: [0.72, 1.62, -0.25], toolDirection: [1, 0, 0], action: 'Running machine handshake' },
+  { at: 0.61, target: [0.72, 1.55, -0.25], toolDirection: [1, 0, 0], action: 'Returning to CNC approach' },
+  { at: 0.65, target: CNC_CHUCK_TARGET, toolDirection: [1, 0, 0], action: 'Gripping finished part' },
+  { at: 0.68, target: CNC_CHUCK_TARGET, toolDirection: [1, 0, 0], action: 'Confirming finished-part grip' },
+  { at: 0.74, target: [0.72, 1.55, -0.25], toolDirection: [1, 0, 0], action: 'Unloading CNC' },
+  { at: 0.86, target: [-1.13, 1.42, -0.92], toolDirection: [0, -1, 0], action: 'Moving to outfeed approach' },
+  { at: 0.93, target: OUTFEED_PLACE_TARGET, toolDirection: [0, -1, 0], action: 'Descending to outfeed slot' },
+  { at: 0.96, target: OUTFEED_PLACE_TARGET, toolDirection: [0, -1, 0], action: 'Releasing finished part' },
+  { at: 1, target: HOME_TARGET, toolDirection: [0, -1, 0], action: 'Returning home' },
 ]
 
 function resolveTarget(frame: MotionKeyframe, plan: MotionPlan): Vec3 {
@@ -106,6 +108,14 @@ function interpolateTarget(from: Vec3, to: Vec3, amount: number): Vec3 {
   ]
 }
 
+function interpolateDirection(from: Vec3, to: Vec3, amount: number): Vec3 {
+  const x = from[0] + (to[0] - from[0]) * amount
+  const y = from[1] + (to[1] - from[1]) * amount
+  const z = from[2] + (to[2] - from[2]) * amount
+  const length = Math.hypot(x, y, z) || 1
+  return [x / length, y / length, z / length]
+}
+
 export function getActiveSequenceIndex(progress: number) {
   const normalized = clamp01(progress)
   const index = sequenceBoundaries.findIndex((boundary) => normalized < boundary)
@@ -129,6 +139,7 @@ export function sampleMotion(
 
   return {
     target: interpolateTarget(resolveTarget(from, plan), resolveTarget(to, plan), segmentProgress),
+    toolDirection: interpolateDirection(from.toolDirection, to.toolDirection, segmentProgress),
     action: runState === 'complete' ? 'Cycle complete · robot home' : to.action,
     gripperClosed: carryingRaw || carryingFinished || (normalized >= 0.15 && normalized < 0.18) || (normalized >= 0.65 && normalized < 0.68),
     carrying: carryingRaw ? 'raw' : carryingFinished ? 'finished' : null,

@@ -46,6 +46,12 @@ describe('machine-tending motion plan', () => {
     expect(sampleMotion(0.82, 'running').doorOpen).toBe(false)
   })
 
+  it('orients the tool down at fixtures and into the CNC chuck', () => {
+    expect(sampleMotion(0.16, 'running').toolDirection).toEqual([0, -1, 0])
+    expect(sampleMotion(0.44, 'running').toolDirection).toEqual([1, 0, 0])
+    expect(sampleMotion(0.94, 'running').toolDirection).toEqual([0, -1, 0])
+  })
+
   it('uses duration-weighted sequence boundaries', () => {
     expect(getActiveSequenceIndex(0)).toBe(0)
     expect(getActiveSequenceIndex(sequenceBoundaries[0] + 0.001)).toBe(1)

@@ -6,7 +6,7 @@
 **Last handoff**: 2026-07-22 11:48:01 CST
 **Branch**: `codex/cnc-vmc-asset`
 **Active ticket**: `None found`
-**Summary**: Published the CNC-only VMC asset slice at commit f2a2f61 on draft PR https://github.com/TrackerXXX23/cellforge/pull/5. The branch replaces the procedural CNC placeholder with a CellForge-authored GLB and editable Blender source, including the visible spindle, T-slot table, vise, safety-glass door, controls, stack light, work light, CNC-selected cutaway, provenance, tests, and refreshed preview. Robot IK, targets, path timing, and arm motion remain untouched for the separate robot branch. npm run check passes with 25 tests; Playwright found zero console errors.
+**Summary**: Published the CNC-only VMC asset slice at commit f2a2f61 on draft PR https://github.com/TrackerXXX23/cellforge/pull/5, then integrated the latest develop robot-motion milestone without changing its implementation. The CNC slice replaces the procedural placeholder with a CellForge-authored GLB and editable Blender source, including the visible spindle, T-slot table, vise, safety-glass door, controls, stack light, work light, CNC-selected cutaway, provenance, tests, and refreshed preview. Post-merge npm run check passes with 29 tests.
 **Next exact action**: Watch CI on draft PR #5, review the ready/open-door/selected-cutaway visuals, then mark ready and merge into develop when approved.
 **Blocker**: None
 
