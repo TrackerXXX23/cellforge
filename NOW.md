@@ -3,28 +3,17 @@
 <!-- codex-handoff:start -->
 ## CONTEXT FOR /work
 
-**Last handoff**: 2026-07-22 11:47:04 CST
+**Last handoff**: 2026-07-22 11:48:01 CST
 **Branch**: `codex/cnc-vmc-asset`
 **Active ticket**: `None found`
-**Summary**: Replaced the procedural CNC placeholder with a CellForge-authored, reproducible VMC GLB and editable Blender source. Added a visible spindle, table, vise, safety-glass door, operator controls, stack light, interior work light, CNC-selected cutaway, provenance, asset-contract tests, and refreshed README preview. Robot IK, targets, path timing, and arm motion code were intentionally left unchanged for the separate robot branch. npm run check passes with 25 tests; Playwright verified ready, open-door, unload, and selected-cutaway states with zero console errors.
-**Next exact action**: Review CI and the VMC visual states on the draft PR, then merge into develop when approved.
+**Summary**: Published the CNC-only VMC asset slice at commit f2a2f61 on draft PR https://github.com/TrackerXXX23/cellforge/pull/5. The branch replaces the procedural CNC placeholder with a CellForge-authored GLB and editable Blender source, including the visible spindle, T-slot table, vise, safety-glass door, controls, stack light, work light, CNC-selected cutaway, provenance, tests, and refreshed preview. Robot IK, targets, path timing, and arm motion remain untouched for the separate robot branch. npm run check passes with 25 tests; Playwright found zero console errors.
+**Next exact action**: Watch CI on draft PR #5, review the ready/open-door/selected-cutaway visuals, then mark ready and merge into develop when approved.
 **Blocker**: None
 
 **Git status at handoff**:
 
 ```text
- M README.md
- M output/playwright/cellforge-preview.png
- M src/App.tsx
- M src/Scene.tsx
- M src/SceneErrorBoundary.tsx
- M src/commissioning.ts
-?? assets/
-?? public/machines/
-?? scripts/
-?? src/CncMachine.tsx
-?? src/cnc.ts
-?? tests/cnc-assets.test.ts
+clean
 ```
 
 ---
