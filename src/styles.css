@@ -281,6 +281,9 @@ button:focus-visible {
 .viewport canvas { display: block; }
 .scene-loading { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 12px; color: #61706d; background: #e7ebea; font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.04em; }
 .scene-loading span { width: 30px; height: 30px; border: 2px solid #bac5c2; border-top-color: var(--cobalt); border-radius: 50%; animation: scene-spin 700ms linear infinite; }
+.scene-error { position: absolute; inset: 0; z-index: 2; display: grid; place-content: center; justify-items: center; gap: 8px; color: #5b2420; background: #f3e9e5; font-family: 'IBM Plex Mono', monospace; font-size: 11px; }
+.scene-error strong { font-family: 'Barlow Condensed', sans-serif; font-size: 24px; color: var(--danger); }
+.scene-error button { margin-top: 6px; border: 1px solid #bd6d61; padding: 8px 18px; color: #7c2f28; background: #fff9f7; font: inherit; cursor: pointer; }
 
 .viewport-meta { position: absolute; top: 12px; left: 12px; right: 12px; display: flex; gap: 7px; pointer-events: none; }
 .view-chip { min-height: 28px; display: inline-flex; align-items: center; gap: 7px; padding: 0 9px; color: #56615f; background: rgba(249, 250, 250, 0.88); backdrop-filter: blur(8px); font-family: 'IBM Plex Mono', monospace; font-size: 8px; pointer-events: auto; }
