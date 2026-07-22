@@ -39,23 +39,23 @@ export interface MotionPlan {
   infeedPickTarget: Vec3
 }
 
-export const CYCLE_DURATION_SECONDS = 14.8
-export const SHOULDER_HEIGHT = 0.64
-export const UPPER_ARM_LENGTH = 1.3
-export const FOREARM_LENGTH = 1.1
-export const TOOL_TIP_OFFSET = 0.58
+export const CYCLE_DURATION_SECONDS = 24
+export const SHOULDER_HEIGHT = 0.2363
+export const UPPER_ARM_LENGTH = 0.862
+export const FOREARM_LENGTH = 0.888
+export const TOOL_TIP_OFFSET = 0.31
 
 export const sequenceBoundaries = [
-  1.8 / CYCLE_DURATION_SECONDS,
-  (1.8 + 2.4) / CYCLE_DURATION_SECONDS,
-  (1.8 + 2.4 + 4.2) / CYCLE_DURATION_SECONDS,
-  (1.8 + 2.4 + 4.2 + 4.0) / CYCLE_DURATION_SECONDS,
+  2.8 / CYCLE_DURATION_SECONDS,
+  (2.8 + 3.8) / CYCLE_DURATION_SECONDS,
+  (2.8 + 3.8 + 6.8) / CYCLE_DURATION_SECONDS,
+  (2.8 + 3.8 + 6.8 + 6.4) / CYCLE_DURATION_SECONDS,
   1,
 ] as const
 
-export const HOME_TARGET: Vec3 = [0.75, 1.65, 0.3]
+export const HOME_TARGET: Vec3 = [0.55, 1.15, 0.25]
 export const INFEED_PICK_TARGET: Vec3 = [-1.13, 0.78, 0.92]
-export const INFEED_APPROACH_TARGET: Vec3 = [-1.13, 1.42, 0.92]
+export const INFEED_APPROACH_TARGET: Vec3 = [-1.13, 0.88, 0.92]
 export const CNC_CHUCK_TARGET: Vec3 = [1.34, 1.06, -0.25]
 export const OUTFEED_PLACE_TARGET: Vec3 = [-1.13, 0.78, -0.92]
 
@@ -66,22 +66,23 @@ export const BASELINE_MOTION_PLAN: MotionPlan = {
 
 const keyframes: MotionKeyframe[] = [
   { at: 0, target: HOME_TARGET, toolDirection: [0, -1, 0], action: 'Moving to infeed approach' },
-  { at: 0.1, targetKey: 'infeed-approach', toolDirection: [0, -1, 0], action: 'Moving to infeed approach' },
-  { at: 0.15, targetKey: 'infeed-pick', toolDirection: [0, -1, 0], action: 'Descending to raw part' },
-  { at: 0.18, targetKey: 'infeed-pick', toolDirection: [0, -1, 0], action: 'Gripping raw part' },
-  { at: 0.24, targetKey: 'infeed-approach', toolDirection: [0, -1, 0], action: 'Lifting raw part' },
+  { at: 0.06, targetKey: 'infeed-approach', toolDirection: [0, -1, 0], action: 'Moving to infeed approach' },
+  { at: 0.11, targetKey: 'infeed-pick', toolDirection: [0, -1, 0], action: 'Descending to raw part' },
+  { at: 0.17, targetKey: 'infeed-pick', toolDirection: [0, -1, 0], action: 'Gripping raw part' },
+  { at: 0.2, targetKey: 'infeed-pick', toolDirection: [0, -1, 0], action: 'Confirming raw-part grip' },
+  { at: 0.26, targetKey: 'infeed-approach', toolDirection: [0, -1, 0], action: 'Lifting raw part' },
   { at: 0.34, target: [0.72, 1.55, -0.25], toolDirection: [1, 0, 0], action: 'Moving to CNC approach' },
-  { at: 0.42, target: CNC_CHUCK_TARGET, toolDirection: [1, 0, 0], action: 'Loading CNC chuck' },
+  { at: 0.4, target: CNC_CHUCK_TARGET, toolDirection: [1, 0, 0], action: 'Loading CNC chuck' },
   { at: 0.46, target: CNC_CHUCK_TARGET, toolDirection: [1, 0, 0], action: 'Releasing raw part' },
   { at: 0.51, target: [0.72, 1.62, -0.25], toolDirection: [1, 0, 0], action: 'Clearing CNC door' },
   { at: 0.57, target: [0.72, 1.62, -0.25], toolDirection: [1, 0, 0], action: 'Running machine handshake' },
   { at: 0.61, target: [0.72, 1.55, -0.25], toolDirection: [1, 0, 0], action: 'Returning to CNC approach' },
   { at: 0.65, target: CNC_CHUCK_TARGET, toolDirection: [1, 0, 0], action: 'Gripping finished part' },
   { at: 0.68, target: CNC_CHUCK_TARGET, toolDirection: [1, 0, 0], action: 'Confirming finished-part grip' },
-  { at: 0.74, target: [0.72, 1.55, -0.25], toolDirection: [1, 0, 0], action: 'Unloading CNC' },
-  { at: 0.86, target: [-1.13, 1.42, -0.92], toolDirection: [0, -1, 0], action: 'Moving to outfeed approach' },
-  { at: 0.93, target: OUTFEED_PLACE_TARGET, toolDirection: [0, -1, 0], action: 'Descending to outfeed slot' },
-  { at: 0.96, target: OUTFEED_PLACE_TARGET, toolDirection: [0, -1, 0], action: 'Releasing finished part' },
+  { at: 0.7, target: [0.72, 1.55, -0.25], toolDirection: [1, 0, 0], action: 'Unloading CNC' },
+  { at: 0.8, target: [-1.13, 0.88, -0.92], toolDirection: [0, -1, 0], action: 'Moving to outfeed approach' },
+  { at: 0.84, target: OUTFEED_PLACE_TARGET, toolDirection: [0, -1, 0], action: 'Descending to outfeed slot' },
+  { at: 0.86, target: OUTFEED_PLACE_TARGET, toolDirection: [0, -1, 0], action: 'Releasing finished part' },
   { at: 1, target: HOME_TARGET, toolDirection: [0, -1, 0], action: 'Returning home' },
 ]
 
@@ -133,29 +134,30 @@ export function sampleMotion(
   const to = keyframes[endIndex]
   const segmentProgress = from.at === to.at ? 1 : smoothstep((normalized - from.at) / (to.at - from.at))
 
-  const carryingRaw = normalized >= 0.18 && normalized < 0.46
-  const carryingFinished = normalized >= 0.68 && normalized < 0.96
+  const carryingRaw = normalized >= 0.2 && normalized < 0.46
+  const carryingFinished = normalized >= 0.68 && normalized < 0.86
   const doorOpen = normalized < 0.49 || (normalized >= 0.575 && normalized < 0.78)
 
   return {
     target: interpolateTarget(resolveTarget(from, plan), resolveTarget(to, plan), segmentProgress),
     toolDirection: interpolateDirection(from.toolDirection, to.toolDirection, segmentProgress),
     action: runState === 'complete' ? 'Cycle complete · robot home' : to.action,
-    gripperClosed: carryingRaw || carryingFinished || (normalized >= 0.15 && normalized < 0.18) || (normalized >= 0.65 && normalized < 0.68),
+    gripperClosed: carryingRaw || carryingFinished || (normalized >= 0.17 && normalized < 0.2) || (normalized >= 0.65 && normalized < 0.68),
     carrying: carryingRaw ? 'raw' : carryingFinished ? 'finished' : null,
     doorOpen,
     machineRunning: normalized >= 0.51 && normalized < 0.575,
-    rawRemoved: normalized >= 0.18,
+    rawRemoved: normalized >= 0.2,
     partAtMachine: normalized >= 0.46 && normalized < 0.68,
     partFinished: normalized >= 0.56,
-    finishedPlaced: normalized >= 0.96,
+    finishedPlaced: normalized >= 0.86,
   }
 }
 
-export function solveRobotIk(target: Vec3): JointSolution {
-  const [x, toolY, z] = target
-  const radial = Math.hypot(x, z)
-  const wristY = toolY + TOOL_TIP_OFFSET
+export function solveRobotIk(target: Vec3, toolDirection: Vec3 = [0, -1, 0]): JointSolution {
+  const wristX = target[0] - toolDirection[0] * TOOL_TIP_OFFSET
+  const wristY = target[1] - toolDirection[1] * TOOL_TIP_OFFSET
+  const wristZ = target[2] - toolDirection[2] * TOOL_TIP_OFFSET
+  const radial = Math.hypot(wristX, wristZ)
   const vertical = wristY - SHOULDER_HEIGHT
   const distanceSquared = radial * radial + vertical * vertical
   const maximumReach = UPPER_ARM_LENGTH + FOREARM_LENGTH
@@ -173,7 +175,7 @@ export function solveRobotIk(target: Vec3): JointSolution {
       UPPER_ARM_LENGTH + FOREARM_LENGTH * Math.cos(elbow),
     )
   const shoulder = linkAngle - Math.PI / 2
-  const base = Math.atan2(-z, x)
+  const base = Math.atan2(-wristZ, wristX)
   const wrist = Math.PI - shoulder - elbow
   const insideJointLimits = base >= -Math.PI && base <= Math.PI
     && shoulder >= -2.6 && shoulder <= 0.8

@@ -5,7 +5,7 @@ import * as THREE from 'three'
 import { INFEED_FIXTURE_ORIGIN, P02_KEEP_OUT_LOCAL_BOUNDS } from './commissioning'
 import { sampleMotion, type MotionPlan, type MotionState, type Vec3 } from './simulation'
 import type { CellObject, RunState } from './types'
-import { Ur5eRobot } from './Ur5eRobot'
+import { Ur20Robot } from './Ur20Robot'
 
 interface SceneProps {
   selected: CellObject
@@ -280,7 +280,7 @@ function Cell({
       <ambientLight intensity={1.3} />
       <directionalLight position={[-4, 8, 5]} intensity={2.2} castShadow shadow-mapSize={[2048, 2048]} />
       <directionalLight position={[5, 3, -4]} intensity={0.7} color="#c9ddff" />
-      <Ur5eRobot selected={selected === 'robot'} onSelect={(event) => select(event, () => onSelect('robot'))} motion={motion} />
+      <Ur20Robot selected={selected === 'robot'} onSelect={(event) => select(event, () => onSelect('robot'))} motion={motion} />
       <CncMachine selected={selected === 'cnc'} onSelect={() => onSelect('cnc')} motion={motion} />
       {showRevisionGhost && <InfeedRevisionGhost />}
       <PartTable
@@ -324,7 +324,7 @@ function Cell({
       )}
 
       {motion.partAtMachine && (
-        <mesh position={[1.34, 0.97, -0.25]} castShadow>
+        <mesh position={[1.42, 1.06, -0.25]} rotation-z={Math.PI / 2} castShadow>
           <cylinderGeometry args={[0.12, 0.12, 0.16, 32]} />
           <meshStandardMaterial color={motion.partFinished ? '#79a998' : '#c4873e'} metalness={0.56} roughness={0.31} />
         </mesh>
