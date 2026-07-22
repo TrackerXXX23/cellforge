@@ -3,11 +3,11 @@
 <!-- codex-handoff:start -->
 ## CONTEXT FOR /work
 
-**Last handoff**: 2026-07-22 11:41:16 CST
-**Branch**: `codex/ur5e-motion`
+**Last handoff**: 2026-07-22 11:43:01 CST
+**Branch**: `develop`
 **Active ticket**: `None found`
-**Summary**: Replaced the temporary UR5e angle adapter with target-driven damped-least-squares IK on the actual URDF chain. The gripper TCP now reaches and orients at pick, CNC, and outfeed targets; npm run check passes with 26 tests; Playwright verified baseline and full Revision 08 repair/release with zero console errors. Draft PR: https://github.com/TrackerXXX23/cellforge/pull/4. No blocker.
-**Next exact action**: Wait for CI on draft PR #4, then mark it ready and merge it into develop when green.
+**Summary**: Merged PR #4 into develop at 3d022e7. The visible UR5e now uses target-driven damped-least-squares IK on the actual URDF chain and completes pick, CNC, and outfeed motion. npm run check passed with 26 tests; CI passed; Playwright verified baseline and Revision 08 repair/release with zero console errors. Remaining product work is actual-chain deploy-gate sampling and collision/clearance coverage. No blocker.
+**Next exact action**: Branch from updated develop to move UR5e TCP acceptance outside the renderer and feed sampled actual-chain reach results into the deploy gate.
 **Blocker**: None
 
 **Git status at handoff**:
