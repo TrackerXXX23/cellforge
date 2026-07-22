@@ -4,8 +4,10 @@ export const ROBOTIQ_2F85_BASE_OFFSET = 0.0108
 export const ROBOTIQ_2F85_PINCH_OFFSET = 0.145
 export const ROBOTIQ_2F85_TCP_OFFSET = ROBOTIQ_2F85_BASE_OFFSET + ROBOTIQ_2F85_PINCH_OFFSET
 
-// Closes both mirrored linkages until their silicone faces span the 60 mm blank.
-export const ROBOTIQ_2F85_GRASP_ANGLE = 0.2837941092083278
+// Each mirrored finger carrier advances 10 mm while the four-bar linkage closes
+// the remaining distance around the 60 mm blank.
+export const ROBOTIQ_2F85_FINGER_TRAVEL = 0.01
+export const ROBOTIQ_2F85_GRASP_ANGLE = 0.0686037406951647
 
 const SPRING_PIVOT_Y = 0.0132
 const FOLLOWER_ORIGIN_Y = 0.055
@@ -32,3 +34,6 @@ export function getRobotiqPadCenterOffset(angle: number) {
     + PAD_ORIGIN_Z
     + SILICONE_CENTER_Z
 }
+
+export const ROBOTIQ_2F85_FINGER_ADVANCE = ROBOTIQ_2F85_PINCH_OFFSET
+  - getRobotiqPadCenterOffset(ROBOTIQ_2F85_GRASP_ANGLE)

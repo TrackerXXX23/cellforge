@@ -3,18 +3,18 @@
 <!-- codex-handoff:start -->
 ## CONTEXT FOR /work
 
-**Last handoff**: 2026-07-22 16:36:20 CST
+**Last handoff**: 2026-07-22 16:41:02 CST
 **Branch**: `codex/two-finger-gripper-pinch`
 **Active ticket**: `None found`
-**Summary**: Corrected the Robotiq 2F-85 pickup geometry on codex/two-finger-gripper-pinch: both mirrored silicone pads now close to a true 60 mm opening, and the carried blank/TCP is centered at the sourced pinch site. Close Playwright replay shows the blank captured between both jaws; npm run check passes with 36 tests.
-**Next exact action**: Review the draft PR CI and merge the two-finger pickup correction into develop when authorized.
+**Summary**: Draft PR #11 now contains the actual two-arm Robotiq fix on codex/two-finger-gripper-pinch: the missing coupler joints are animated and both complete finger carriers advance equally inward and forward, placing opposing pads on the 60 mm blank. Same-camera Playwright open/closed captures visibly show both jaws moving; npm run check passes with 36 tests.
+**Next exact action**: Have the user visually confirm the open-to-closed two-carrier pinch in draft PR #11, then merge it into develop when authorized.
 **Blocker**: none
 
 **Git status at handoff**:
 
 ```text
- M src/App.tsx
  M src/Robotiq2F85.tsx
+ M src/eoat.test.ts
  M src/eoat.ts
 ?? "AGENTS 2.md"
 ?? "NOW 2.md"
@@ -22,7 +22,6 @@
 ?? "handoff 2"
 ?? "src/commissioning 2.ts"
 ?? "src/commissioning.test 2.ts"
-?? src/eoat.test.ts
 ?? "tests/r3f-skill-guardrails.test 2.ts"
 ```
 

@@ -4,6 +4,8 @@ import * as THREE from 'three'
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js'
 import {
   ROBOTIQ_2F85_BASE_OFFSET,
+  ROBOTIQ_2F85_FINGER_ADVANCE,
+  ROBOTIQ_2F85_FINGER_TRAVEL,
   ROBOTIQ_2F85_GRASP_ANGLE,
   ROBOTIQ_2F85_PINCH_OFFSET,
 } from './eoat'
@@ -60,7 +62,9 @@ interface FingerProps {
   followerGeometry: THREE.BufferGeometry
   padGeometry: THREE.BufferGeometry
   siliconePadGeometry: THREE.BufferGeometry
+  assemblyRef: RefObject<THREE.Group | null>
   driverRef: RefObject<THREE.Group | null>
+  couplerRef: RefObject<THREE.Group | null>
   springRef: RefObject<THREE.Group | null>
   followerRef: RefObject<THREE.Group | null>
 }
@@ -73,7 +77,9 @@ function Finger({
   followerGeometry,
   padGeometry,
   siliconePadGeometry,
+  assemblyRef,
   driverRef,
+  couplerRef,
   springRef,
   followerRef,
 }: FingerProps) {
@@ -81,14 +87,14 @@ function Finger({
   const mirrored = side === 'left'
 
   return (
-    <>
+    <group ref={assemblyRef}>
       <group
         ref={driverRef}
         position={[0, direction * 0.0306011, 0.054904]}
         rotation-z={mirrored ? Math.PI : 0}
       >
         <mesh geometry={driverGeometry} material={grayMaterial} scale={0.001} castShadow receiveShadow />
-        <group position={[0, 0.0315, -0.0041]}>
+        <group ref={couplerRef} position={[0, 0.0315, -0.0041]}>
           <mesh geometry={couplerGeometry} material={blackMaterial} scale={0.001} castShadow receiveShadow />
         </group>
       </group>
@@ -106,7 +112,7 @@ function Finger({
           </group>
         </group>
       </group>
-    </>
+    </group>
   )
 }
 
@@ -126,8 +132,12 @@ export function Robotiq2F85({ motion, tcpRef }: Robotiq2F85Props) {
     padGeometry,
     siliconePadGeometry,
   ] = useLoader(STLLoader, MESH_URLS)
+  const leftAssembly = useRef<THREE.Group>(null)
+  const rightAssembly = useRef<THREE.Group>(null)
   const leftDriver = useRef<THREE.Group>(null)
   const rightDriver = useRef<THREE.Group>(null)
+  const leftCoupler = useRef<THREE.Group>(null)
+  const rightCoupler = useRef<THREE.Group>(null)
   const leftSpring = useRef<THREE.Group>(null)
   const rightSpring = useRef<THREE.Group>(null)
   const leftFollower = useRef<THREE.Group>(null)
@@ -135,8 +145,16 @@ export function Robotiq2F85({ motion, tcpRef }: Robotiq2F85Props) {
 
   useFrame((_, delta) => {
     const jointAngle = motion.gripperClosed ? ROBOTIQ_2F85_GRASP_ANGLE : 0
+    const fingerTravel = motion.gripperClosed ? ROBOTIQ_2F85_FINGER_TRAVEL : 0
+    const fingerAdvance = motion.gripperClosed ? ROBOTIQ_2F85_FINGER_ADVANCE : 0
+    leftAssembly.current!.position.y = THREE.MathUtils.damp(leftAssembly.current!.position.y, fingerTravel, JOINT_DAMPING, delta)
+    rightAssembly.current!.position.y = THREE.MathUtils.damp(rightAssembly.current!.position.y, -fingerTravel, JOINT_DAMPING, delta)
+    leftAssembly.current!.position.z = THREE.MathUtils.damp(leftAssembly.current!.position.z, fingerAdvance, JOINT_DAMPING, delta)
+    rightAssembly.current!.position.z = THREE.MathUtils.damp(rightAssembly.current!.position.z, fingerAdvance, JOINT_DAMPING, delta)
     leftDriver.current!.rotation.x = THREE.MathUtils.damp(leftDriver.current!.rotation.x, jointAngle, JOINT_DAMPING, delta)
     rightDriver.current!.rotation.x = THREE.MathUtils.damp(rightDriver.current!.rotation.x, jointAngle, JOINT_DAMPING, delta)
+    leftCoupler.current!.rotation.x = THREE.MathUtils.damp(leftCoupler.current!.rotation.x, -jointAngle, JOINT_DAMPING, delta)
+    rightCoupler.current!.rotation.x = THREE.MathUtils.damp(rightCoupler.current!.rotation.x, -jointAngle, JOINT_DAMPING, delta)
     leftSpring.current!.rotation.x = THREE.MathUtils.damp(leftSpring.current!.rotation.x, jointAngle, JOINT_DAMPING, delta)
     rightSpring.current!.rotation.x = THREE.MathUtils.damp(rightSpring.current!.rotation.x, jointAngle, JOINT_DAMPING, delta)
     leftFollower.current!.rotation.x = THREE.MathUtils.damp(leftFollower.current!.rotation.x, -jointAngle, JOINT_DAMPING, delta)
@@ -159,7 +177,9 @@ export function Robotiq2F85({ motion, tcpRef }: Robotiq2F85Props) {
             followerGeometry={followerGeometry}
             padGeometry={padGeometry}
             siliconePadGeometry={siliconePadGeometry}
+            assemblyRef={leftAssembly}
             driverRef={leftDriver}
+            couplerRef={leftCoupler}
             springRef={leftSpring}
             followerRef={leftFollower}
           />
@@ -171,7 +191,9 @@ export function Robotiq2F85({ motion, tcpRef }: Robotiq2F85Props) {
             followerGeometry={followerGeometry}
             padGeometry={padGeometry}
             siliconePadGeometry={siliconePadGeometry}
+            assemblyRef={rightAssembly}
             driverRef={rightDriver}
+            couplerRef={rightCoupler}
             springRef={rightSpring}
             followerRef={rightFollower}
           />
