@@ -1,11 +1,34 @@
 # CellForge handoff
 
+<!-- codex-handoff:start -->
+## CONTEXT FOR /work
+
+**Last handoff**: 2026-07-22 10:00:33 CST
+**Branch**: `codex/commissioning-recovery`
+**Active ticket**: `None found`
+**Summary**: Commissioning recovery slice is complete at e02b424 and published as draft PR #1: https://github.com/TrackerXXX23/cellforge/pull/1. Repo-local continue and handoff helpers are installed; verification passed.
+**Next exact action**: Review CI on PR #1, merge it into develop when green, then branch from updated develop to replace prototype-clearance-heuristic/v1 with geometry-derived P02 keep-out and swept-path clearance.
+**Blocker**: None
+
+**Git status at handoff**:
+
+```text
+ M AGENTS.md
+?? "AGENTS 2.md"
+?? "NOW 2.md"
+?? "continue 2"
+?? handoff
+?? "tests/r3f-skill-guardrails.test 2.ts"
+```
+
+---
+<!-- codex-handoff:end -->
 ## Current state
 
 - Branch: `codex/commissioning-recovery`, created from `develop` at `3ba0a0d`.
 - Product slice: the fixture-change commissioning recovery workflow is implemented from validated baseline through released revision.
 - Repository: `https://github.com/TrackerXXX23/cellforge` (private).
-- Pull request: none yet; the branch remains local for product review.
+- Draft pull request: `https://github.com/TrackerXXX23/cellforge/pull/1` targeting `develop`.
 
 ## Changed
 
@@ -19,6 +42,7 @@
 - Added release artifact generation with revision, motion, validation, and change evidence.
 - Added commissioning-domain and revised-motion tests; the full suite now has 14 passing tests.
 - Replaced the README preview and demo description with the recovery workflow.
+- Installed the shared repo-local `./handoff` helper and documented the `./continue` / `./handoff` resume standard in `AGENTS.md`.
 
 ## Verification
 
@@ -35,4 +59,4 @@
 
 ## Next exact action
 
-Review the hero workflow on `codex/commissioning-recovery`; if the product direction is approved, push the branch and open a pull request to `develop` before beginning the geometry/asset upgrade.
+Review CI on PR #1, merge it into `develop` when green, then branch from updated `develop` to replace `prototype-clearance-heuristic/v1` with geometry-derived P02 keep-out and swept-path clearance.
