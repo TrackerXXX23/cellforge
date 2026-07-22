@@ -3,16 +3,17 @@
 <!-- codex-handoff:start -->
 ## CONTEXT FOR /work
 
-**Last handoff**: 2026-07-22 10:33:17 CST
-**Branch**: `codex/geometry-clearance`
+**Last handoff**: 2026-07-22 11:21:46 CST
+**Branch**: `codex/ur5e-urdf`
 **Active ticket**: `None found`
-**Summary**: Replaced the poor PR artifacts at b3f18b1: focused blocked-versus-repaired 3D captures, separate 9 mm and 84 mm evidence panels, verified-cycle evidence, and a clean 16:9 2x flow GIF. Removed every prior repetitive screenshot and the first GIF. PR: https://github.com/TrackerXXX23/cellforge/pull/2.
-**Next exact action**: Review the focused visual evidence on draft PR #2, wait for CI, then mark it ready and merge it into develop.
+**Summary**: Published the completed UR5e asset/loading milestone at commit 129abd4 on draft PR https://github.com/TrackerXXX23/cellforge/pull/3. The branch adds the licensed UR5e 4.3.1 URDF hierarchy, official DAE/STL assets, pinned provenance, urdf-loader, in-canvas Suspense and error handling, the temporary six-joint commissioning adapter, tests, documentation, and the new default publish-completion rule in AGENTS.md. npm run check passes with 22 tests and the production build; Playwright verified the full recovery/release flow with zero console errors and stable WebGL. Physical UR5e FK/IK and TCP acceptance remain the next product slice.
+**Next exact action**: Wait for CI on draft PR #3, review the UR5e visual and licensing evidence, then mark it ready and merge it into develop.
 **Blocker**: None
 
 **Git status at handoff**:
 
 ```text
+ M NOW.md
 ?? "AGENTS 2.md"
 ?? "NOW 2.md"
 ?? "continue 2"
