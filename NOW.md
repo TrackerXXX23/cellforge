@@ -3,24 +3,28 @@
 <!-- codex-handoff:start -->
 ## CONTEXT FOR /work
 
-**Last handoff**: 2026-07-22 11:21:46 CST
-**Branch**: `codex/ur5e-urdf`
+**Last handoff**: 2026-07-22 11:47:04 CST
+**Branch**: `codex/cnc-vmc-asset`
 **Active ticket**: `None found`
-**Summary**: Published the completed UR5e asset/loading milestone at commit 129abd4 on draft PR https://github.com/TrackerXXX23/cellforge/pull/3. The branch adds the licensed UR5e 4.3.1 URDF hierarchy, official DAE/STL assets, pinned provenance, urdf-loader, in-canvas Suspense and error handling, the temporary six-joint commissioning adapter, tests, documentation, and the new default publish-completion rule in AGENTS.md. npm run check passes with 22 tests and the production build; Playwright verified the full recovery/release flow with zero console errors and stable WebGL. Physical UR5e FK/IK and TCP acceptance remain the next product slice.
-**Next exact action**: Wait for CI on draft PR #3, review the UR5e visual and licensing evidence, then mark it ready and merge it into develop.
+**Summary**: Replaced the procedural CNC placeholder with a CellForge-authored, reproducible VMC GLB and editable Blender source. Added a visible spindle, table, vise, safety-glass door, operator controls, stack light, interior work light, CNC-selected cutaway, provenance, asset-contract tests, and refreshed README preview. Robot IK, targets, path timing, and arm motion code were intentionally left unchanged for the separate robot branch. npm run check passes with 25 tests; Playwright verified ready, open-door, unload, and selected-cutaway states with zero console errors.
+**Next exact action**: Review CI and the VMC visual states on the draft PR, then merge into develop when approved.
 **Blocker**: None
 
 **Git status at handoff**:
 
 ```text
- M NOW.md
-?? "AGENTS 2.md"
-?? "NOW 2.md"
-?? "continue 2"
-?? "handoff 2"
-?? "src/commissioning 2.ts"
-?? "src/commissioning.test 2.ts"
-?? "tests/r3f-skill-guardrails.test 2.ts"
+ M README.md
+ M output/playwright/cellforge-preview.png
+ M src/App.tsx
+ M src/Scene.tsx
+ M src/SceneErrorBoundary.tsx
+ M src/commissioning.ts
+?? assets/
+?? public/machines/
+?? scripts/
+?? src/CncMachine.tsx
+?? src/cnc.ts
+?? tests/cnc-assets.test.ts
 ```
 
 ---
