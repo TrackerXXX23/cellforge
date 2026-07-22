@@ -3,19 +3,18 @@
 <!-- codex-handoff:start -->
 ## CONTEXT FOR /work
 
-**Last handoff**: 2026-07-22 16:41:02 CST
+**Last handoff**: 2026-07-22 16:46:26 CST
 **Branch**: `codex/two-finger-gripper-pinch`
 **Active ticket**: `None found`
-**Summary**: Draft PR #11 now contains the actual two-arm Robotiq fix on codex/two-finger-gripper-pinch: the missing coupler joints are animated and both complete finger carriers advance equally inward and forward, placing opposing pads on the 60 mm blank. Same-camera Playwright open/closed captures visibly show both jaws moving; npm run check passes with 36 tests.
-**Next exact action**: Have the user visually confirm the open-to-closed two-carrier pinch in draft PR #11, then merge it into develop when authorized.
+**Summary**: Added Space-bar pause/resume to the CellForge workflow on codex/two-finger-gripper-pinch. Running cycles can now be paused from the keyboard or ribbon button without losing progress; the paused UI keeps the active sequence step and motion pose visible. Playwright verified progress stayed at 4.97958% during a 1.5 s pause and resumed to 8.60417%; npm run check passes with 36 tests.
+**Next exact action**: Have the user pause the baseline at the gripper close with Space, inspect the jaw alignment, and provide the desired pinch geometry adjustment.
 **Blocker**: none
 
 **Git status at handoff**:
 
 ```text
- M src/Robotiq2F85.tsx
- M src/eoat.test.ts
- M src/eoat.ts
+ M src/App.tsx
+ M src/types.ts
 ?? "AGENTS 2.md"
 ?? "NOW 2.md"
 ?? "continue 2"

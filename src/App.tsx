@@ -99,10 +99,11 @@ export default function App() {
   const details = objectDetails[selected]
   const canRun = committedEvaluation.deployable && previewRepair === null && !released
   const canRelease = isChanged && appliedRepair !== null && runState === 'complete' && !released
+  const isExecutionActive = runState === 'running' || runState === 'paused'
 
   const activePhase: WorkflowPhase = released || runState === 'complete'
     ? 'Release'
-    : runState === 'running' || appliedRepair !== null
+    : isExecutionActive || appliedRepair !== null
       ? 'Run'
       : isChanged
         ? 'Validate'
@@ -142,6 +143,21 @@ export default function App() {
     frame = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(frame)
   }, [committedEvaluation.cycleSeconds, runState])
+
+  useEffect(() => {
+    const handleSpacebar = (event: KeyboardEvent) => {
+      if (event.code !== 'Space' || event.repeat) return
+      const target = event.target
+      if (target instanceof Element && target.closest('input, textarea, select, button, a, [contenteditable="true"]')) return
+      if (runState !== 'running' && runState !== 'paused') return
+
+      event.preventDefault()
+      toggleExecutionPause()
+    }
+
+    window.addEventListener('keydown', handleSpacebar)
+    return () => window.removeEventListener('keydown', handleSpacebar)
+  }, [runState])
 
   useEffect(() => {
     if (!toast) return
@@ -207,6 +223,19 @@ export default function App() {
     setToast(`Executing Revision ${isChanged ? '08' : '07'} against the validated motion plan`)
   }
 
+  function toggleExecutionPause() {
+    if (runState === 'running') {
+      setRunState('paused')
+      setToast('Cycle paused · press Space to resume')
+      return
+    }
+
+    if (runState === 'paused') {
+      setRunState('running')
+      setToast('Cycle resumed')
+    }
+  }
+
   function releaseRevision() {
     if (!canRelease) {
       setToast(isChanged ? 'Release blocked · validate and run the repaired cycle first' : 'Record a change to create Revision 08')
@@ -252,15 +281,17 @@ export default function App() {
     ? 'Revision 08 released'
     : runState === 'running'
       ? motion.action
-      : runState === 'complete'
-        ? 'Repaired cycle verified'
-        : previewRepair
-          ? 'Previewing repair candidate'
-          : appliedRepair
-            ? 'Revision 08 ready to run'
-            : isChanged
-              ? 'Revision 08 blocked'
-              : 'Revision 07 is commissioned'
+      : runState === 'paused'
+        ? `Paused · ${motion.action}`
+        : runState === 'complete'
+          ? 'Repaired cycle verified'
+          : previewRepair
+            ? 'Previewing repair candidate'
+            : appliedRepair
+              ? 'Revision 08 ready to run'
+              : isChanged
+                ? 'Revision 08 blocked'
+                : 'Revision 07 is commissioned'
 
   const releaseLabel = released
     ? 'Revision 08 released'
@@ -329,8 +360,8 @@ export default function App() {
           <div className="section-label"><span>Sequence</span><span>{sequence.length} skills</span></div>
           <ol className="sequence-list">
             {sequence.map((step, index) => {
-              const isActive = runState === 'running' && activeStep === index
-              const isDone = runState === 'complete' || (runState === 'running' && activeStep > index)
+              const isActive = isExecutionActive && activeStep === index
+              const isDone = runState === 'complete' || (isExecutionActive && activeStep > index)
               const isAffected = isChanged && step.id === 'pick'
               const isResolved = isAffected && appliedRepair !== null
               return (
@@ -350,7 +381,7 @@ export default function App() {
 
           <div className="runtime-bridge">
             <div><span className={`pulse-dot ${runState === 'running' ? 'running' : ''}`} /><span>Deterministic runtime</span></div>
-            <strong>{runState === 'running' ? 'Executing current revision' : runState === 'complete' ? 'Cycle evidence captured' : 'Ready · local simulation'}</strong>
+            <strong>{runState === 'running' ? 'Executing current revision' : runState === 'paused' ? 'Execution paused · Space to resume' : runState === 'complete' ? 'Cycle evidence captured' : 'Ready · local simulation'}</strong>
           </div>
         </aside>
 
@@ -384,7 +415,7 @@ export default function App() {
 
           <div className={`commissioning-ribbon ${pathState === 'blocked' ? 'has-fault' : ''} ${pathState === 'repaired' ? 'has-repair' : ''}`}>
             <div className="ribbon-state">
-              <span className="micro-label">{pathState === 'blocked' ? 'VALIDATION BLOCKED' : previewRepair ? 'REPAIR PREVIEW' : runState === 'complete' ? 'CYCLE VERIFIED' : 'COMMISSIONING STATE'}</span>
+              <span className="micro-label">{pathState === 'blocked' ? 'VALIDATION BLOCKED' : previewRepair ? 'REPAIR PREVIEW' : runState === 'paused' ? 'CYCLE PAUSED · SPACE TO RESUME' : runState === 'complete' ? 'CYCLE VERIFIED' : 'COMMISSIONING STATE'}</span>
               <strong>{stateTitle}</strong>
             </div>
             <div className="progress-track"><span style={{ width: `${Math.max(3, progress * 100)}%` }} /></div>
@@ -397,8 +428,14 @@ export default function App() {
             ) : runState === 'complete' && isChanged ? (
               <button className="run-button release-action" onClick={releaseRevision}><Icon name="download" size={16} />Release Rev 08</button>
             ) : (
-              <button className="run-button" onClick={runSimulation} disabled={!canRun}>
-                <Icon name={canRun ? 'play' : 'warning'} size={16} />{canRun ? (runState === 'running' ? 'Restart cycle' : isChanged ? 'Run repaired cycle' : 'Replay baseline') : 'Resolve P02'}
+              <button
+                className="run-button"
+                onClick={isExecutionActive ? toggleExecutionPause : runSimulation}
+                disabled={!canRun}
+                aria-keyshortcuts={isExecutionActive ? 'Space' : undefined}
+              >
+                <Icon name={canRun ? 'play' : 'warning'} size={16} />
+                {canRun ? (runState === 'running' ? 'Pause · Space' : runState === 'paused' ? 'Resume · Space' : isChanged ? 'Run repaired cycle' : 'Replay baseline') : 'Resolve P02'}
               </button>
             )}
           </div>
