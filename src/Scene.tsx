@@ -2,7 +2,7 @@ import { ContactShadows, Grid, Line, OrbitControls } from '@react-three/drei'
 import { Canvas, ThreeEvent, useFrame } from '@react-three/fiber'
 import { useMemo, useRef } from 'react'
 import * as THREE from 'three'
-import { sampleMotion, solveRobotIk, type MotionState } from './simulation'
+import { sampleMotion, solveRobotIk, type MotionPlan, type MotionState, type Vec3 } from './simulation'
 import type { CellObject, RunState } from './types'
 
 interface SceneProps {
@@ -12,6 +12,12 @@ interface SceneProps {
   runState: RunState
   faultInjected: boolean
   showEnvelope: boolean
+  fixtureShiftMm: number
+  baselinePath: readonly Vec3[]
+  activePath: readonly Vec3[]
+  pathState: 'baseline' | 'blocked' | 'preview' | 'repaired'
+  showRevisionGhost: boolean
+  motionPlan: MotionPlan
 }
 
 interface SelectableProps {
@@ -24,6 +30,10 @@ const machine = '#aeb8b6'
 const steel = '#d8dedc'
 const cobalt = '#245df3'
 const amber = '#f08a24'
+const danger = '#e54835'
+const success = '#2f9e75'
+const infeedBaseX = -1.55
+const infeedZ = 1.15
 
 function select(event: ThreeEvent<MouseEvent>, onSelect: () => void) {
   event.stopPropagation()
@@ -192,17 +202,26 @@ interface PartTableProps extends SelectableProps {
   faultInjected?: boolean
   rawRemoved?: boolean
   finishedPlaced?: boolean
+  fixtureShiftMeters?: number
 }
 
-function PartTable({ kind, selected, onSelect, faultInjected = false, rawRemoved = false, finishedPlaced = false }: PartTableProps) {
-  const shiftedX = -1.55 - (kind === 'infeed' && faultInjected ? 0.18 : 0)
-  const position: [number, number, number] = kind === 'infeed' ? [shiftedX, 0, 1.15] : [-1.55, 0, -1.15]
+function PartTable({
+  kind,
+  selected,
+  onSelect,
+  faultInjected = false,
+  rawRemoved = false,
+  finishedPlaced = false,
+  fixtureShiftMeters = 0,
+}: PartTableProps) {
+  const positionX = infeedBaseX + (kind === 'infeed' ? fixtureShiftMeters : 0)
+  const positionZ = kind === 'infeed' ? infeedZ : -1.15
   const partIndices = kind === 'infeed'
     ? [0, 1, 2, 3, 4, 5].filter((index) => !(rawRemoved && index === 2))
     : [0, 1, 2, ...(finishedPlaced ? [5] : [])]
 
   return (
-    <group position={position} onClick={(event) => select(event, onSelect)}>
+    <group position-x={positionX} position-z={positionZ} onClick={(event) => select(event, onSelect)}>
       {selected && <SelectionHalo radius={0.84} />}
       <mesh position-y={0.56} castShadow receiveShadow>
         <boxGeometry args={[1.42, 0.15, 1.08]} />
@@ -234,6 +253,27 @@ function PartTable({ kind, selected, onSelect, faultInjected = false, rawRemoved
   )
 }
 
+function InfeedRevisionGhost() {
+  return (
+    <group position-x={infeedBaseX} position-z={infeedZ}>
+      <mesh position-y={0.56}>
+        <boxGeometry args={[1.42, 0.15, 1.08]} />
+        <meshBasicMaterial color={cobalt} wireframe transparent opacity={0.24} depthWrite={false} />
+      </mesh>
+      {[[-0.56, -0.42], [0.56, -0.42], [-0.56, 0.42], [0.56, 0.42]].map(([x, z]) => (
+        <mesh key={`${x}-${z}`} position={[x, 0.27, z]}>
+          <boxGeometry args={[0.08, 0.55, 0.08]} />
+          <meshBasicMaterial color={cobalt} wireframe transparent opacity={0.18} depthWrite={false} />
+        </mesh>
+      ))}
+      <mesh rotation-x={-Math.PI / 2} position-y={0.02}>
+        <ringGeometry args={[0.79, 0.82, 64]} />
+        <meshBasicMaterial color={cobalt} transparent opacity={0.32} depthWrite={false} />
+      </mesh>
+    </group>
+  )
+}
+
 function SafetyScanner({ faultInjected }: Pick<SceneProps, 'faultInjected'>) {
   return (
     <group position={[0.78, 0, 2.55]}>
@@ -253,20 +293,51 @@ function SafetyScanner({ faultInjected }: Pick<SceneProps, 'faultInjected'>) {
   )
 }
 
-function Cell({ selected, onSelect, progress, runState, faultInjected, showEnvelope }: SceneProps) {
-  const motion = sampleMotion(progress, runState)
-  const pathPoints = useMemo(
-    () => [
-      new THREE.Vector3(-1.13, 0.78, 0.92),
-      new THREE.Vector3(-1.13, 1.42, 0.92),
-      new THREE.Vector3(0.72, 1.55, -0.25),
-      new THREE.Vector3(1.34, 1.06, -0.25),
-      new THREE.Vector3(0.72, 1.55, -0.25),
-      new THREE.Vector3(-1.13, 1.42, -0.92),
-      new THREE.Vector3(-1.13, 0.78, -0.92),
-    ],
-    [],
+function Cell({
+  selected,
+  onSelect,
+  progress,
+  runState,
+  faultInjected,
+  showEnvelope,
+  fixtureShiftMm,
+  baselinePath,
+  activePath,
+  pathState,
+  showRevisionGhost,
+  motionPlan,
+}: SceneProps) {
+  const motion = sampleMotion(progress, runState, motionPlan)
+  const fixtureShiftMeters = fixtureShiftMm / 1000
+  const baselinePathPoints = useMemo(
+    () => baselinePath.map(([x, y, z]) => new THREE.Vector3(x, y, z)),
+    [baselinePath],
   )
+  const activePathPoints = useMemo(
+    () => activePath.map(([x, y, z]) => new THREE.Vector3(x, y, z)),
+    [activePath],
+  )
+  const failingSegmentPoints = useMemo(
+    () => activePathPoints.slice(-2),
+    [activePathPoints],
+  )
+  const fixtureDeltaPoints = useMemo(
+    () => [
+      new THREE.Vector3(infeedBaseX, 0.82, infeedZ),
+      new THREE.Vector3(infeedBaseX + fixtureShiftMeters, 0.82, infeedZ),
+    ],
+    [fixtureShiftMeters],
+  )
+  const pathChanged = useMemo(
+    () => baselinePath.length !== activePath.length || baselinePath.some((point, index) => (
+      point[0] !== activePath[index]?.[0]
+      || point[1] !== activePath[index]?.[1]
+      || point[2] !== activePath[index]?.[2]
+    )),
+    [activePath, baselinePath],
+  )
+  const showBaselinePath = showRevisionGhost || pathState !== 'baseline' || pathChanged
+  const activePathColor = pathState === 'blocked' ? danger : pathState === 'repaired' ? success : cobalt
 
   return (
     <>
@@ -275,9 +346,31 @@ function Cell({ selected, onSelect, progress, runState, faultInjected, showEnvel
       <directionalLight position={[5, 3, -4]} intensity={0.7} color="#c9ddff" />
       <RobotArm selected={selected === 'robot'} onSelect={() => onSelect('robot')} motion={motion} />
       <CncMachine selected={selected === 'cnc'} onSelect={() => onSelect('cnc')} motion={motion} />
-      <PartTable kind="infeed" selected={selected === 'infeed'} onSelect={() => onSelect('infeed')} faultInjected={faultInjected} rawRemoved={motion.rawRemoved} />
+      {showRevisionGhost && <InfeedRevisionGhost />}
+      <PartTable
+        kind="infeed"
+        selected={selected === 'infeed'}
+        onSelect={() => onSelect('infeed')}
+        faultInjected={faultInjected}
+        rawRemoved={motion.rawRemoved}
+        fixtureShiftMeters={fixtureShiftMeters}
+      />
       <PartTable kind="outfeed" selected={selected === 'outfeed'} onSelect={() => onSelect('outfeed')} finishedPlaced={motion.finishedPlaced} />
       <SafetyScanner faultInjected={faultInjected} />
+
+      {showRevisionGhost && fixtureShiftMm !== 0 && (
+        <group>
+          <Line points={fixtureDeltaPoints} color={amber} lineWidth={2.2} dashed dashSize={0.045} gapSize={0.025} transparent opacity={0.95} />
+          <mesh position-x={infeedBaseX} position-y={0.82} position-z={infeedZ}>
+            <sphereGeometry args={[0.035, 18, 18]} />
+            <meshBasicMaterial color={cobalt} transparent opacity={0.75} />
+          </mesh>
+          <mesh position-x={infeedBaseX + fixtureShiftMeters} position-y={0.82} position-z={infeedZ}>
+            <sphereGeometry args={[0.055, 18, 18]} />
+            <meshBasicMaterial color={amber} />
+          </mesh>
+        </group>
+      )}
 
       {motion.partAtMachine && (
         <mesh position={[1.34, 0.97, -0.25]} castShadow>
@@ -293,7 +386,30 @@ function Cell({ selected, onSelect, progress, runState, faultInjected, showEnvel
         </mesh>
       )}
 
-      <Line points={pathPoints} color={faultInjected ? amber : cobalt} lineWidth={1.6} dashed dashSize={0.13} gapSize={0.09} transparent opacity={0.7} />
+      {showBaselinePath && baselinePathPoints.length > 1 && (
+        <Line points={baselinePathPoints} color={cobalt} lineWidth={1.2} dashed dashSize={0.11} gapSize={0.08} transparent opacity={0.28} />
+      )}
+      {activePathPoints.length > 1 && (
+        <Line
+          points={activePathPoints}
+          color={activePathColor}
+          lineWidth={pathState === 'blocked' ? 2.4 : 2}
+          dashed={pathState === 'baseline'}
+          dashSize={0.13}
+          gapSize={0.09}
+          transparent
+          opacity={pathState === 'preview' ? 0.82 : 0.9}
+        />
+      )}
+      {pathState === 'blocked' && failingSegmentPoints.length === 2 && (
+        <>
+          <Line points={failingSegmentPoints} color={danger} lineWidth={5} transparent opacity={1} />
+          <mesh position={failingSegmentPoints[1]}>
+            <sphereGeometry args={[0.085, 24, 24]} />
+            <meshBasicMaterial color={danger} transparent opacity={0.9} />
+          </mesh>
+        </>
+      )}
       <mesh rotation-x={-Math.PI / 2} position-y={-0.04} receiveShadow>
         <planeGeometry args={[10, 8]} />
         <meshStandardMaterial color="#eef1f0" roughness={0.92} />

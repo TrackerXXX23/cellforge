@@ -10,11 +10,11 @@ Before a workcell reaches the shop floor, an integrator should be able to verify
 
 ## The 60-second demo
 
-1. Inspect the authored machine-tending sequence and click components in the 3D cell.
-2. Run the 14.8-second cycle and watch the robot, CNC door, and sequence state advance together.
-3. Inject a `+180 mm` infeed-fixture shift.
-4. See reach, clearance, and cycle-time findings update—and deployment become blocked.
-5. Restore the commissioned baseline and export the versioned runtime job artifact.
+1. Open the validated Revision 07 machine-tending job and replay its 14.8-second baseline cycle.
+2. Record a measured `+180 mm` change to the infeed-fixture position and create the Revision 08 draft.
+3. Trace the resulting 9 mm clearance failure from the fixture to path P02, the pick step, and the release gate.
+4. Compare two constraint-derived repairs, preview their paths and tradeoffs, then apply one to the draft.
+5. Run the repaired cycle, capture validation evidence, and release the versioned Revision 08 runtime artifact.
 
 The workflow follows the same path as a commissioning task: configure → validate → disturb → diagnose → deploy.
 
@@ -28,9 +28,12 @@ The workflow follows the same path as a commissioning task: configure → valida
 - Hard motion gate for joint limits, floor height, reach, and the CNC solid volume/door aperture
 - Real payload transfer: fixture → gripper → CNC → gripper → outfeed
 - Interlocked CNC door, machine handshake, gripper state, and unsafe-run blocking
+- Revision-aware fixture changes with before/after ghost geometry and spatial delta evidence
+- Linked causal trace across physical object, motion segment, sequence step, and release gate
+- Two deterministic repair candidates with distinct paths, clearance, and cycle-time tradeoffs
+- Repair preview, validation gating, full-cycle evidence, and Revision 08 release workflow
 - Component selection with domain-specific configuration data
 - Reach-envelope and planned-path overlays
-- Fault injection with derived preflight and deployment state
 - Versioned JSON job-artifact export
 - Reduced-motion support and a mobile layout
 
