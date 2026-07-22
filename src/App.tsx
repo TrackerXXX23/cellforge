@@ -27,7 +27,7 @@ const objectDetails: Record<CellObject, { name: string; eyebrow: string; specs: 
   robot: {
     name: 'Universal Robots UR20',
     eyebrow: 'Licensed URDF model',
-    specs: [['Payload', '20 kg'], ['Reach', '1,750 mm'], ['EOAT', 'Robotiq 2F-85'], ['TCP', '145 mm']],
+    specs: [['Payload', '20 kg'], ['Reach', '1,750 mm'], ['EOAT', 'Robotiq 2F-85'], ['TCP', '156 mm']],
   },
   cnc: {
     name: 'CNC mill · Machine 01',

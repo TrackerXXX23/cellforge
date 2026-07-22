@@ -3,17 +3,27 @@
 <!-- codex-handoff:start -->
 ## CONTEXT FOR /work
 
-**Last handoff**: 2026-07-22 15:55:47 CST
-**Branch**: `codex/cnc-vmc-asset`
+**Last handoff**: 2026-07-22 16:36:20 CST
+**Branch**: `codex/two-finger-gripper-pinch`
 **Active ticket**: `None found`
-**Summary**: PR #10 is merged. PR #5 now integrates the CellForge-authored VMC with the UR20 and sourced Robotiq 2F-85; its enclosure approach, vise-centered 60 x 35 mm blank, load, clamp, and unload states passed browser review and npm run check. Known remaining visual defect: during the first pickup, the carried blank still appears attached to one Robotiq jaw instead of clamped between both opposing pads.
-**Next exact action**: After PR #5 merges, branch from updated develop, center the carried blank between the two inner Robotiq pad faces, and verify the first pickup with a close tracking-camera replay.
-**Blocker**: None
+**Summary**: Corrected the Robotiq 2F-85 pickup geometry on codex/two-finger-gripper-pinch: both mirrored silicone pads now close to a true 60 mm opening, and the carried blank/TCP is centered at the sourced pinch site. Close Playwright replay shows the blank captured between both jaws; npm run check passes with 36 tests.
+**Next exact action**: Review the draft PR CI and merge the two-finger pickup correction into develop when authorized.
+**Blocker**: none
 
 **Git status at handoff**:
 
 ```text
-clean
+ M src/App.tsx
+ M src/Robotiq2F85.tsx
+ M src/eoat.ts
+?? "AGENTS 2.md"
+?? "NOW 2.md"
+?? "continue 2"
+?? "handoff 2"
+?? "src/commissioning 2.ts"
+?? "src/commissioning.test 2.ts"
+?? src/eoat.test.ts
+?? "tests/r3f-skill-guardrails.test 2.ts"
 ```
 
 ---

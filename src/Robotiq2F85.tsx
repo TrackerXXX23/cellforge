@@ -2,7 +2,11 @@ import { useFrame, useLoader } from '@react-three/fiber'
 import { useRef, type RefObject } from 'react'
 import * as THREE from 'three'
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js'
-import { ROBOTIQ_2F85_GRASP_ANGLE, ROBOTIQ_2F85_TCP_OFFSET } from './eoat'
+import {
+  ROBOTIQ_2F85_BASE_OFFSET,
+  ROBOTIQ_2F85_GRASP_ANGLE,
+  ROBOTIQ_2F85_PINCH_OFFSET,
+} from './eoat'
 import type { MotionState } from './simulation'
 import { UR20_RENDER_SCALE } from './ur20'
 import {
@@ -144,7 +148,7 @@ export function Robotiq2F85({ motion, tcpRef }: Robotiq2F85Props) {
       <group position-z={0.007} scale={0.001}>
         <mesh geometry={baseMountGeometry} material={blackMaterial} castShadow receiveShadow />
       </group>
-      <group position-z={0.0108} rotation-z={-Math.PI / 2}>
+      <group position-z={ROBOTIQ_2F85_BASE_OFFSET} rotation-z={-Math.PI / 2}>
         <group>
           <mesh geometry={baseGeometry} material={blackMaterial} scale={0.001} castShadow receiveShadow />
           <Finger
@@ -173,7 +177,7 @@ export function Robotiq2F85({ motion, tcpRef }: Robotiq2F85Props) {
           />
         </group>
         <mesh
-          position-z={ROBOTIQ_2F85_TCP_OFFSET - 0.0108}
+          position-z={ROBOTIQ_2F85_PINCH_OFFSET}
           rotation-x={Math.PI / 2}
           visible={motion.carrying !== null}
           castShadow
@@ -187,7 +191,7 @@ export function Robotiq2F85({ motion, tcpRef }: Robotiq2F85Props) {
             roughness={0.28}
           />
         </mesh>
-        <object3D ref={tcpRef} position-z={ROBOTIQ_2F85_TCP_OFFSET - 0.0108} />
+        <object3D ref={tcpRef} position-z={ROBOTIQ_2F85_PINCH_OFFSET} />
       </group>
     </group>
   )
