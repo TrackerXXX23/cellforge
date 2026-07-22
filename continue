@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+cd "$repo_root"
+
+printf 'Repository: %s\n' "$repo_root"
+printf 'Branch: %s\n\n' "$(git branch --show-current)"
+
+printf 'Git state\n'
+git status --short --branch
+
+printf '\nCurrent handoff\n'
+if [[ -f NOW.md ]]; then
+  sed -n '1,240p' NOW.md
+else
+  printf 'NOW.md is missing.\n'
+fi
+
+printf '\nLikely active tickets\n'
+if command -v rg >/dev/null 2>&1; then
+  ticket_files="$(rg --files -g 'MASTER_CONTROL.md' -g 'tickets/**' 2>/dev/null || true)"
+  if [[ -n "$ticket_files" ]]; then
+    printf '%s\n' "$ticket_files"
+  else
+    printf 'None found.\n'
+  fi
+else
+  printf 'ripgrep is unavailable.\n'
+fi
