@@ -2,7 +2,12 @@ import { useFrame } from '@react-three/fiber'
 import { useRef, type RefObject } from 'react'
 import * as THREE from 'three'
 import {
+  THREE_JAW_AXIAL_TRAVEL,
   THREE_JAW_CLOSED_RADIUS,
+  THREE_JAW_BODY_CENTER,
+  THREE_JAW_BODY_DEPTH,
+  THREE_JAW_MOUNT_CENTER,
+  THREE_JAW_MOUNT_DEPTH,
   THREE_JAW_OPEN_RADIUS,
   THREE_JAW_TCP_OFFSET,
   THREE_JAW_TWIST_ANGLE,
@@ -36,8 +41,17 @@ const contactMaterial = new THREE.MeshStandardMaterial({
   metalness: 0.08,
   roughness: 0.76,
 })
+const indexMaterial = new THREE.MeshStandardMaterial({
+  color: '#245df3',
+  metalness: 0.18,
+  roughness: 0.32,
+})
 const preserveMaterial = { preserveMaterial: true }
-const JAW_DAMPING = 16
+const JAW_DAMPING = 7
+const MOUNT_BOLT_POSITIONS = [0, 1, 2, 3, 4, 5].map((index) => {
+  const angle = (index * Math.PI) / 3
+  return [Math.cos(angle) * 0.038, Math.sin(angle) * 0.038, 0.011] as const
+})
 
 interface JawProps {
   angle: number
@@ -47,7 +61,7 @@ interface JawProps {
 function Jaw({ angle, jawRef }: JawProps) {
   return (
     <group rotation-z={angle}>
-      <group ref={jawRef} position-x={THREE_JAW_OPEN_RADIUS}>
+      <group ref={jawRef} position={[THREE_JAW_OPEN_RADIUS, 0, -THREE_JAW_AXIAL_TRAVEL]}>
         <mesh position-z={0.108} castShadow receiveShadow>
           <boxGeometry args={[0.028, 0.026, 0.024]} />
           <primitive object={jawMaterial} attach="material" />
@@ -66,8 +80,19 @@ interface ThreeJawGripperProps {
   tcpRef: RefObject<THREE.Object3D | null>
 }
 
-function dampJaw(ref: RefObject<THREE.Group | null>, radius: number, delta: number) {
+function dampJaw(
+  ref: RefObject<THREE.Group | null>,
+  radius: number,
+  axialOffset: number,
+  delta: number,
+) {
   ref.current!.position.x = THREE.MathUtils.damp(ref.current!.position.x, radius, JAW_DAMPING, delta)
+  ref.current!.position.z = THREE.MathUtils.damp(
+    ref.current!.position.z,
+    axialOffset,
+    JAW_DAMPING,
+    delta,
+  )
 }
 
 export function ThreeJawGripper({ motion, tcpRef }: ThreeJawGripperProps) {
@@ -79,6 +104,7 @@ export function ThreeJawGripper({ motion, tcpRef }: ThreeJawGripperProps) {
   useFrame((_, delta) => {
     const jawRadius = motion.gripperClosed ? THREE_JAW_CLOSED_RADIUS : THREE_JAW_OPEN_RADIUS
     const rotorAngle = motion.gripperClosed ? THREE_JAW_TWIST_ANGLE : 0
+    const jawAxialOffset = motion.gripperClosed ? 0 : -THREE_JAW_AXIAL_TRAVEL
 
     rotorRef.current!.rotation.z = THREE.MathUtils.damp(
       rotorRef.current!.rotation.z,
@@ -86,15 +112,36 @@ export function ThreeJawGripper({ motion, tcpRef }: ThreeJawGripperProps) {
       JAW_DAMPING,
       delta,
     )
-    dampJaw(firstJawRef, jawRadius, delta)
-    dampJaw(secondJawRef, jawRadius, delta)
-    dampJaw(thirdJawRef, jawRadius, delta)
+    dampJaw(firstJawRef, jawRadius, jawAxialOffset, delta)
+    dampJaw(secondJawRef, jawRadius, jawAxialOffset, delta)
+    dampJaw(thirdJawRef, jawRadius, jawAxialOffset, delta)
   })
 
   return (
-    <group name="Twisting three-jaw centric gripper" scale={1 / UR20_RENDER_SCALE} userData={preserveMaterial}>
-      <mesh position-z={0.035} rotation-x={Math.PI / 2} castShadow receiveShadow>
-        <cylinderGeometry args={[0.046, 0.046, 0.07, 48]} />
+    <group
+      name="Twisting three-jaw centric gripper"
+      scale={1 / UR20_RENDER_SCALE}
+      userData={preserveMaterial}
+      dispose={null}
+    >
+      <group name="UR20 tool0 mounting interface">
+        <mesh position-z={THREE_JAW_MOUNT_CENTER} rotation-x={Math.PI / 2} castShadow receiveShadow>
+          <cylinderGeometry args={[0.041, 0.041, THREE_JAW_MOUNT_DEPTH, 48]} />
+          <primitive object={bodyMaterial} attach="material" />
+        </mesh>
+        <mesh position-z={0.004} rotation-x={Math.PI / 2} castShadow receiveShadow>
+          <cylinderGeometry args={[0.052, 0.052, 0.014, 48]} />
+          <primitive object={jawMaterial} attach="material" />
+        </mesh>
+        {MOUNT_BOLT_POSITIONS.map((position, index) => (
+          <mesh key={index} position={position} rotation-x={Math.PI / 2} castShadow>
+            <cylinderGeometry args={[0.003, 0.003, 0.004, 12]} />
+            <primitive object={contactMaterial} attach="material" />
+          </mesh>
+        ))}
+      </group>
+      <mesh position-z={THREE_JAW_BODY_CENTER} rotation-x={Math.PI / 2} castShadow receiveShadow>
+        <cylinderGeometry args={[0.046, 0.046, THREE_JAW_BODY_DEPTH, 48]} />
         <primitive object={bodyMaterial} attach="material" />
       </mesh>
       <mesh position-z={0.074} rotation-x={Math.PI / 2} castShadow receiveShadow>
@@ -105,6 +152,10 @@ export function ThreeJawGripper({ motion, tcpRef }: ThreeJawGripperProps) {
         <mesh position-z={0.082} rotation-x={Math.PI / 2} castShadow receiveShadow>
           <cylinderGeometry args={[0.041, 0.041, 0.012, 48]} />
           <primitive object={bodyMaterial} attach="material" />
+        </mesh>
+        <mesh position={[0.028, 0, 0.09]} castShadow>
+          <boxGeometry args={[0.018, 0.006, 0.004]} />
+          <primitive object={indexMaterial} attach="material" />
         </mesh>
         <Jaw angle={0} jawRef={firstJawRef} />
         <Jaw angle={(Math.PI * 2) / 3} jawRef={secondJawRef} />

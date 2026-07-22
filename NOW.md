@@ -3,20 +3,17 @@
 <!-- codex-handoff:start -->
 ## CONTEXT FOR /work
 
-**Last handoff**: 2026-07-22 16:55:53 CST
+**Last handoff**: 2026-07-22 17:06:29 CST
 **Branch**: `codex/two-finger-gripper-pinch`
 **Active ticket**: `None found`
-**Summary**: Replaced the Robotiq two-finger EOAT with a procedural twisting three-jaw centric gripper for 60 mm round stock. All three jaws damp radially inward while the jaw rotor twists 15 degrees, the contact faces close at the workpiece radius, and the TCP/IK offset is updated to 140 mm. Space-bar pause/resume remains active and Playwright verified progress freezes at 19.7108% while paused, then advances after resume. npm run check passes with 37 tests and the production build; npm run test:skill passes all 4 R3F guardrails.
-**Next exact action**: Review the draft PR's three-jaw close replay and CI; merge to develop only when the user approves the visual result.
+**Summary**: Fixed the custom three-jaw gripper's visible wrist attachment with a tool0 mounting collar, overlapping faceplate, and six-bolt flange that extends into the UR20 wrist envelope. Changed the grasp from a subtle radial close to a visible helical action: the three-jaw rotor turns 30 degrees while each jaw advances 18 mm down and closes radially onto the 60 mm blank. Slowed damping so the twist is observable and updated runtime status copy for the raw and finished part grasps. Playwright captured same-camera open, mid-twist, and closed states with 0 console errors. npm run check passes with 38 tests and the production build; npm run test:skill passes all 4 R3F guardrails.
+**Next exact action**: Have the user inspect the mounted open, mid-twist, and closed pickup states in draft PR #11; merge to develop only after visual approval.
 **Blocker**: None
 
 **Git status at handoff**:
 
 ```text
- M README.md
- M src/App.tsx
- D src/Robotiq2F85.tsx
- M src/Ur20Robot.tsx
+ M src/ThreeJawGripper.tsx
  M src/eoat.test.ts
  M src/eoat.ts
  M src/simulation.ts
@@ -24,7 +21,6 @@
 ?? "NOW 2.md"
 ?? "continue 2"
 ?? "handoff 2"
-?? src/ThreeJawGripper.tsx
 ?? "src/commissioning 2.ts"
 ?? "src/commissioning.test 2.ts"
 ?? "tests/r3f-skill-guardrails.test 2.ts"
