@@ -3,11 +3,11 @@
 <!-- codex-handoff:start -->
 ## CONTEXT FOR /work
 
-**Last handoff**: 2026-07-22 11:43:01 CST
+**Last handoff**: 2026-07-22 12:24:54 CST
 **Branch**: `develop`
 **Active ticket**: `None found`
-**Summary**: Merged PR #4 into develop at 3d022e7. The visible UR5e now uses target-driven damped-least-squares IK on the actual URDF chain and completes pick, CNC, and outfeed motion. npm run check passed with 26 tests; CI passed; Playwright verified baseline and Revision 08 repair/release with zero console errors. Remaining product work is actual-chain deploy-gate sampling and collision/clearance coverage. No blocker.
-**Next exact action**: Branch from updated develop to move UR5e TCP acceptance outside the renderer and feed sampled actual-chain reach results into the deploy gate.
+**Summary**: Merged PR #6 (f339934) into develop. Replaced the scaled UR5e with a full-scale licensed UR20, reachable task poses, off-frame multistart IK, UR20-rated velocity and bounded-acceleration following, corrected gripper/payload geometry, settled grip/release timing, and a complete 24-second return-home cycle. npm run check passes with 29 tests; R3F guardrails pass; browser acceptance is 6.2 mm pickup, 11.9 mm machine release, 9.6 mm outfeed release, and 11.3 mm home with no errors. Remaining work is full-body mesh collision gating beyond the current P02/tool-envelope clearance model.
+**Next exact action**: Branch from updated develop to add sampled full-body collision and actual-chain TCP acceptance to the deploy gate.
 **Blocker**: None
 
 **Git status at handoff**:
