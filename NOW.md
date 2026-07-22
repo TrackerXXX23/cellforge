@@ -3,11 +3,11 @@
 <!-- codex-handoff:start -->
 ## CONTEXT FOR /work
 
-**Last handoff**: 2026-07-22 14:16:52 CST
-**Branch**: `codex/ur20-wrist-mount`
+**Last handoff**: 2026-07-22 14:18:12 CST
+**Branch**: `codex/ur20-wrist-handoff`
 **Active ticket**: `None found`
-**Summary**: PR #8 fixes the UR20 wrist/gripper visual separation by adding a continuous tool-axis flange adapter, rotating the gripper body correctly, and moving carried parts onto the TCP between the fingertips. npm run check and R3F guardrails pass; browser close-up has zero errors. Remaining product milestone after merge is sampled full-body collision and actual-chain TCP gating.
-**Next exact action**: Review CI on PR #8 and merge it into develop when green.
+**Summary**: Merged PR #8 into develop at becd2f7. The UR20 wrist, flange adapter, gripper, TCP grasp point, and CNC released-part pose are now visually continuous and aligned. npm run check passes with 29 tests; R3F guardrails and CI pass; browser close-up reports zero errors. Remaining milestone is sampled full-body collision and actual-chain TCP gating.
+**Next exact action**: Branch from updated develop to add sampled full-body collision and actual-chain TCP acceptance to the deploy gate.
 **Blocker**: None
 
 **Git status at handoff**:
