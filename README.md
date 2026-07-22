@@ -24,7 +24,7 @@ The workflow follows the same path as a commissioning task: configure → valida
 - Three.js scene rendered through React Three Fiber
 - Licensed UR5e URDF joint hierarchy with official visual and collision link geometry, plus the CNC enclosure, material fixtures, parts, and safety scanner
 - Target-driven machine-tending state machine with duration-weighted sequence stages
-- Existing analytic commissioning IK mapped onto all six URDF joints while physical UR5e FK/IK remains the next acceptance milestone
+- Target-driven damped-least-squares IK on the actual URDF joint chain, with TCP position and tool-direction tracking at every machine-tending waypoint
 - Hard motion gate for joint limits, floor height, reach, and the CNC solid volume/door aperture
 - Real payload transfer: fixture → gripper → CNC → gripper → outfeed
 - Interlocked CNC door, machine handshake, gripper state, and unsafe-run blocking
@@ -59,7 +59,8 @@ The deterministic process state and kinematics live outside the scene graph. Thr
 
 The current robot and checks are a product prototype, not a certified engineering simulator:
 
-- The visible robot uses the licensed UR5e URDF hierarchy and official visual meshes, but it is scaled to the existing demo cell and driven by the prototype analytic IK adapter. Actual UR5e FK/IK, TCP acceptance, calibration, and controller-specific planning are not implemented yet.
+- The visible robot uses the licensed UR5e URDF hierarchy, official visual meshes, and an actual-chain browser IK solve, but it is scaled to the existing demo cell. Runtime TCP tracking is prototype evidence only; physical calibration, controller-specific planning, and hardware acceptance are not implemented.
+- The deploy gate still uses the deterministic analytic reachability model rather than replaying the URDF solve across every sampled path state.
 - P02 clearance is geometry-derived from one axis-aligned fixture keep-out and a spherical tool envelope; it does not yet cover the full robot body or arbitrary mesh collisions.
 - The “planner” sequence is seeded data; no hosted LLM is represented as running.
 - Runtime synchronization is local and deterministic; there is no PLC or robot-driver connection.
@@ -68,7 +69,7 @@ The current robot and checks are a product prototype, not a certified engineerin
 
 ### 1. Real geometry and kinematics
 
-The licensed UR5e asset, browser loader, six-joint hierarchy, limits, and provenance are now integrated. Next, replace the prototype render adapter with physical UR5e forward/inverse kinematics and calculate accepted TCP poses from the actual chain.
+The licensed UR5e asset, browser loader, six-joint hierarchy, limits, provenance, and target-driven actual-chain IK are integrated. Next, replay the URDF solve outside the renderer so reachability and sampled TCP acceptance become deploy-gate evidence.
 
 ### 2. Computed commissioning checks
 
