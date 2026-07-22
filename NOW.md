@@ -3,11 +3,11 @@
 <!-- codex-handoff:start -->
 ## CONTEXT FOR /work
 
-**Last handoff**: 2026-07-22 10:25:09 CST
+**Last handoff**: 2026-07-22 10:33:17 CST
 **Branch**: `codex/geometry-clearance`
 **Active ticket**: `None found`
-**Summary**: Geometry-derived P02 clearance and visual evidence are published in draft PR #2: https://github.com/TrackerXXX23/cellforge/pull/2. The unsupported WebM was replaced by a 4.2 MB inline GIF at 59a7857; four full-resolution screenshots remain embedded.
-**Next exact action**: Wait for CI on draft PR #2, confirm the inline GIF renders, then mark it ready and merge it into develop.
+**Summary**: Replaced the poor PR artifacts at b3f18b1: focused blocked-versus-repaired 3D captures, separate 9 mm and 84 mm evidence panels, verified-cycle evidence, and a clean 16:9 2x flow GIF. Removed every prior repetitive screenshot and the first GIF. PR: https://github.com/TrackerXXX23/cellforge/pull/2.
+**Next exact action**: Review the focused visual evidence on draft PR #2, wait for CI, then mark it ready and merge it into develop.
 **Blocker**: None
 
 **Git status at handoff**:
@@ -16,6 +16,7 @@
 ?? "AGENTS 2.md"
 ?? "NOW 2.md"
 ?? "continue 2"
+?? "handoff 2"
 ?? "src/commissioning 2.ts"
 ?? "src/commissioning.test 2.ts"
 ?? "tests/r3f-skill-guardrails.test 2.ts"
