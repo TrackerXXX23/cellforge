@@ -65,3 +65,58 @@ describe('CNC swept contact gate', () => {
     expect(createCncContactMonitor().measure('run', false)).toContain('unavailable')
   })
 })
+
+describe('table contact and support gates', () => {
+  function tableFixture() {
+    const { arm, glass, monitor } = fixture()
+    glass.position.x = 10
+    const top = new THREE.Mesh(new THREE.BoxGeometry(1, 0.1, 1))
+    top.name = 'infeed-tabletop'
+    top.userData.supportSlot = [0,0,0]
+    monitor.registerTable('infeed', top)
+    const check = (token = 'table') => {
+      arm.updateMatrixWorld(true)
+      glass.updateMatrixWorld(true)
+      top.updateMatrixWorld(true)
+      return monitor.measure(token,false)
+    }
+    return { arm, monitor, check }
+  }
+  it('blocks arm contact and thin-table tunneling, independent of CNC clearance', () => {
+    const {arm, check} = tableFixture()
+    arm.position.set(0,0.3,0)
+    expect(check()).toBeNull()
+    arm.position.y = -0.3
+    expect(check()).toContain('infeed-tabletop')
+  })
+  it('allows only named payload support from above at the designated slot', () => {
+    const {arm, check} = tableFixture()
+    arm.name = 'CarriedWorkpiece'
+    arm.position.set(0,0.1,0)
+    expect(check()).toBeNull()
+    arm.name = 'gripper'
+    expect(check('gripper')).toContain('infeed-tabletop')
+    arm.name = 'CarriedWorkpiece'
+    arm.position.x = 0.2
+    expect(check('wrong-slot')).toContain('infeed-tabletop')
+    arm.position.set(0,0.07,0)
+    expect(check('penetration')).toContain('infeed-tabletop')
+  })
+  it('does not exempt a payload crossing from below into the support slot', () => {
+    const {arm, check} = tableFixture()
+    arm.name = 'CarriedWorkpiece'
+    arm.position.set(0,-0.3,0)
+    expect(check()).toBeNull()
+    arm.position.y = 0.1
+    expect(check()).toContain('infeed-tabletop')
+  })
+  it('requires both tables for the full-cell runtime monitor', () => {
+    const monitor = createCncContactMonitor(2)
+    monitor.registerRobot(new THREE.Mesh(new THREE.BoxGeometry(1,1,1)))
+    monitor.registerMachine(new THREE.Mesh(new THREE.BoxGeometry(1,1,1)))
+    expect(monitor.measure('missing',false)).toContain('unavailable')
+    monitor.registerTable('infeed',new THREE.Group())
+    monitor.registerTable('outfeed',new THREE.Group())
+    expect(monitor.measure('empty',false)).toContain('unavailable')
+  })
+})

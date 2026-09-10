@@ -25,6 +25,7 @@ const cobalt = '#245df3'
 const cutawayOpacity = 0.14
 
 interface CncMachineProps {
+  motionToken: string
   cncContact: CncContactMonitor
   paused: boolean
   motion: MotionState
@@ -78,7 +79,7 @@ function setLampState(node: THREE.Object3D, active: boolean) {
   })
 }
 
-export function CncMachine({ motion, selected, onSelect, paused, cncContact }: CncMachineProps) {
+export function CncMachine({ motionToken, motion, selected, onSelect, paused, cncContact }: CncMachineProps) {
   const { scene } = useGLTF(CNC_ASSET_URL)
   const machineScene = useMemo(() => {
     const instance = scene.clone(true)
@@ -121,6 +122,12 @@ export function CncMachine({ motion, selected, onSelect, paused, cncContact }: C
     setLampState(nodes.stackAmber, !motion.machineRunning)
     setLampState(nodes.stackGreen, motion.machineRunning)
   }, [motion.machineRunning, nodes.stackAmber, nodes.stackGreen])
+
+  useEffect(() => {
+    nodes.door.position.x = CNC_DOOR_OPEN_OFFSET
+    nodes.spindle.position.y = spindleHomeY + 0.44
+    machineScene.updateWorldMatrix(true, true)
+  }, [motionToken, nodes, spindleHomeY, machineScene])
 
   useFrame((_, delta) => {
     if (paused) return

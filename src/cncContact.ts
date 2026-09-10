@@ -13,7 +13,7 @@ interface Body {
 function bodies(root: THREE.Object3D): Body[] {
   const result: Body[] = []
   root.traverse((object) => {
-    if (!(object instanceof THREE.Mesh)) return
+    if (!(object instanceof THREE.Mesh) || object.userData.contactIgnored) return
     object.geometry.computeBoundingBox()
     if (!object.geometry.boundingBox) return
     result.push({ mesh: object, local: new OBB().fromBox3(object.geometry.boundingBox),
@@ -52,33 +52,59 @@ function update(body: Body, paused: boolean) {
   }
 }
 
-export function createCncContactMonitor() {
+export function createCncContactMonitor(requiredTables = 0) {
   let arm: Body[] = []
   let machine: Body[] = []
+  let robotRoot: THREE.Object3D | null = null
+  let machineRoot: THREE.Object3D | null = null
+  const tables = new Map<string, { root: THREE.Object3D; bodies: Body[] }>()
+  let obstacles: Body[] = []
+  let readyTables = 0
+  const refreshObstacles = () => {
+    const registered = [...tables.values()]
+    obstacles = [...machine, ...registered.flatMap(value => value.bodies)]
+    readyTables = registered.filter(value => value.bodies.length > 0).length
+  }
   let token = ''
   let failure: string | null = null
   let frames = 0
   return {
-    registerRobot(root: THREE.Object3D) { arm = bodies(root) },
-    registerMachine(root: THREE.Object3D) { machine = bodies(root) },
+    registerRobot(root: THREE.Object3D) { robotRoot = root; arm = bodies(root) },
+    registerMachine(root: THREE.Object3D) { machineRoot = root; machine = bodies(root); refreshObstacles() },
+    registerTable(id: string, root: THREE.Object3D) { tables.set(id, { root, bodies: bodies(root) }); refreshObstacles() },
+    unregisterTable(id: string) { tables.delete(id); refreshObstacles() },
+    getGeometry() { return { robot: robotRoot, machine: machineRoot, tables: [...tables.values()].map(value => value.root) } },
     measure(nextToken: string, paused: boolean) {
       if (token !== nextToken) {
         token = nextToken
         failure = null
         frames = 0
         for (const body of arm) body.initialized = false
-        for (const body of machine) body.initialized = false
+        for (const body of obstacles) body.initialized = false
       }
-      if (!arm.length || !machine.length) return 'CNC contact geometry unavailable'
+      if (!arm.length || !machine.length || readyTables < requiredTables) return 'CNC contact geometry unavailable'
       if (failure) return failure
       for (const body of arm) update(body, paused)
-      for (const body of machine) update(body, paused)
+      for (const body of obstacles) update(body, paused)
       for (const moving of arm) {
         if (!moving.mesh.visible) continue
-        for (const fixed of machine) {
+        for (const fixed of obstacles) {
           // The carried blank intentionally contacts the receiving chuck pads.
           // All robot/gripper meshes and the chuck backplate remain checked.
           if (moving.mesh.name === 'CarriedWorkpiece' && fixed.mesh.name.startsWith('Chuck_Jaw_')) continue
+          // Only the payload may rest on its named table slot, from above.
+          // Robot/gripper contact and all other table intersections remain blocked.
+          const slot = fixed.mesh.userData.supportSlot as number[] | undefined
+          if (moving.mesh.name === 'CarriedWorkpiece' && slot) {
+            const r = moving.current.rotation.elements
+            const extentY = Math.abs(r[1]) * moving.current.halfSize.x + Math.abs(r[4]) * moving.current.halfSize.y + Math.abs(r[7]) * moving.current.halfSize.z
+            const top = fixed.current.center.y + fixed.current.halfSize.y
+            const previousRotation = moving.previous.rotation.elements
+            const previousExtentY = Math.abs(previousRotation[1]) * moving.previous.halfSize.x + Math.abs(previousRotation[4]) * moving.previous.halfSize.y + Math.abs(previousRotation[7]) * moving.previous.halfSize.z
+            if ((!moving.initialized || moving.previous.center.y - previousExtentY >= top - 0.006)
+              && moving.current.center.y - extentY >= top - 0.006
+              && Math.hypot(moving.current.center.x - fixed.current.center.x - slot[0], moving.current.center.z - fixed.current.center.z - slot[2]) < 0.04) continue
+          }
           if (moving.swept.intersectsOBB(fixed.swept, 1e-8)) {
             failure = `CNC swept contact: ${moving.mesh.name || moving.mesh.parent?.name || 'robot mesh'} / ${fixed.mesh.name}`
             return failure
@@ -86,7 +112,7 @@ export function createCncContactMonitor() {
         }
       }
       for (const body of arm) { body.previous.copy(body.current); body.initialized = true }
-      for (const body of machine) { body.previous.copy(body.current); body.initialized = true }
+      for (const body of obstacles) { body.previous.copy(body.current); body.initialized = true }
       if (!paused) frames += 1
       return null
     },

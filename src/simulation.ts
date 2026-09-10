@@ -1,6 +1,6 @@
 import type { RunState } from './types'
 import { THREE_JAW_TCP_OFFSET } from './eoat'
-import { WORKPIECE_TABLE_CENTER_Y } from './workpiece'
+import { layoutTarget, REFERENCE_LAYOUT } from './cellLayout'
 
 export type Vec3 = readonly [number, number, number]
 export type PayloadState = 'raw' | 'finished' | null
@@ -31,7 +31,7 @@ export interface JointSolution {
 interface MotionKeyframe {
   at: number
   target?: Vec3
-  targetKey?: 'infeed-approach' | 'infeed-pick'
+  targetKey?: 'infeed-approach' | 'infeed-pick' | 'outfeed-approach' | 'outfeed-place'
   toolDirection: Vec3
   action: string
 }
@@ -39,6 +39,7 @@ interface MotionKeyframe {
 export interface MotionPlan {
   infeedApproachTarget: Vec3
   infeedPickTarget: Vec3
+  outfeedPlaceTarget?: Vec3
 }
 
 export const CYCLE_DURATION_SECONDS = 24
@@ -56,10 +57,10 @@ export const sequenceBoundaries = [
 ] as const
 
 export const HOME_TARGET: Vec3 = [0.55, 1.15, 0.25]
-export const INFEED_PICK_TARGET: Vec3 = [-1.13, WORKPIECE_TABLE_CENTER_Y, 0.92]
-export const INFEED_APPROACH_TARGET: Vec3 = [-1.13, WORKPIECE_TABLE_CENTER_Y + 0.3, 0.92]
+export const INFEED_PICK_TARGET: Vec3 = layoutTarget(REFERENCE_LAYOUT, 'infeed')
+export const INFEED_APPROACH_TARGET: Vec3 = [INFEED_PICK_TARGET[0], INFEED_PICK_TARGET[1] + 0.3, INFEED_PICK_TARGET[2]]
 export const CNC_CHUCK_TARGET: Vec3 = [1.34, 1.06, -0.25]
-export const OUTFEED_PLACE_TARGET: Vec3 = [-1.13, WORKPIECE_TABLE_CENTER_Y, -0.92]
+export const OUTFEED_PLACE_TARGET: Vec3 = layoutTarget(REFERENCE_LAYOUT, 'outfeed')
 
 export const BASELINE_MOTION_PLAN: MotionPlan = {
   infeedApproachTarget: INFEED_APPROACH_TARGET,
@@ -86,9 +87,9 @@ const keyframes: MotionKeyframe[] = [
   { at: 0.65, target: CNC_CHUCK_TARGET, toolDirection: [1, 0, 0], action: 'Twisting three jaws onto finished part' },
   { at: 0.68, target: CNC_CHUCK_TARGET, toolDirection: [1, 0, 0], action: 'Confirming finished-part grip' },
   { at: 0.7, target: [0.65, 1.06, -0.25], toolDirection: [1, 0, 0], action: 'Unloading CNC' },
-  { at: 0.8, target: [-1.13, 0.88, -0.92], toolDirection: [0, -1, 0], action: 'Moving to outfeed approach' },
-  { at: 0.84, target: OUTFEED_PLACE_TARGET, toolDirection: [0, -1, 0], action: 'Descending to outfeed slot' },
-  { at: 0.86, target: OUTFEED_PLACE_TARGET, toolDirection: [0, -1, 0], action: 'Releasing finished part' },
+  { at: 0.8, targetKey: 'outfeed-approach', toolDirection: [0, -1, 0], action: 'Moving to outfeed approach' },
+  { at: 0.84, targetKey: 'outfeed-place', toolDirection: [0, -1, 0], action: 'Descending to outfeed slot' },
+  { at: 0.86, targetKey: 'outfeed-place', toolDirection: [0, -1, 0], action: 'Releasing finished part' },
   { at: 0.92, target: [-0.3, 1.15, -0.9], toolDirection: [0, -1, 0], action: 'Returning around robot base' },
   { at: 0.96, target: [0.55, 1.15, -0.7], toolDirection: [0, -1, 0], action: 'Returning around robot base' },
   { at: 1, target: HOME_TARGET, toolDirection: [0, -1, 0], action: 'Returning home' },
@@ -97,6 +98,9 @@ const keyframes: MotionKeyframe[] = [
 function resolveTarget(frame: MotionKeyframe, plan: MotionPlan): Vec3 {
   if (frame.targetKey === 'infeed-approach') return plan.infeedApproachTarget
   if (frame.targetKey === 'infeed-pick') return plan.infeedPickTarget
+  const outfeed = plan.outfeedPlaceTarget ?? OUTFEED_PLACE_TARGET
+  if (frame.targetKey === 'outfeed-place') return outfeed
+  if (frame.targetKey === 'outfeed-approach') return [outfeed[0], outfeed[1] + 0.205, outfeed[2]]
   return frame.target ?? HOME_TARGET
 }
 

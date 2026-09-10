@@ -1,3 +1,5 @@
+import { LAYOUT_PRESETS, REFERENCE_LAYOUT, layoutTarget } from './cellLayout'
+import type { PlanningEvidence, PlanningRequest } from './pathPlanning'
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import {
   acceptsTelemetry, createCycleEvidence, CYCLE_SAMPLES, isCycleVerified, recordAcceptedSample,
@@ -24,8 +26,6 @@ const sequence: SequenceStep[] = [
   { id: 'unload', label: 'Unload finished part', target: 'Machine 01', duration: 6.4, accent: '#245df3' },
   { id: 'place', label: 'Place finished part', target: 'Outfeed B', duration: 4.2, accent: '#245df3' },
 ]
-
-const baselineEvaluation = evaluateCommissioning({ fixtureShiftMm: 0, repairId: null })
 
 const objectDetails: Record<CellObject, { name: string; eyebrow: string; specs: [string, string][] }> = {
   robot: {
@@ -72,6 +72,11 @@ function Icon({ name, size = 18 }: { name: 'play' | 'cube' | 'check' | 'warning'
 }
 
 export default function App() {
+  const [layout, setLayout] = useState(REFERENCE_LAYOUT)
+  const [planning, setPlanning] = useState(false)
+  const [planningEvidence, setPlanningEvidence] = useState<(PlanningEvidence & { revisionKey: string }) | null>(null)
+  const planningRequest = useRef<PlanningRequest | null>(null)
+  const planningGeneration = useRef(0)
   const [selected, setSelected] = useState<CellObject>('robot')
   const [runState, setRunState] = useState<RunState>('ready')
   const [progress, setProgress] = useState(0)
@@ -85,31 +90,35 @@ export default function App() {
   const telemetry = useRef<MotionTelemetry | null>(null)
   const evidence = useRef<CycleEvidence | null>(null)
   const [runId, setRunId] = useState(0)
-  const revisionKey = JSON.stringify({ fixtureShiftMm, appliedRepair, version: 'ur20-cycle/v2-cnc-sweep' })
+  const revisionKey = JSON.stringify({ layout, fixtureShiftMm, appliedRepair, version: 'ur20-cycle/v3-layout-planning' })
   const motionToken = `${revisionKey}:${runId}`
 
+  const baselineEvaluation = useMemo(() => evaluateCommissioning({ layout, fixtureShiftMm: 0, repairId: null }), [layout])
   const activeRepair = previewRepair ?? appliedRepair
   const activeEvaluation = useMemo(
-    () => evaluateCommissioning({ fixtureShiftMm, repairId: activeRepair }),
-    [activeRepair, fixtureShiftMm],
+    () => evaluateCommissioning({ layout, fixtureShiftMm, repairId: activeRepair }),
+    [activeRepair, fixtureShiftMm, layout],
   )
   const committedEvaluation = useMemo(
-    () => evaluateCommissioning({ fixtureShiftMm, repairId: appliedRepair }),
-    [appliedRepair, fixtureShiftMm],
+    () => evaluateCommissioning({ layout, fixtureShiftMm, repairId: appliedRepair }),
+    [appliedRepair, fixtureShiftMm, layout],
   )
   const motionPlan: MotionPlan = useMemo(() => ({
     infeedApproachTarget: committedEvaluation.approachTarget,
     infeedPickTarget: committedEvaluation.pickTarget,
-  }), [committedEvaluation.approachTarget, committedEvaluation.pickTarget])
+    outfeedPlaceTarget: layoutTarget(layout, 'outfeed'),
+  }), [committedEvaluation.approachTarget, committedEvaluation.pickTarget, layout])
   const motion = sampleMotion(progress, runState, motionPlan)
   const activeStep = getActiveSequenceIndex(progress)
   const isChanged = fixtureShiftMm !== 0
+  const isLayoutChanged = layout.id !== REFERENCE_LAYOUT.id
+  const isDraft = isChanged || isLayoutChanged
   const checksPassed = activeEvaluation.checks.filter((check) => check.status === 'pass').length
   const details = objectDetails[selected]
-  const canRun = committedEvaluation.deployable && previewRepair === null && !released
-  const canRelease = isChanged && appliedRepair !== null && runState === 'complete'
+  const canRun = committedEvaluation.deployable && previewRepair === null && !released && !planning
+  const canRelease = isDraft && (!isChanged || appliedRepair !== null) && runState === 'complete'
     && isCycleVerified(evidence.current, revisionKey) && committedEvaluation.deployable
-    && previewRepair === null && !released
+    && previewRepair === null && !released && planningEvidence?.revisionKey === revisionKey && planningEvidence.failure === null && planningEvidence.acceptedSamples === CYCLE_SAMPLES + 1
   const isExecutionActive = runState === 'running' || runState === 'paused'
 
   const activePhase: WorkflowPhase = released || runState === 'complete'
@@ -199,6 +208,9 @@ export default function App() {
   }, [toast])
 
   function resetExecution() {
+    planningGeneration.current++
+    setPlanning(false)
+    setPlanningEvidence(null)
     waitingMs.current = 0
     evidence.current = null
     telemetry.current = null
@@ -244,7 +256,8 @@ export default function App() {
     setToast(`${proposal?.label ?? 'Repair'} added to Revision 08`)
   }
 
-  function runSimulation() {
+  async function runSimulation() {
+    if (planning || released) return
     if (previewRepair) {
       setToast('Apply or discard the preview before running the cycle')
       return
@@ -255,13 +268,37 @@ export default function App() {
       return
     }
 
+    const request = planningRequest.current
+    if (!request) { setToast('Planning geometry is still loading'); return }
+    const generation = ++planningGeneration.current
+    setPlanning(true)
+    setPlanningEvidence(null)
+    setRunState('ready')
+    setProgress(0)
+    evidence.current = null
+    let rehearsal: PlanningEvidence
+    try {
+      rehearsal = await request(motionPlan, () => generation !== planningGeneration.current)
+    } catch (error) {
+      if (generation !== planningGeneration.current) return
+      setPlanning(false)
+      setToast(`Planning failed: ${error instanceof Error ? error.message : String(error)}`)
+      return
+    }
+    if (generation !== planningGeneration.current) return
+    setPlanning(false)
+    setPlanningEvidence({ ...rehearsal, revisionKey })
+    if (rehearsal.failure || rehearsal.acceptedSamples !== CYCLE_SAMPLES + 1) {
+      setToast(rehearsal.failure ?? 'Planning coverage incomplete')
+      return
+    }
     waitingMs.current = 0
     evidence.current = createCycleEvidence(revisionKey)
     telemetry.current = null
     setRunId((id) => id + 1)
     setProgress(0)
     setRunState('running')
-    setToast(`Executing Revision ${isChanged ? '08' : '07'} against the validated motion plan`)
+    setToast(`Executing Revision ${isDraft ? '08' : '07'} against the validated motion plan`)
   }
 
   function toggleExecutionPause() {
@@ -279,21 +316,24 @@ export default function App() {
 
   function releaseRevision() {
     if (!canRelease) {
-      setToast(isChanged ? 'Release blocked · validate and run the repaired cycle first' : 'Record a change to create Revision 08')
+      setToast(isDraft ? 'Release blocked · validate and run this layout first' : 'Record a change to create Revision 08')
       return
     }
 
     const artifact = {
       schema: 'cellforge.job/v2',
       delivery: { status: 'local-export', runtimeAcknowledged: false },
-      cycleEvidence: { ...evidence.current, positionToleranceMm: 18, directionToleranceDegrees: 15, coverage: '1441 measured poses; rendered arm/tool/payload swept bounding boxes against CNC meshes; planned P02 tool-envelope clearance; intentional payload/chuck-pad contact allowed; no self-collision, other-cell collision or hardware certification' },
+      layout,
+      planningEvidence,
+      cycleEvidence: { ...evidence.current, positionToleranceMm: 18, directionToleranceDegrees: 15, coverage: '1441 measured poses; rendered arm/tool/payload swept bounding boxes against CNC and table meshes; planned P02 tool-envelope clearance; named payload/chuck-pad and table-slot support contact allowed; no self-collision, loose stock, scanner/fence collision, jerk limits or hardware certification' },
       job: 'OP-1042 · CNC housing',
       revision: 8,
       generatedAt: new Date().toISOString(),
-      change: committedEvaluation.revisionDelta,
+      change: { ...committedEvaluation.revisionDelta, layoutFrom: REFERENCE_LAYOUT, layoutTo: layout },
       motion: {
         approachTarget: committedEvaluation.approachTarget,
         pickTarget: committedEvaluation.pickTarget,
+        outfeedPlaceTarget: motionPlan.outfeedPlaceTarget,
         repairId: appliedRepair,
       },
       validation: {
@@ -321,7 +361,7 @@ export default function App() {
     setToast(entry.label)
   }
 
-  const stateTitle = released
+  const stateTitle = planning ? 'Checking the full path before motion…' : planningEvidence?.failure ? planningEvidence.failure : released
     ? 'Revision 08 released'
     : runState === 'failed'
       ? evidence.current?.failure ?? 'Motion verification failed'
@@ -337,13 +377,13 @@ export default function App() {
               ? 'Revision 08 ready to run'
               : isChanged
                 ? 'Revision 08 blocked'
-                : 'Revision 07 is commissioned'
+                : isLayoutChanged ? 'Table layout candidate · run to verify' : 'Revision 07 is commissioned'
 
   const releaseLabel = released
     ? 'Revision 08 released'
     : canRelease
       ? 'Release revision 08'
-      : isChanged
+      : isDraft
         ? 'Release blocked'
         : 'Revision 07 validated'
 
@@ -364,8 +404,8 @@ export default function App() {
               <span className="micro-label">CELLS / CNC-01</span>
               <strong>OP-1042 · CNC housing</strong>
             </div>
-            <span className={`revision-chip ${isChanged && !released ? 'draft' : 'validated'}`}>
-              REV {released ? '08 · RELEASED' : isChanged ? '08 · DRAFT' : '07 · VALIDATED'}
+            <span className={`revision-chip ${isDraft && !released ? 'draft' : 'validated'}`}>
+              REV {released ? '08 · RELEASED' : isDraft ? '08 · DRAFT' : '07 · VALIDATED'}
             </span>
           </div>
           <ol className="workflow-phases" aria-label="Commissioning workflow">
@@ -382,8 +422,8 @@ export default function App() {
         </div>
 
         <div className="header-actions">
-          <button className={`deploy-button ${isChanged && !canRelease ? 'blocked' : ''} ${!isChanged || released ? 'released' : ''}`} onClick={releaseRevision} disabled={released || !isChanged}>
-            <Icon name={!isChanged || released ? 'check' : canRelease ? 'download' : 'warning'} size={16} />
+          <button className={`deploy-button ${isDraft && !canRelease ? 'blocked' : ''} ${!isDraft || released ? 'released' : ''}`} onClick={releaseRevision} disabled={released || !isDraft}>
+            <Icon name={!isDraft || released ? 'check' : canRelease ? 'download' : 'warning'} size={16} />
             {releaseLabel}
           </button>
         </div>
@@ -394,15 +434,30 @@ export default function App() {
           <div className="revision-summary">
             <div className="panel-heading">
               <span className="micro-label">ACTIVE REVISION</span>
-              <span className={`revision ${isChanged && !released ? 'draft' : ''}`}>REV {isChanged ? '08' : '07'}</span>
+              <span className={`revision ${isDraft && !released ? 'draft' : ''}`}>REV {isDraft ? '08' : '07'}</span>
             </div>
             <div className="revision-copy">
-              <strong>{released ? 'Released revision' : isChanged ? 'Commissioning draft' : 'Commissioned baseline'}</strong>
-              <p>{released ? 'Local export · runtime not connected' : isChanged ? '1 layout change · 1 affected path' : 'Reference layout · replay to verify'}</p>
+              <strong>{released ? 'Released revision' : isDraft ? 'Commissioning draft' : 'Commissioned baseline'}</strong>
+              <p>{released ? 'Local export · runtime not connected' : isDraft ? 'Layout candidate · full cycle required' : 'Reference layout · replay to verify'}</p>
               {isChanged && <span>{released ? 'Revision 08 · local export record' : 'Compared with Revision 07'}</span>}
             </div>
           </div>
 
+          <div className="layout-controls">
+            <label htmlFor="table-layout">Table placement</label>
+            <select id="table-layout" value={layout.id} disabled={isExecutionActive || planning || released} onChange={event => {
+              const candidate = LAYOUT_PRESETS.find(value => value.id === event.target.value)!
+              setLayout(candidate)
+              setFixtureShiftMm(0)
+              setPreviewRepair(null)
+              setAppliedRepair(null)
+              resetExecution()
+            }}>
+              {LAYOUT_PRESETS.map(value => <option key={value.id} value={value.id}>{value.label}</option>)}
+            </select>
+            <p>{layout.id === 'compact' ? 'Both tables move 150 mm inward on X and Z. Full-path check required.' : 'Original commissioning layout.'}</p>
+            <p role="status">{planning ? 'Rehearsing all 1441 poses…' : planningEvidence ? planningEvidence.failure ?? `Path checked · ${planningEvidence.simulatedSeconds.toFixed(1)} s rehearsal · ${planningEvidence.tcpTravelMeters.toFixed(2)} m TCP travel` : 'Run checks loaded geometry before moving.'}</p>
+          </div>
           <div className="section-label"><span>Sequence</span><span>{sequence.length} skills</span></div>
           <ol className="sequence-list">
             {sequence.map((step, index) => {
@@ -435,6 +490,8 @@ export default function App() {
           <SceneErrorBoundary>
             <Suspense fallback={<div className="scene-loading"><span /><strong>Loading cell digital twin</strong></div>}>
               <CommissioningScene
+                layout={layout}
+                planningRequest={planningRequest}
                 selected={selected}
                 onSelect={setSelected}
                 telemetry={telemetry}
@@ -461,9 +518,9 @@ export default function App() {
             {isChanged && <span className="view-chip delta-chip">REV 07 → 08&nbsp;&nbsp; ΔX +180 mm</span>}
           </div>
 
-          <div className={`commissioning-ribbon ${pathState === 'blocked' || runState === 'failed' ? 'has-fault' : ''} ${pathState === 'repaired' ? 'has-repair' : ''}`}>
+          <div className={`commissioning-ribbon ${pathState === 'blocked' || runState === 'failed' || planningEvidence?.failure ? 'has-fault' : ''} ${pathState === 'repaired' ? 'has-repair' : ''}`}>
             <div className="ribbon-state">
-              <span className="micro-label">{pathState === 'blocked' ? 'VALIDATION BLOCKED' : previewRepair ? 'REPAIR PREVIEW' : runState === 'paused' ? 'CYCLE PAUSED · SPACE TO RESUME' : runState === 'failed' ? 'MOTION VERIFICATION FAILED' : runState === 'complete' ? 'CYCLE VERIFIED' : 'COMMISSIONING STATE'}</span>
+              <span className="micro-label">{planningEvidence?.failure ? 'PLANNING BLOCKED' : pathState === 'blocked' ? 'VALIDATION BLOCKED' : previewRepair ? 'REPAIR PREVIEW' : runState === 'paused' ? 'CYCLE PAUSED · SPACE TO RESUME' : runState === 'failed' ? 'MOTION VERIFICATION FAILED' : runState === 'complete' ? 'CYCLE VERIFIED' : 'COMMISSIONING STATE'}</span>
               <strong>{stateTitle}</strong>
             </div>
             <div className="progress-track"><span style={{ width: `${Math.max(3, progress * 100)}%` }} /></div>
@@ -473,7 +530,7 @@ export default function App() {
               <button className="run-button release-action" disabled><Icon name="check" size={16} />Revision released</button>
             ) : previewRepair ? (
               <button className="run-button preview-action" onClick={applyCandidate}><Icon name="check" size={16} />Apply repair</button>
-            ) : runState === 'complete' && isChanged ? (
+            ) : runState === 'complete' && isDraft ? (
               <button className="run-button release-action" onClick={releaseRevision}><Icon name="download" size={16} />Release Rev 08</button>
             ) : (
               <button
@@ -483,7 +540,7 @@ export default function App() {
                 aria-keyshortcuts={isExecutionActive ? 'Space' : undefined}
               >
                 <Icon name={canRun ? 'play' : 'warning'} size={16} />
-                {canRun ? (runState === 'running' ? 'Pause · Space' : runState === 'paused' ? 'Resume · Space' : isChanged ? 'Run repaired cycle' : 'Replay baseline') : 'Resolve P02'}
+                {planning ? 'Checking path…' : canRun ? (runState === 'running' ? 'Pause · Space' : runState === 'paused' ? 'Resume · Space' : isChanged ? 'Run repaired cycle' : isLayoutChanged ? 'Run layout candidate' : 'Replay baseline') : 'Resolve P02'}
               </button>
             )}
           </div>
@@ -499,12 +556,12 @@ export default function App() {
               </div>
               <div className="spec-grid">
                 {details.specs.map(([label, value]) => (
-                  <div key={label}><span>{label}</span><strong>{value}</strong></div>
+                  <div key={label}><span>{label}</span><strong>{label === 'Position X' ? `${Math.round((layout.infeed[0] + fixtureShiftMm / 1000) * 1000)} mm` : value}</strong></div>
                 ))}
               </div>
               <div className="baseline-evidence">
                 <span className="micro-label">COMMISSIONED EVIDENCE</span>
-                <strong>Baseline preflight passes</strong>
+                <strong>P02 preflight passes · full path checked on run</strong>
                 <p>{baselineEvaluation.cycleSeconds.toFixed(1)} s nominal cycle · 84 mm P02 clearance · {checksPassed}/{activeEvaluation.checks.length} checks passed</p>
               </div>
               <div className="change-action">
@@ -548,7 +605,7 @@ export default function App() {
                   <div className="section-label"><span>Recovery options</span><span>Constraint-derived</span></div>
                   <div className="repair-list">
                     {recoveryProposals.map((proposal, index) => {
-                      const evaluation = evaluateCommissioning({ fixtureShiftMm, repairId: proposal.id })
+                      const evaluation = evaluateCommissioning({ layout, fixtureShiftMm, repairId: proposal.id })
                       const selectedProposal = previewRepair === proposal.id
                       return (
                         <button key={proposal.id} className={`repair-card ${selectedProposal ? 'selected' : ''}`} onClick={() => previewCandidate(proposal.id)}>
@@ -581,7 +638,7 @@ export default function App() {
           )}
           <div className="baseline-evidence">
             <span className="micro-label">VERIFICATION SCOPE</span>
-            <p>1441 measured TCP poses · 18 mm / 15° · joint limits. Swept arm/tool bounds checked against CNC geometry; payload contact with chuck pads allowed. P02 remains planned tool clearance. Self-collision and other cell obstacles are not checked.</p>
+            <p>1441 measured TCP poses · 18 mm / 15° · joint limits. Before motion: full-path rehearsal on loaded assets. During motion: swept arm/tool/payload bounds against CNC and tables; named payload supports allowed. P02 remains planned tool clearance. Self-collision, loose stock, scanner/fences, jerk limits and hardware acknowledgement are not checked.</p>
           </div>
         </aside>
       </section>
@@ -591,7 +648,7 @@ export default function App() {
         <div>Robot <strong>UR20</strong></div>
         <div>Controller <strong>Local prototype</strong></div>
         <div className="statusbar-spacer" />
-        <div>Revision <strong>{released ? '08 released' : isChanged ? '08 draft' : '07 validated'}</strong></div>
+        <div>Revision <strong>{released ? '08 released' : isDraft ? '08 draft' : '07 validated'}</strong></div>
         <div className="coordinate-readout">X {fixtureShiftMm.toFixed(1)}&nbsp;&nbsp; Y 0000.0&nbsp;&nbsp; Z 0000.0</div>
       </footer>
 

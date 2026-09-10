@@ -1,5 +1,5 @@
 import { useFrame } from '@react-three/fiber'
-import { useRef, type RefObject } from 'react'
+import { useEffect, useRef, type RefObject } from 'react'
 import * as THREE from 'three'
 import {
   THREE_JAW_AXIAL_TRAVEL,
@@ -76,6 +76,7 @@ function Jaw({ angle, jawRef }: JawProps) {
 }
 
 interface ThreeJawGripperProps {
+  motionToken: string
   paused: boolean
   motion: MotionState
   tcpRef: RefObject<THREE.Object3D | null>
@@ -96,11 +97,19 @@ function dampJaw(
   )
 }
 
-export function ThreeJawGripper({ motion, tcpRef, paused }: ThreeJawGripperProps) {
+export function ThreeJawGripper({ motionToken, motion, tcpRef, paused }: ThreeJawGripperProps) {
   const rotorRef = useRef<THREE.Group>(null)
   const firstJawRef = useRef<THREE.Group>(null)
   const secondJawRef = useRef<THREE.Group>(null)
   const thirdJawRef = useRef<THREE.Group>(null)
+
+  useEffect(() => {
+    rotorRef.current!.rotation.z = 0
+    for (const ref of [firstJawRef, secondJawRef, thirdJawRef]) {
+      ref.current!.position.x = THREE_JAW_OPEN_RADIUS
+      ref.current!.position.z = -THREE_JAW_AXIAL_TRAVEL
+    }
+  }, [motionToken])
 
   useFrame((_, delta) => {
     if (paused) return

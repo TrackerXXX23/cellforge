@@ -124,6 +124,11 @@ export function Ur20Robot({ motion, selected, onSelect, telemetry, motionToken, 
   const motionWorkspace = useMemo(createUr20IkWorkspace, [])
   const planner = useMemo(() => {
     const plannerRobot = robot.clone(true)
+    // The loaded robot may already have R3F's world transform (e.g. remount/HMR).
+    // This clone's coordinate conversion belongs exclusively to the root below.
+    plannerRobot.position.set(0, 0, 0)
+    plannerRobot.rotation.set(0, 0, 0)
+    plannerRobot.scale.setScalar(1)
     const root = new THREE.Group()
     const tcp = new THREE.Object3D()
     root.rotation.x = -Math.PI / 2
@@ -261,7 +266,7 @@ export function Ur20Robot({ motion, selected, onSelect, telemetry, motionToken, 
         scale={UR20_RENDER_SCALE}
         dispose={null}
       />
-      {toolFrame && createPortal(<ThreeJawGripper paused={paused} motion={motion} tcpRef={tcpRef} />, toolFrame)}
+      {toolFrame && createPortal(<ThreeJawGripper motionToken={motionToken} paused={paused} motion={motion} tcpRef={tcpRef} />, toolFrame)}
     </group>
   )
 }
