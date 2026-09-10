@@ -4,6 +4,8 @@ import * as THREE from 'three'
 import URDFLoader, { type URDFRobot } from 'urdf-loader'
 import { THREE_JAW_TCP_OFFSET } from './eoat'
 import { ThreeJawGripper } from './ThreeJawGripper'
+import type { MotionTelemetry } from './cycleAcceptance'
+import { UR20_JOINT_NAMES } from './ur20'
 import type { MotionState } from './simulation'
 import {
   UR20_PACKAGE_URL,
@@ -74,6 +76,10 @@ const motionDebug: Ur20MotionDebug = {
 
 interface Ur20RobotProps {
   motion: MotionState
+  telemetry: React.RefObject<MotionTelemetry | null>
+  motionToken: string
+  progress: number
+  paused: boolean
   selected: boolean
   onSelect: (event: import('@react-three/fiber').ThreeEvent<MouseEvent>) => void
 }
@@ -101,7 +107,7 @@ function preservesAttachedMaterial(object: THREE.Object3D) {
   return false
 }
 
-export function Ur20Robot({ motion, selected, onSelect }: Ur20RobotProps) {
+export function Ur20Robot({ motion, selected, onSelect, telemetry, motionToken, progress, paused }: Ur20RobotProps) {
   const robot = useLoader(R3fUrdfLoader, UR20_URDF_URL, (loader) => {
     const urdfLoader = loader as unknown as URDFLoader
     urdfLoader.packages = { ur_description: UR20_PACKAGE_URL }
@@ -110,6 +116,7 @@ export function Ur20Robot({ motion, selected, onSelect }: Ur20RobotProps) {
   })
   const toolFrame = robot.frames.tool0
   const tcpRef = useRef<THREE.Object3D>(null)
+  const measurement = useMemo<MotionTelemetry>(() => ({ token: '', progress: 0, timestamp: 0, tcpError: Infinity, directionError: Infinity, plannedTcpError: Infinity, plannedDirectionError: Infinity, joints: Array(6).fill(0) }), [])
   const motionWorkspace = useMemo(createUr20IkWorkspace, [])
   const planner = useMemo(() => {
     const plannerRobot = robot.clone(true)
@@ -177,13 +184,24 @@ export function Ur20Robot({ motion, selected, onSelect }: Ur20RobotProps) {
   ])
 
   useFrame((_, delta) => {
-    stepUr20JointMotion(robot, planner.targetJoints, delta, motionWorkspace)
+    if (!paused) stepUr20JointMotion(robot, planner.targetJoints, delta, motionWorkspace)
     const tcpError = measureUr20TcpPose(
       tcpRef.current,
       motion.target,
       motion.toolDirection,
       motionWorkspace,
     )
+    measurement.token = motionToken
+    measurement.progress = progress
+    measurement.timestamp = performance.now()
+    measurement.tcpError = tcpError
+    measurement.directionError = motionWorkspace.directionError
+    measurement.plannedTcpError = planner.tcpError
+    measurement.plannedDirectionError = planner.workspace.directionError
+    for (let index = 0; index < UR20_JOINT_NAMES.length; index += 1) {
+      measurement.joints[index] = robot.joints[UR20_JOINT_NAMES[index]]?.angle ?? NaN
+    }
+    telemetry.current = measurement
     if (import.meta.env.DEV) {
       motionDebug.tcpError = tcpError
       motionDebug.directionError = motionWorkspace.directionError
@@ -223,7 +241,7 @@ export function Ur20Robot({ motion, selected, onSelect }: Ur20RobotProps) {
         scale={UR20_RENDER_SCALE}
         dispose={null}
       />
-      {toolFrame && createPortal(<ThreeJawGripper motion={motion} tcpRef={tcpRef} />, toolFrame)}
+      {toolFrame && createPortal(<ThreeJawGripper paused={paused} motion={motion} tcpRef={tcpRef} />, toolFrame)}
     </group>
   )
 }

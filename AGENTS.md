@@ -27,6 +27,11 @@
 
 ## Verification
 
+- Codex owns visual and functional acceptance. Use browser tools to inspect the running app, exercise the complete workflow and meaningful failure cases, capture evidence, and iterate until defects within scope are fixed.
+- Do not stop for user visual approval or ask the user to test routine implementation work. Browser verification and self-review replace that approval gate, including the former PR #11 visual-review handoff.
+- A passing build or elapsed simulation timer alone is not acceptance. Verify actual motion outcomes, blocked failure paths, and truthful export/release status. Record evidence and remaining limitations in the handoff.
+- This autonomous verification rule does not itself authorize merging PRs or deploying; follow the completion workflow for publishing a verified draft PR.
+
 Run the narrowest useful command while iterating:
 
 - `npm run test:skill` for R3F guardrails.

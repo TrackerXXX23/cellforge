@@ -239,7 +239,7 @@ export function evaluateCommissioning(config: CommissioningConfiguration): Commi
       {
         layer: 'deployment-gate',
         id: 'preflight',
-        label: deployable ? 'Candidate revision is deployable' : 'Release blocked by preflight findings',
+        label: deployable ? 'Preflight passes · measured cycle required' : 'Release blocked by preflight findings',
         status: deployable ? 'clear' : 'blocked',
       },
     ],
