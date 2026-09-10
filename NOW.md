@@ -6,7 +6,7 @@
 **Last handoff**: 2026-09-10 00:55:16 CST
 **Branch**: `codex/self-cell-collision`
 **Active ticket**: `None found`
-**Summary**: Implemented self and remaining-cell collision checks on codex/self-cell-collision, based on open PR #15 head 44a8e49. Fixed inherited offset OBB center transforms, added relative sectioned self checks, scanner/floor/panels/stock coverage, explicit grasp phases, and missing-body rejection. Corrected gripper carrier geometry and unloaded via a clear reorientation route. Closer-table baseline and shifted runs accepted 1441 poses in 53.86 s and 53.68 s; reference layout is now correctly blocked under the approximate model near sample 1150. Eleven asset fault injections, live scanner stop/blocked export/retry, pause and mobile checks passed. npm run check passed 81 tests, typecheck and build. See docs/self-cell-collision-verification.md. Prior PRs untouched; no merge/deploy.
+**Summary**: Published draft PR #16 targeting develop: https://github.com/TrackerXXX23/cellforge/pull/16 (implementation 4d66838). Implemented self and remaining-cell collision checks on codex/self-cell-collision, based on open PR #15 head 44a8e49. Fixed inherited offset OBB center transforms, added relative sectioned self checks, scanner/floor/panels/stock coverage, explicit grasp phases, and missing-body rejection. Corrected gripper carrier geometry and unloaded via a clear reorientation route. Closer-table baseline and shifted runs accepted 1441 poses in 53.86 s and 53.68 s; reference layout is now correctly blocked under the approximate model near sample 1150. Eleven asset fault injections, live scanner stop/blocked export/retry, pause and mobile checks passed. npm run check passed 81 tests, typecheck and build. See docs/self-cell-collision-verification.md. Prior PRs untouched; no merge/deploy.
 **Next exact action**: Review this dependent draft PR; next improve the rejected reference outfeed route with collision-aware configuration selection. Merge only with authorization.
 **Blocker**: None
 
@@ -37,7 +37,7 @@
 <!-- codex-handoff:end -->
 ## Current state
 
-- Active branch: `codex/self-cell-collision`, based on open [PR #15](https://github.com/TrackerXXX23/cellforge/pull/15) head `44a8e49`; depends transitively on PR #14 and #13. Parent branches remain unchanged. No merge/deploy authorization.
+- [Draft PR #16](https://github.com/TrackerXXX23/cellforge/pull/16) targets `develop`; implementation `4d66838`. Active branch: `codex/self-cell-collision`, based on open [PR #15](https://github.com/TrackerXXX23/cellforge/pull/15) head `44a8e49`; depends transitively on PR #14 and #13. Parent branches remain unchanged. No merge/deploy authorization.
 - Same guard in rehearsal and execution: non-adjacent robot links/tool/payload, CNC, tables, loose/source/chuck/placed stock, scanner housing, floor and two boundary panels. Missing required bodies fail closed; connected/internal-gripper pairs and named grasp/support contact are narrowly excluded.
 - Fixed inherited offset OBB center transforms. Self checks use relative-frame sectioned bounds. Corrected jaw carrier/finger geometry and routed unloading through a clear reorientation point.
 - Important changed result: reference layout now fails the approximate self-contact guard near outfeed sample 1150 (base/upper arm). It is marked for recheck and excluded from search. Prior pass claims must not authorize release under this collision version.
