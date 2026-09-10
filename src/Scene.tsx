@@ -2,6 +2,7 @@ import { ContactShadows, Grid, Line, OrbitControls } from '@react-three/drei'
 import { Canvas, ThreeEvent } from '@react-three/fiber'
 import { Suspense, useMemo } from 'react'
 import * as THREE from 'three'
+import { createCncContactMonitor } from './cncContact'
 import { CncMachine } from './CncMachine'
 import {
   FINISHED_WORKPIECE_COLOR,
@@ -226,6 +227,7 @@ function Cell({
     )),
     [activePath, baselinePath],
   )
+  const cncContact = useMemo(createCncContactMonitor, [])
   const showBaselinePath = showRevisionGhost || pathState !== 'baseline' || pathChanged
   const activePathColor = pathState === 'blocked' ? danger : pathState === 'repaired' ? success : cobalt
 
@@ -241,8 +243,8 @@ function Cell({
         shadow-normalBias={0.04}
       />
       <directionalLight position={[5, 3, -4]} intensity={0.7} color="#c9ddff" />
-      <Ur20Robot telemetry={telemetry} motionToken={motionToken} progress={progress} paused={runState === 'paused' || runState === 'failed'} selected={selected === 'robot'} onSelect={(event) => select(event, () => onSelect('robot'))} motion={motion} />
-      <CncMachine paused={runState === 'paused' || runState === 'failed'} selected={selected === 'cnc'} onSelect={() => onSelect('cnc')} motion={motion} />
+      <Ur20Robot cncContact={cncContact} telemetry={telemetry} motionToken={motionToken} progress={progress} paused={runState === 'paused' || runState === 'failed' || runState === 'complete'} selected={selected === 'robot'} onSelect={(event) => select(event, () => onSelect('robot'))} motion={motion} />
+      <CncMachine cncContact={cncContact} paused={runState === 'paused' || runState === 'failed' || runState === 'complete'} selected={selected === 'cnc'} onSelect={() => onSelect('cnc')} motion={motion} />
       {showRevisionGhost && <InfeedRevisionGhost />}
       <PartTable
         kind="infeed"

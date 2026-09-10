@@ -23,7 +23,7 @@ interface GlbJson {
       mode?: number
     }[]
   }[]
-  nodes?: { name?: string }[]
+  nodes?: { name?: string; translation?: number[] }[]
 }
 
 function readGlbJson() {
@@ -79,6 +79,21 @@ describe('CellForge VMC browser asset', () => {
     worldWorkpieceCenter.forEach((coordinate, index) => {
       expect(coordinate).toBeCloseTo(CNC_CHUCK_TARGET[index])
     })
+  })
+
+  it('keeps the horizontal chuck behind the blank with a rear gripping zone', () => {
+    const nodes = readGlbJson().nodes ?? []
+    const backplate = nodes.find(node => node.name === 'Chuck_Backplate')!
+    const pad = nodes.find(node => node.name === 'Chuck_Jaw_0')!
+    expect(backplate).toBeDefined()
+    expect(pad).toBeDefined()
+    // glTF +Z becomes world -X. Backplate thickness is 50 mm.
+    const frontOfBackplate = CNC_MACHINE_POSITION[0] - backplate.translation![2] - 0.025
+    const blankRear = CNC_CHUCK_TARGET[0] + 0.04
+    const padFront = CNC_MACHINE_POSITION[0] - pad.translation![2] - 0.007
+    expect(frontOfBackplate - blankRear).toBeCloseTo(0.01, 5)
+    expect(blankRear - padFront).toBeCloseTo(0.007, 5)
+    expect(nodes.some(node => node.name === 'Vise_MovingJaw')).toBe(false)
   })
 
   it('retains editable source, a reproducible generator, and asset notes', () => {

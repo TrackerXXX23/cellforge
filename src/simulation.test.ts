@@ -28,7 +28,7 @@ describe('machine-tending motion plan', () => {
   it('transfers one part through pick, machine, unload, and place states', () => {
     const beforePick = sampleMotion(0.12, 'running')
     const carryingRaw = sampleMotion(0.2, 'running')
-    const machining = sampleMotion(0.54, 'running')
+    const machining = sampleMotion(0.56, 'running')
     const carryingFinished = sampleMotion(0.72, 'running')
     const placed = sampleMotion(0.98, 'running')
 
@@ -70,7 +70,7 @@ describe('machine-tending motion plan', () => {
 
   it('opens the CNC door only for load and unload access', () => {
     expect(sampleMotion(0.44, 'running').doorOpen).toBe(true)
-    expect(sampleMotion(0.54, 'running').doorOpen).toBe(false)
+    expect(sampleMotion(0.56, 'running').doorOpen).toBe(false)
     expect(sampleMotion(0.62, 'running').doorOpen).toBe(true)
     expect(sampleMotion(0.82, 'running').doorOpen).toBe(false)
   })

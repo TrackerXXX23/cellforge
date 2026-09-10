@@ -30,6 +30,11 @@ The runtime depends on these named nodes:
 - `ControlPanel`
 - `StackLight`, `StackLight_Amber`, and `StackLight_Green`
 
+The legacy `Vise` group now holds a horizontal receiving chuck. Its rear pads
+contact the back 7 mm of the blank; the front remains accessible to the robot.
+The door travels 1.3 m to clear the aperture, and the spindle retracts during
+loading and unloading.
+
 The machine component animates `Door`, `Spindle`, and the stack-light lenses
 from existing deterministic process state. Robot targets, kinematics, motion
 timing, and clearance logic are intentionally outside this asset package.

@@ -85,7 +85,7 @@ export default function App() {
   const telemetry = useRef<MotionTelemetry | null>(null)
   const evidence = useRef<CycleEvidence | null>(null)
   const [runId, setRunId] = useState(0)
-  const revisionKey = JSON.stringify({ fixtureShiftMm, appliedRepair, version: 'ur20-cycle/v1' })
+  const revisionKey = JSON.stringify({ fixtureShiftMm, appliedRepair, version: 'ur20-cycle/v2-cnc-sweep' })
   const motionToken = `${revisionKey}:${runId}`
 
   const activeRepair = previewRepair ?? appliedRepair
@@ -145,21 +145,30 @@ export default function App() {
       if (!result || result.revisionKey !== revisionKey) return
       result.elapsedSeconds += elapsed / 1000
       waitingMs.current += elapsed
+      if (telemetry.current?.token === motionToken && (telemetry.current.contactFailure || telemetry.current.continuityFailure)) {
+        result.failure = telemetry.current.contactFailure || telemetry.current.continuityFailure
+        setRunState('failed')
+        setToast(result.failure!)
+        return
+      }
       if (acceptsTelemetry(telemetry.current, motionToken, currentProgress, performance.now())
           && waitingMs.current >= committedEvaluation.cycleSeconds * 1000 / CYCLE_SAMPLES) {
         recordAcceptedSample(result, telemetry.current!)
         if (isCycleVerified(result, revisionKey)) {
           setRunState('complete')
-          setToast('Cycle verified · all 241 sampled UR20 poses accepted')
+          setToast('Cycle verified · all 1441 sampled UR20 poses accepted')
           return
         }
         currentProgress = result.acceptedSamples / CYCLE_SAMPLES
         setProgress(currentProgress)
-        waitingMs.current = 0
+        waitingMs.current = Math.min(
+          waitingMs.current - committedEvaluation.cycleSeconds * 1000 / CYCLE_SAMPLES,
+          committedEvaluation.cycleSeconds * 1000 / CYCLE_SAMPLES,
+        )
       } else if (waitingMs.current > 8000) {
         result.failure = `Motion acceptance timed out at ${(currentProgress * 100).toFixed(1)}% · check TCP tracking, solver and joint limits`
         setRunState('failed')
-        setToast(result.failure)
+        setToast(result.failure!)
         return
       }
       frame = requestAnimationFrame(tick)
@@ -277,7 +286,7 @@ export default function App() {
     const artifact = {
       schema: 'cellforge.job/v2',
       delivery: { status: 'local-export', runtimeAcknowledged: false },
-      cycleEvidence: { ...evidence.current, positionToleranceMm: 18, directionToleranceDegrees: 15, coverage: '241 sampled poses; planned P02 tool-envelope clearance only; no full-arm collision or hardware certification' },
+      cycleEvidence: { ...evidence.current, positionToleranceMm: 18, directionToleranceDegrees: 15, coverage: '1441 measured poses; rendered arm/tool/payload swept bounding boxes against CNC meshes; planned P02 tool-envelope clearance; intentional payload/chuck-pad contact allowed; no self-collision, other-cell collision or hardware certification' },
       job: 'OP-1042 · CNC housing',
       revision: 8,
       generatedAt: new Date().toISOString(),
@@ -321,7 +330,7 @@ export default function App() {
       : runState === 'paused'
         ? `Paused · ${motion.action}`
         : runState === 'complete'
-          ? 'Cycle verified · 241 measured poses'
+          ? 'Cycle verified · 1441 measured poses'
           : previewRepair
             ? 'Previewing repair candidate'
             : appliedRepair
@@ -572,7 +581,7 @@ export default function App() {
           )}
           <div className="baseline-evidence">
             <span className="micro-label">VERIFICATION SCOPE</span>
-            <p>241 sampled TCP poses · 18 mm / 15° · joint limits. Clearance covers the planned P02 tool envelope only; full-arm collisions are not checked.</p>
+            <p>1441 measured TCP poses · 18 mm / 15° · joint limits. Swept arm/tool bounds checked against CNC geometry; payload contact with chuck pads allowed. P02 remains planned tool clearance. Self-collision and other cell obstacles are not checked.</p>
           </div>
         </aside>
       </section>

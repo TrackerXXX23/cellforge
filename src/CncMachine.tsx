@@ -19,10 +19,13 @@ import {
   WORKPIECE_RADIUS,
 } from './workpiece'
 
+import type { CncContactMonitor } from './cncContact'
+
 const cobalt = '#245df3'
 const cutawayOpacity = 0.14
 
 interface CncMachineProps {
+  cncContact: CncContactMonitor
   paused: boolean
   motion: MotionState
   selected: boolean
@@ -75,7 +78,7 @@ function setLampState(node: THREE.Object3D, active: boolean) {
   })
 }
 
-export function CncMachine({ motion, selected, onSelect, paused }: CncMachineProps) {
+export function CncMachine({ motion, selected, onSelect, paused, cncContact }: CncMachineProps) {
   const { scene } = useGLTF(CNC_ASSET_URL)
   const machineScene = useMemo(() => {
     const instance = scene.clone(true)
@@ -92,15 +95,18 @@ export function CncMachine({ motion, selected, onSelect, paused }: CncMachinePro
       stackGreen: requireNode(machineScene, CNC_ASSET_NODES.stackGreen),
     }
   }, [machineScene])
+  const spindleHomeY = useMemo(() => nodes.spindle.position.y, [nodes.spindle])
   const shellMaterials = useMemo(() => collectMaterials(nodes.shell), [nodes.shell])
 
   useEffect(() => {
+    cncContact.registerMachine(machineScene)
+    if (import.meta.env.DEV) Object.assign(window, { __CELLFORGE_CNC__: machineScene })
     machineScene.traverse((object) => {
       if (!(object instanceof THREE.Mesh)) return
       object.castShadow = true
       object.receiveShadow = true
     })
-  }, [machineScene])
+  }, [machineScene, cncContact])
 
   useEffect(() => {
     for (const material of shellMaterials) {
@@ -120,8 +126,11 @@ export function CncMachine({ motion, selected, onSelect, paused }: CncMachinePro
     if (paused) return
     const doorTarget = motion.doorOpen ? CNC_DOOR_OPEN_OFFSET : 0
     nodes.door.position.x = THREE.MathUtils.damp(nodes.door.position.x, doorTarget, 8, delta)
+    const spindleTarget = spindleHomeY + (motion.machineRunning ? 0.14 : 0.44)
+    nodes.spindle.position.y = THREE.MathUtils.damp(nodes.spindle.position.y, spindleTarget, 8, delta)
     if (motion.machineRunning) nodes.spindle.rotation.y += delta * 18
-  })
+    machineScene.updateWorldMatrix(true, true)
+  }, -2)
 
   function handleSelect(event: ThreeEvent<MouseEvent>) {
     event.stopPropagation()

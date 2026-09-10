@@ -10,7 +10,6 @@ import type { MotionState } from './simulation'
 import {
   UR20_PACKAGE_URL,
   UR20_IK_JOINT_NAMES,
-  UR20_OUTFEED_SEED_JOINTS,
   UR20_READY_JOINTS,
   UR20_RENDER_SCALE,
   UR20_URDF_URL,
@@ -21,6 +20,9 @@ import {
   solveUr20IkTarget,
   stepUr20JointMotion,
 } from './ur20Ik'
+
+import { createMotionContinuityMonitor } from './motionContinuity'
+import type { CncContactMonitor } from './cncContact'
 
 const graphite = '#26302f'
 const shellMaterial = new THREE.MeshStandardMaterial({
@@ -75,6 +77,7 @@ const motionDebug: Ur20MotionDebug = {
 }
 
 interface Ur20RobotProps {
+  cncContact: CncContactMonitor
   motion: MotionState
   telemetry: React.RefObject<MotionTelemetry | null>
   motionToken: string
@@ -107,7 +110,7 @@ function preservesAttachedMaterial(object: THREE.Object3D) {
   return false
 }
 
-export function Ur20Robot({ motion, selected, onSelect, telemetry, motionToken, progress, paused }: Ur20RobotProps) {
+export function Ur20Robot({ motion, selected, onSelect, telemetry, motionToken, progress, paused, cncContact }: Ur20RobotProps) {
   const robot = useLoader(R3fUrdfLoader, UR20_URDF_URL, (loader) => {
     const urdfLoader = loader as unknown as URDFLoader
     urdfLoader.packages = { ur_description: UR20_PACKAGE_URL }
@@ -116,7 +119,8 @@ export function Ur20Robot({ motion, selected, onSelect, telemetry, motionToken, 
   })
   const toolFrame = robot.frames.tool0
   const tcpRef = useRef<THREE.Object3D>(null)
-  const measurement = useMemo<MotionTelemetry>(() => ({ token: '', progress: 0, timestamp: 0, tcpError: Infinity, directionError: Infinity, plannedTcpError: Infinity, plannedDirectionError: Infinity, joints: Array(6).fill(0) }), [])
+  const measurement = useMemo<MotionTelemetry>(() => ({ token: '', progress: 0, timestamp: 0, tcpError: Infinity, directionError: Infinity, plannedTcpError: Infinity, plannedDirectionError: Infinity, contactFailure: null, sweptFrames: 0, continuityFailure: null, maxJointVelocity: 0, maxJointAcceleration: 0, currentJointSpeed: 0, joints: Array(6).fill(0) }), [])
+  const continuity = useMemo(createMotionContinuityMonitor, [])
   const motionWorkspace = useMemo(createUr20IkWorkspace, [])
   const planner = useMemo(() => {
     const plannerRobot = robot.clone(true)
@@ -140,8 +144,11 @@ export function Ur20Robot({ motion, selected, onSelect, telemetry, motionToken, 
   }, [robot])
 
   useEffect(() => {
-    if (import.meta.env.DEV) window.__CELLFORGE_UR20_MOTION__ = motionDebug
-    robot.setJointValues(UR20_READY_JOINTS)
+    if (import.meta.env.DEV) {
+      window.__CELLFORGE_UR20_MOTION__ = motionDebug
+      Object.assign(window, { __CELLFORGE_ROBOT__: robot })
+    }
+    cncContact.registerRobot(robot)
     robot.traverse((object) => {
       if (!(object instanceof THREE.Mesh) || preservesAttachedMaterial(object)) return
       const linkName = getUrdfLinkName(object)
@@ -156,13 +163,16 @@ export function Ur20Robot({ motion, selected, onSelect, telemetry, motionToken, 
     return () => {
       if (import.meta.env.DEV) delete window.__CELLFORGE_UR20_MOTION__
     }
-  }, [robot])
+  }, [robot, cncContact])
+
+  // A new run/revision resets the simulation; pause/resume keeps the same token.
+  useEffect(() => {
+    robot.setJointValues(UR20_READY_JOINTS)
+    planner.robot.setJointValues(UR20_READY_JOINTS)
+    motionWorkspace.jointVelocities.fill(0)
+  }, [motionToken, robot, planner, motionWorkspace])
 
   useEffect(() => {
-    const followsOutfeedBranch = motion.action === 'Moving to outfeed approach'
-      || motion.action === 'Descending to outfeed slot'
-      || motion.action === 'Releasing finished part'
-    if (followsOutfeedBranch) planner.robot.setJointValues(UR20_OUTFEED_SEED_JOINTS)
     planner.tcpError = solveUr20IkTarget(
       planner.robot,
       planner.tcp,
@@ -174,6 +184,7 @@ export function Ur20Robot({ motion, selected, onSelect, telemetry, motionToken, 
       planner.targetJoints[index] = planner.robot.joints[UR20_IK_JOINT_NAMES[index]].angle
     }
   }, [
+    motionToken,
     motion.target[0],
     motion.target[1],
     motion.target[2],
@@ -191,6 +202,8 @@ export function Ur20Robot({ motion, selected, onSelect, telemetry, motionToken, 
       motion.toolDirection,
       motionWorkspace,
     )
+    measurement.contactFailure = cncContact.measure(motionToken, paused)
+    measurement.sweptFrames = cncContact.frames
     measurement.token = motionToken
     measurement.progress = progress
     measurement.timestamp = performance.now()
@@ -200,6 +213,13 @@ export function Ur20Robot({ motion, selected, onSelect, telemetry, motionToken, 
     measurement.plannedDirectionError = planner.workspace.directionError
     for (let index = 0; index < UR20_JOINT_NAMES.length; index += 1) {
       measurement.joints[index] = robot.joints[UR20_JOINT_NAMES[index]]?.angle ?? NaN
+    }
+    measurement.continuityFailure = continuity.measure(measurement.joints, delta, paused, motionToken)
+    measurement.maxJointVelocity = continuity.maxVelocity
+    measurement.maxJointAcceleration = continuity.maxAcceleration
+    measurement.currentJointSpeed = 0
+    for (const velocity of motionWorkspace.jointVelocities) {
+      measurement.currentJointSpeed = Math.max(measurement.currentJointSpeed, Math.abs(velocity))
     }
     telemetry.current = measurement
     if (import.meta.env.DEV) {
@@ -225,7 +245,7 @@ export function Ur20Robot({ motion, selected, onSelect, telemetry, motionToken, 
         motionDebug.jointVelocities[index] = motionWorkspace.jointVelocities[index]
       }
     }
-  })
+  }, -1)
 
   return (
     <group onClick={onSelect}>

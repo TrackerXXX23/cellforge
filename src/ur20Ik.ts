@@ -17,15 +17,10 @@ const POSITION_WEIGHT = 1
 const DIRECTION_WEIGHT = 0.15
 const POSTURE_WEIGHT = 0.00001
 const DAMPING_SQUARED = 0.0025
-const SOLVER_RESPONSE = 12
+const SOLVER_RESPONSE = 30
 const JOINT_COUNT = UR20_IK_JOINT_NAMES.length
 const PLANNER_ITERATIONS = 160
 const MAX_PLANNER_STEP = 0.18
-
-function moveTowards(value: number, target: number, maxDelta: number) {
-  if (Math.abs(target - value) <= maxDelta) return target
-  return value + Math.sign(target - value) * maxDelta
-}
 
 export interface Ur20IkWorkspace {
   target: THREE.Vector3
@@ -99,8 +94,8 @@ export function isUr20TcpPoseAccepted(tcpError: number, directionError: number) 
 
 // Leave tracking margin for the velocity-limited rendered chain.
 function isPlannerPoseAccepted(positionError: number, directionError: number) {
-  return positionError <= UR20_TCP_TOLERANCE * 0.5
-    && directionError <= UR20_TOOL_DIRECTION_TOLERANCE * 0.5
+  return positionError <= 0.0005
+    && directionError <= 0.005
 }
 
 function solveNormalEquations(workspace: Ur20IkWorkspace) {
@@ -306,35 +301,30 @@ export function stepUr20JointMotion(
   delta: number,
   workspace: Ur20IkWorkspace,
 ) {
-  const frameDelta = Math.min(delta, 1 / 60)
+  const duration = Math.max(0, Math.min(delta, 1 / 15))
+  const steps = Math.max(1, Math.ceil(duration * 120))
+  const frameDelta = duration / steps
 
-  for (let index = 0; index < JOINT_COUNT; index += 1) {
-    const name = UR20_IK_JOINT_NAMES[index]
-    const joint = robot.joints[name] as URDFJoint
-    const jointError = targetJoints[index] - joint.angle
-    const stoppingVelocity = Math.sqrt(2 * MAX_JOINT_ACCELERATION * Math.abs(jointError))
-    const desiredVelocity = Math.sign(jointError) * Math.min(
-      Math.abs(jointError) * SOLVER_RESPONSE,
-      stoppingVelocity,
-      UR20_MAX_JOINT_VELOCITIES[name],
-    )
-    workspace.jointVelocities[index] = THREE.MathUtils.clamp(
-      desiredVelocity,
-      workspace.jointVelocities[index] - MAX_JOINT_ACCELERATION * frameDelta,
-      workspace.jointVelocities[index] + MAX_JOINT_ACCELERATION * frameDelta,
-    )
-    if (Math.abs(jointError) < 1e-4) {
-      workspace.jointVelocities[index] = moveTowards(
-        workspace.jointVelocities[index],
-        0,
-        MAX_JOINT_ACCELERATION * frameDelta,
+  for (let step = 0; step < steps; step += 1) {
+    for (let index = 0; index < JOINT_COUNT; index += 1) {
+      const name = UR20_IK_JOINT_NAMES[index]
+      const joint = robot.joints[name] as URDFJoint
+      const jointError = targetJoints[index] - joint.angle
+      const stoppingVelocity = Math.sqrt(2 * MAX_JOINT_ACCELERATION * Math.abs(jointError))
+      const desiredVelocity = Math.sign(jointError) * Math.min(
+        Math.abs(jointError) * SOLVER_RESPONSE,
+        stoppingVelocity,
+        UR20_MAX_JOINT_VELOCITIES[name],
       )
-    }
-    const next = clampUr20Joint(name, joint.angle + workspace.jointVelocities[index] * frameDelta)
-    if ((targetJoints[index] - next) * jointError < 0) {
-      workspace.jointVelocities[index] = 0
-      robot.setJointValue(name, targetJoints[index])
-    } else {
+      const previousVelocity = workspace.jointVelocities[index]
+      workspace.jointVelocities[index] = THREE.MathUtils.clamp(
+        desiredVelocity,
+        workspace.jointVelocities[index] - MAX_JOINT_ACCELERATION * frameDelta,
+        workspace.jointVelocities[index] + MAX_JOINT_ACCELERATION * frameDelta,
+      )
+      const next = clampUr20Joint(name, joint.angle + (previousVelocity + workspace.jointVelocities[index]) * 0.5 * frameDelta)
+      // Keep bounded acceleration through target crossings. Snapping to a target
+      // and zeroing velocity here created a visible stop at every command.
       robot.setJointValue(name, next)
     }
   }

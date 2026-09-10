@@ -235,13 +235,17 @@ def build_machine() -> None:
             bevel=0.003,
         )
 
-    # Pneumatic vise centered on the commissioned CNC chuck target.
-    add_box("Vise_Base", (0.5, 0.34, 0.1), (0, -0.82, 0.86), graphite, parent=vise, bevel=0.016)
-    # Close the opposing pads around the commissioned 35 mm blank thickness.
-    add_box("Vise_FixedJaw", (0.5, 0.09, 0.22), (0, -0.745, 0.96), brushed_steel, parent=vise, bevel=0.012)
-    add_box("Vise_MovingJaw", (0.5, 0.09, 0.22), (0, -0.915, 0.96), brushed_steel, parent=vise, bevel=0.012)
-    add_box("Vise_JawPad_Fixed", (0.42, 0.025, 0.12), (0, -0.8, 1.01), graphite, parent=vise, bevel=0.004)
-    add_box("Vise_JawPad_Moving", (0.42, 0.025, 0.12), (0, -0.86, 1.01), graphite, parent=vise, bevel=0.004)
+    # Horizontal receiving chuck: the front half of the blank remains exposed
+    # for the robot's radial jaws. Rear chuck pads grip only its last 7 mm.
+    add_box("Vise_Base", (0.3, 0.3, 0.12), (0, -0.67, 0.86), graphite, parent=vise)
+    add_cylinder("Chuck_Backplate", 0.11, 0.05, (0, -0.755, 1.06), brushed_steel,
+                 parent=vise, rotation=(math.pi / 2, 0, 0))
+    for index in range(3):
+        angle = index * 2 * math.pi / 3
+        # Cylindrical pads tangent to the 30 mm blank radius, behind robot fingers.
+        add_cylinder(f"Chuck_Jaw_{index}", 0.012, 0.014,
+                     (0.042 * math.cos(angle), -0.790, 1.06 + 0.042 * math.sin(angle)),
+                     graphite, parent=vise, rotation=(math.pi / 2, 0, 0))
 
     # Stationary spindle housing plus a separately named rotating spindle/tool node.
     add_box("SpindleHousing", (0.46, 0.36, 0.48), (0, -0.82, 1.61), panel_paint, parent=interior, bevel=0.045)
