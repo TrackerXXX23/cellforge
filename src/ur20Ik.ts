@@ -12,12 +12,14 @@ import {
 export const UR20_TCP_TOLERANCE = 0.018
 export const UR20_TOOL_DIRECTION_TOLERANCE = THREE.MathUtils.degToRad(15)
 
-const MAX_JOINT_ACCELERATION = 4
+export const MAX_JOINT_ACCELERATION = 4
+export const MAX_JOINT_JERK = 120
 const POSITION_WEIGHT = 1
 const DIRECTION_WEIGHT = 0.15
 const POSTURE_WEIGHT = 0.00001
 const DAMPING_SQUARED = 0.0025
-const SOLVER_RESPONSE = 30
+const SOLVER_RESPONSE = 14
+const VELOCITY_RESPONSE = 32
 const JOINT_COUNT = UR20_IK_JOINT_NAMES.length
 const PLANNER_ITERATIONS = 160
 const MAX_PLANNER_STEP = 0.18
@@ -39,6 +41,7 @@ export interface Ur20IkWorkspace {
   normalRhs: number[]
   jointSteps: number[]
   jointVelocities: number[]
+  jointAccelerations: number[]
   bestJoints: number[]
   directionError: number
 }
@@ -69,6 +72,7 @@ export function createUr20IkWorkspace(): Ur20IkWorkspace {
     normalRhs: Array(JOINT_COUNT).fill(0) as number[],
     jointSteps: Array(JOINT_COUNT).fill(0) as number[],
     jointVelocities: Array(JOINT_COUNT).fill(0) as number[],
+    jointAccelerations: Array(JOINT_COUNT).fill(0) as number[],
     bestJoints: Array(JOINT_COUNT).fill(0) as number[],
     directionError: Number.POSITIVE_INFINITY,
   }
@@ -310,21 +314,29 @@ export function stepUr20JointMotion(
       const name = UR20_IK_JOINT_NAMES[index]
       const joint = robot.joints[name] as URDFJoint
       const jointError = targetJoints[index] - joint.angle
-      const stoppingVelocity = Math.sqrt(2 * MAX_JOINT_ACCELERATION * Math.abs(jointError))
+      // Reserve velocity headroom to ramp maximum acceleration back to zero.
+      const velocityHeadroom = MAX_JOINT_ACCELERATION ** 2 / (2 * MAX_JOINT_JERK)
       const desiredVelocity = Math.sign(jointError) * Math.min(
         Math.abs(jointError) * SOLVER_RESPONSE,
-        stoppingVelocity,
-        UR20_MAX_JOINT_VELOCITIES[name],
+        Math.sqrt(2 * MAX_JOINT_ACCELERATION * Math.abs(jointError)),
+        UR20_MAX_JOINT_VELOCITIES[name] - velocityHeadroom,
       )
-      const previousVelocity = workspace.jointVelocities[index]
-      workspace.jointVelocities[index] = THREE.MathUtils.clamp(
-        desiredVelocity,
-        workspace.jointVelocities[index] - MAX_JOINT_ACCELERATION * frameDelta,
-        workspace.jointVelocities[index] + MAX_JOINT_ACCELERATION * frameDelta,
+      const velocity = workspace.jointVelocities[index]
+      const acceleration = workspace.jointAccelerations[index]
+      const desiredAcceleration = THREE.MathUtils.clamp(
+        (desiredVelocity - velocity) * VELOCITY_RESPONSE,
+        -MAX_JOINT_ACCELERATION, MAX_JOINT_ACCELERATION,
       )
-      const next = clampUr20Joint(name, joint.angle + (previousVelocity + workspace.jointVelocities[index]) * 0.5 * frameDelta)
-      // Keep bounded acceleration through target crossings. Snapping to a target
-      // and zeroing velocity here created a visible stop at every command.
+      const nextAcceleration = THREE.MathUtils.clamp(desiredAcceleration,
+        acceleration - MAX_JOINT_JERK * frameDelta,
+        acceleration + MAX_JOINT_JERK * frameDelta)
+      const jerk = frameDelta > 0 ? (nextAcceleration - acceleration) / frameDelta : 0
+      const next = clampUr20Joint(name, joint.angle + velocity * frameDelta
+        + acceleration * frameDelta ** 2 / 2 + jerk * frameDelta ** 3 / 6)
+      workspace.jointVelocities[index] = velocity + (acceleration + nextAcceleration) * frameDelta / 2
+      workspace.jointAccelerations[index] = nextAcceleration
+      // Integrate the constant-jerk substep exactly; never snap or zero velocity
+      // at a target crossing. Boundary clamps remain subject to runtime guards.
       robot.setJointValue(name, next)
     }
   }

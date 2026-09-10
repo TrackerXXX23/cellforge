@@ -1,5 +1,6 @@
+import { searchLayouts, type SearchRequest } from './layoutSearch'
 import { tableSlot, TABLE_SIZE, TABLE_TOP_Y, TABLE_LEGS, type CellLayout } from './cellLayout'
-import { rehearsePlan, type PlanningRequest } from './pathPlanning'
+import { geometryForLayout, rehearsePlan, type PlanningRequest } from './pathPlanning'
 import { ContactShadows, Grid, Line, OrbitControls } from '@react-three/drei'
 import { Canvas, ThreeEvent } from '@react-three/fiber'
 import { Suspense, useEffect, useMemo, useRef } from 'react'
@@ -22,6 +23,7 @@ import type { MotionTelemetry } from './cycleAcceptance'
 interface SceneProps {
   layout: CellLayout
   planningRequest: React.RefObject<PlanningRequest | null>
+  searchRequest: React.RefObject<SearchRequest | null>
   telemetry: React.RefObject<MotionTelemetry | null>
   motionToken: string
   selected: CellObject
@@ -190,7 +192,7 @@ function CellLoadingFallback() {
 }
 
 function Cell({
-  layout, planningRequest,
+  layout, planningRequest, searchRequest,
   telemetry,
   motionToken,
   selected,
@@ -241,8 +243,10 @@ function Cell({
   useEffect(() => {
     if (import.meta.env.DEV) Object.assign(window, { __CELLFORGE_GEOMETRY__: () => cncContact.getGeometry() })
     planningRequest.current = (plan, cancelled) => rehearsePlan(cncContact.getGeometry(), plan, cancelled)
-    return () => { planningRequest.current = null }
-  }, [cncContact, planningRequest])
+    searchRequest.current = (fixtureShiftMm, cancelled, onProgress) => searchLayouts(fixtureShiftMm,
+      candidate => rehearsePlan(geometryForLayout(cncContact.getGeometry(), candidate.layout, fixtureShiftMm), candidate.motionPlan, cancelled), cancelled, onProgress)
+    return () => { planningRequest.current = null; searchRequest.current = null }
+  }, [cncContact, planningRequest, searchRequest])
   const showBaselinePath = showRevisionGhost || pathState !== 'baseline' || pathChanged
   const activePathColor = pathState === 'blocked' ? danger : pathState === 'repaired' ? success : cobalt
 

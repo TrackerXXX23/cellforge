@@ -46,3 +46,13 @@ describe('parameterized layout and path contracts', () => {
     expect(incomplete.frames).toBe(0)
   })
 })
+
+it('records a raised transfer even when the table layout is unchanged', () => {
+  const evaluation=evaluateCommissioning({fixtureShiftMm:0,repairId:null,transferLift:0.1})
+  expect(evaluation.revisionDelta.toRevision).toBe(8)
+  expect(evaluation.revisionDelta.modifiedWaypointIds).toEqual(['transfer-around-base','cnc-door-align'])
+  const standard={infeedApproachTarget:evaluation.approachTarget,infeedPickTarget:evaluation.pickTarget}
+  const raised={...standard,transferLift:0.1}
+  expect(sampleMotion(0.305,'running',raised).target[1]-sampleMotion(0.305,'running',standard).target[1]).toBeCloseTo(0.1)
+  expect(sampleMotion(0.4,'running',raised).target).toEqual(sampleMotion(0.4,'running',standard).target)
+})

@@ -10,6 +10,7 @@ export type RepairId = 'lifted-approach' | 'side-entry'
 
 export interface CommissioningConfiguration {
   layout?: CellLayout
+  transferLift?: number
   fixtureShiftMm: number
   repairId: RepairId | null
 }
@@ -154,6 +155,7 @@ function getModifiedWaypointIds(config: CommissioningConfiguration): readonly st
     else if (config.repairId === 'lifted-approach') changed.push('infeed-frame', 'infeed-approach')
     else changed.push('infeed-frame', 'infeed-pick')
   }
+  if (config.transferLift) changed.push('transfer-around-base', 'cnc-door-align')
   return [...new Set(changed)]
 }
 

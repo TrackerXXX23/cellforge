@@ -1,3 +1,4 @@
+import { MAX_OBSERVED_JERK } from './motionContinuity'
 import { UR20_COMMISSIONING_LIMITS, UR20_JOINT_NAMES } from './ur20'
 import { UR20_TCP_TOLERANCE, UR20_TOOL_DIRECTION_TOLERANCE } from './ur20Ik'
 
@@ -12,6 +13,8 @@ export interface MotionTelemetry {
   plannedDirectionError: number
   continuityFailure: string | null
   currentJointSpeed: number
+  currentJointAcceleration: number
+  maxJointJerk: number
   maxJointVelocity: number
   maxJointAcceleration: number
   contactFailure: string | null
@@ -35,7 +38,8 @@ export function acceptsTelemetry(sample: MotionTelemetry | null, token: string, 
   if (!Number.isFinite(now) || !sample || !Number.isFinite(sample.timestamp) || sample.token !== token || sample.progress !== progress || now < sample.timestamp || now - sample.timestamp > 250) return false
   const errors = [sample.tcpError, sample.directionError, sample.plannedTcpError, sample.plannedDirectionError]
   return sample.contactFailure === null && sample.continuityFailure === null && sample.sweptFrames > 0 && errors.every((value) => Number.isFinite(value) && value >= 0)
-    && (progress < 1 || sample.currentJointSpeed <= 0.01)
+    && (progress < 1 || (sample.currentJointSpeed <= 0.01 && sample.currentJointAcceleration <= 0.05))
+    && Number.isFinite(sample.maxJointJerk) && sample.maxJointJerk >= 0 && sample.maxJointJerk <= MAX_OBSERVED_JERK
     && sample.tcpError <= UR20_TCP_TOLERANCE
     && sample.plannedTcpError <= UR20_TCP_TOLERANCE
     && sample.directionError <= UR20_TOOL_DIRECTION_TOLERANCE

@@ -119,7 +119,7 @@ export function Ur20Robot({ motion, selected, onSelect, telemetry, motionToken, 
   })
   const toolFrame = robot.frames.tool0
   const tcpRef = useRef<THREE.Object3D>(null)
-  const measurement = useMemo<MotionTelemetry>(() => ({ token: '', progress: 0, timestamp: 0, tcpError: Infinity, directionError: Infinity, plannedTcpError: Infinity, plannedDirectionError: Infinity, contactFailure: null, sweptFrames: 0, continuityFailure: null, maxJointVelocity: 0, maxJointAcceleration: 0, currentJointSpeed: 0, joints: Array(6).fill(0) }), [])
+  const measurement = useMemo<MotionTelemetry>(() => ({ token: '', progress: 0, timestamp: 0, tcpError: Infinity, directionError: Infinity, plannedTcpError: Infinity, plannedDirectionError: Infinity, contactFailure: null, sweptFrames: 0, continuityFailure: null, maxJointVelocity: 0, maxJointAcceleration: 0, maxJointJerk: 0, currentJointAcceleration: 0, currentJointSpeed: 0, joints: Array(6).fill(0) }), [])
   const continuity = useMemo(createMotionContinuityMonitor, [])
   const motionWorkspace = useMemo(createUr20IkWorkspace, [])
   const planner = useMemo(() => {
@@ -175,6 +175,7 @@ export function Ur20Robot({ motion, selected, onSelect, telemetry, motionToken, 
     robot.setJointValues(UR20_READY_JOINTS)
     planner.robot.setJointValues(UR20_READY_JOINTS)
     motionWorkspace.jointVelocities.fill(0)
+    motionWorkspace.jointAccelerations.fill(0)
   }, [motionToken, robot, planner, motionWorkspace])
 
   useEffect(() => {
@@ -222,6 +223,9 @@ export function Ur20Robot({ motion, selected, onSelect, telemetry, motionToken, 
     measurement.continuityFailure = continuity.measure(measurement.joints, delta, paused, motionToken)
     measurement.maxJointVelocity = continuity.maxVelocity
     measurement.maxJointAcceleration = continuity.maxAcceleration
+    measurement.maxJointJerk = continuity.maxJerk
+    measurement.currentJointAcceleration = 0
+    for (const acceleration of motionWorkspace.jointAccelerations) measurement.currentJointAcceleration = Math.max(measurement.currentJointAcceleration, Math.abs(acceleration))
     measurement.currentJointSpeed = 0
     for (const velocity of motionWorkspace.jointVelocities) {
       measurement.currentJointSpeed = Math.max(measurement.currentJointSpeed, Math.abs(velocity))

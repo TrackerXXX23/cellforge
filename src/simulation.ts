@@ -40,6 +40,7 @@ export interface MotionPlan {
   infeedApproachTarget: Vec3
   infeedPickTarget: Vec3
   outfeedPlaceTarget?: Vec3
+  transferLift?: number
 }
 
 export const CYCLE_DURATION_SECONDS = 24
@@ -101,6 +102,9 @@ function resolveTarget(frame: MotionKeyframe, plan: MotionPlan): Vec3 {
   const outfeed = plan.outfeedPlaceTarget ?? OUTFEED_PLACE_TARGET
   if (frame.targetKey === 'outfeed-place') return outfeed
   if (frame.targetKey === 'outfeed-approach') return [outfeed[0], outfeed[1] + 0.205, outfeed[2]]
+  if (frame.target && frame.at >= 0.305 && frame.at <= 0.325) {
+    return [frame.target[0], frame.target[1] + (plan.transferLift ?? 0), frame.target[2]]
+  }
   return frame.target ?? HOME_TARGET
 }
 

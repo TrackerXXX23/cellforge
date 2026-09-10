@@ -1,3 +1,4 @@
+import type { CellLayout } from './cellLayout'
 import * as THREE from 'three'
 import type { URDFRobot } from 'urdf-loader'
 import { createCncContactMonitor } from './cncContact'
@@ -10,18 +11,19 @@ import { CNC_DOOR_OPEN_OFFSET } from './cnc'
 import { THREE_JAW_TCP_OFFSET, THREE_JAW_CLOSED_RADIUS, THREE_JAW_OPEN_RADIUS, THREE_JAW_AXIAL_TRAVEL, THREE_JAW_TWIST_ANGLE } from './eoat'
 
 export interface PlanningEvidence {
-  method: 'asset-rehearsal/v1'
+  method: 'asset-rehearsal/v2-jerk'
   failure: string | null
   acceptedSamples: number
   frames: number
   simulatedSeconds: number
   maxJointVelocity: number
   maxJointAcceleration: number
+  maxJointJerk: number
   tcpTravelMeters: number
   coverage: string
 }
 export type PlanningRequest = (plan: MotionPlan, cancelled: () => boolean) => Promise<PlanningEvidence>
-interface Geometry { robot: THREE.Object3D | null; machine: THREE.Object3D | null; tables: THREE.Object3D[] }
+export interface PlanningGeometry { robot: THREE.Object3D | null; machine: THREE.Object3D | null; tables: THREE.Object3D[] }
 
 function worldClone<T extends THREE.Object3D>(source: T): T {
   source.updateWorldMatrix(true, true)
@@ -32,13 +34,13 @@ function worldClone<T extends THREE.Object3D>(source: T): T {
 }
 
 /** A bounded candidate rehearsal, not a general search or a safety certificate.
- * Never mutates live assets. Uses the same IK, acceleration-limited integrator,
+ * Never mutates live assets. Uses the same IK, jerk-limited integrator,
  * pose gates, and approximate swept boxes as execution, at a fixed 60 Hz.
  */
-export async function rehearsePlan(geometry: Geometry, plan: MotionPlan, cancelled = () => false): Promise<PlanningEvidence> {
-  const result: PlanningEvidence = { method: 'asset-rehearsal/v1', failure: null, acceptedSamples: 0, frames: 0, simulatedSeconds: 0,
-    maxJointVelocity: 0, maxJointAcceleration: 0, tcpTravelMeters: 0,
-    coverage: '1441 commanded poses; fixed 60 Hz arm/tool/payload vs CNC and table boxes; named payload support contacts allowed. Excludes self-collision, loose table stock, scanner, fences, grasp forces, jerk limits and hardware acknowledgement.' }
+export async function rehearsePlan(geometry: PlanningGeometry, plan: MotionPlan, cancelled = () => false): Promise<PlanningEvidence> {
+  const result: PlanningEvidence = { method: 'asset-rehearsal/v2-jerk', failure: null, acceptedSamples: 0, frames: 0, simulatedSeconds: 0,
+    maxJointVelocity: 0, maxJointAcceleration: 0, maxJointJerk: 0, tcpTravelMeters: 0,
+    coverage: '1441 commanded poses; fixed 60 Hz arm/tool/payload vs CNC and table boxes; named payload support contacts allowed. Excludes self-collision, loose table stock, scanner, fences, grasp forces and hardware acknowledgement.' }
   if (!geometry.robot || !geometry.machine || geometry.tables.length !== 2) {
     return { ...result, failure: 'Planning geometry unavailable: robot, CNC and both tables are required' }
   }
@@ -111,7 +113,7 @@ export async function rehearsePlan(geometry: Geometry, plan: MotionPlan, cancell
       if (hasPrevious) result.tcpTravelMeters += previousTcp.distanceTo(workspace.toolPosition)
       previousTcp.copy(workspace.toolPosition)
       hasPrevious = true
-      const settled = index < CYCLE_SAMPLES || workspace.jointVelocities.every(v => Math.abs(v) <= 0.01)
+      const settled = index < CYCLE_SAMPLES || (workspace.jointVelocities.every(v => Math.abs(v) <= 0.01) && workspace.jointAccelerations.every(a => Math.abs(a) <= 0.05))
       if (settled && isUr20TcpPoseAccepted(actualError, workspace.directionError)) { accepted = true; break }
     }
     if (result.failure) break
@@ -121,5 +123,21 @@ export async function rehearsePlan(geometry: Geometry, plan: MotionPlan, cancell
   result.simulatedSeconds = result.frames / 60
   result.maxJointVelocity = continuity.maxVelocity
   result.maxJointAcceleration = continuity.maxAcceleration
+  result.maxJointJerk = continuity.maxJerk
   return result
+}
+
+/** Reposition cloned table frames for a candidate without touching the live cell. */
+export function geometryForLayout(geometry: PlanningGeometry, layout: CellLayout, fixtureShiftMm: number): PlanningGeometry {
+  const names = geometry.tables.map(table => table.name)
+  if (names.length !== 2 || !names.includes('infeed-table') || !names.includes('outfeed-table')) return {...geometry, tables:[]}
+  const tables = geometry.tables.map(source => {
+    const table = worldClone(source)
+    const kind = table.name === 'infeed-table' ? 'infeed' : 'outfeed'
+    table.position.fromArray(layout[kind])
+    if (kind === 'infeed') table.position.x += fixtureShiftMm / 1000
+    table.updateMatrixWorld(true)
+    return table
+  })
+  return {...geometry, tables}
 }

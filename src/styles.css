@@ -478,3 +478,6 @@ button:focus-visible {
 .layout-controls label { display: block; font-size: 12px; font-weight: 700; margin-bottom: 8px; }
 .layout-controls select { width: 100%; padding: 8px; border: 1px solid #b9c6c2; border-radius: 5px; background: #fff; color: #26302f; }
 .layout-controls p { font-size: 11px; line-height: 1.5; color: #52645d; overflow-wrap: anywhere; margin-bottom: 0; }
+
+.search-layout-button { margin-top: 12px; padding: 9px; width: 100%; border: 1px solid #245df3; border-radius: 5px; color: #245df3; background: #f2f6ff; font-weight: 700; cursor: pointer; }
+.search-layout-button:disabled { opacity: .55; cursor: default; }

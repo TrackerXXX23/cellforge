@@ -1,5 +1,6 @@
 // Run through Playwright CLI with the dev app idle. Uses only geometry copies.
 async (page) => {
+  await page.reload() // Fresh modules after source edits; run only while idle.
   await page.waitForFunction(() => window.__CELLFORGE_GEOMETRY__?.().tables.length === 2)
   const results = await page.evaluate(async () => {
     const { rehearsePlan } = await import('/src/pathPlanning.ts')
