@@ -1,5 +1,5 @@
 import type { RunState } from './types'
-import { ROBOTIQ_2F85_TCP_OFFSET } from './eoat'
+import { THREE_JAW_TCP_OFFSET } from './eoat'
 import { WORKPIECE_TABLE_CENTER_Y } from './workpiece'
 
 export type Vec3 = readonly [number, number, number]
@@ -45,7 +45,7 @@ export const CYCLE_DURATION_SECONDS = 24
 export const SHOULDER_HEIGHT = 0.2363
 export const UPPER_ARM_LENGTH = 0.862
 export const FOREARM_LENGTH = 0.888
-export const TOOL_TIP_OFFSET = ROBOTIQ_2F85_TCP_OFFSET
+export const TOOL_TIP_OFFSET = THREE_JAW_TCP_OFFSET
 
 export const sequenceBoundaries = [
   2.8 / CYCLE_DURATION_SECONDS,
@@ -72,7 +72,7 @@ const keyframes: MotionKeyframe[] = [
   { at: 0.115, targetKey: 'infeed-approach', toolDirection: [0, -1, 0], action: 'Aligning above raw part' },
   { at: 0.15, targetKey: 'infeed-pick', toolDirection: [0, -1, 0], action: 'Descending vertically to raw part' },
   { at: 0.17, targetKey: 'infeed-pick', toolDirection: [0, -1, 0], action: 'Settling at raw-part grip pose' },
-  { at: 0.19, targetKey: 'infeed-pick', toolDirection: [0, -1, 0], action: 'Closing gripper on raw part' },
+  { at: 0.19, targetKey: 'infeed-pick', toolDirection: [0, -1, 0], action: 'Twisting three jaws down onto raw part' },
   { at: 0.21, targetKey: 'infeed-pick', toolDirection: [0, -1, 0], action: 'Verifying raw-part grip' },
   { at: 0.27, targetKey: 'infeed-approach', toolDirection: [0, -1, 0], action: 'Lifting raw part vertically' },
   { at: 0.34, target: [0.72, 1.55, -0.25], toolDirection: [1, 0, 0], action: 'Moving to CNC approach' },
@@ -81,7 +81,7 @@ const keyframes: MotionKeyframe[] = [
   { at: 0.51, target: [0.72, 1.62, -0.25], toolDirection: [1, 0, 0], action: 'Clearing CNC door' },
   { at: 0.57, target: [0.72, 1.62, -0.25], toolDirection: [1, 0, 0], action: 'Running machine handshake' },
   { at: 0.61, target: [0.72, 1.55, -0.25], toolDirection: [1, 0, 0], action: 'Returning to CNC approach' },
-  { at: 0.65, target: CNC_CHUCK_TARGET, toolDirection: [1, 0, 0], action: 'Gripping finished part' },
+  { at: 0.65, target: CNC_CHUCK_TARGET, toolDirection: [1, 0, 0], action: 'Twisting three jaws onto finished part' },
   { at: 0.68, target: CNC_CHUCK_TARGET, toolDirection: [1, 0, 0], action: 'Confirming finished-part grip' },
   { at: 0.7, target: [0.72, 1.55, -0.25], toolDirection: [1, 0, 0], action: 'Unloading CNC' },
   { at: 0.8, target: [-1.13, 0.88, -0.92], toolDirection: [0, -1, 0], action: 'Moving to outfeed approach' },

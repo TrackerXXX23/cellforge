@@ -3,17 +3,27 @@
 <!-- codex-handoff:start -->
 ## CONTEXT FOR /work
 
-**Last handoff**: 2026-07-22 15:55:47 CST
-**Branch**: `codex/cnc-vmc-asset`
+**Last handoff**: 2026-07-22 17:06:29 CST
+**Branch**: `codex/two-finger-gripper-pinch`
 **Active ticket**: `None found`
-**Summary**: PR #10 is merged. PR #5 now integrates the CellForge-authored VMC with the UR20 and sourced Robotiq 2F-85; its enclosure approach, vise-centered 60 x 35 mm blank, load, clamp, and unload states passed browser review and npm run check. Known remaining visual defect: during the first pickup, the carried blank still appears attached to one Robotiq jaw instead of clamped between both opposing pads.
-**Next exact action**: After PR #5 merges, branch from updated develop, center the carried blank between the two inner Robotiq pad faces, and verify the first pickup with a close tracking-camera replay.
+**Summary**: Fixed the custom three-jaw gripper's visible wrist attachment with a tool0 mounting collar, overlapping faceplate, and six-bolt flange that extends into the UR20 wrist envelope. Changed the grasp from a subtle radial close to a visible helical action: the three-jaw rotor turns 30 degrees while each jaw advances 18 mm down and closes radially onto the 60 mm blank. Slowed damping so the twist is observable and updated runtime status copy for the raw and finished part grasps. Playwright captured same-camera open, mid-twist, and closed states with 0 console errors. npm run check passes with 38 tests and the production build; npm run test:skill passes all 4 R3F guardrails.
+**Next exact action**: Have the user inspect the mounted open, mid-twist, and closed pickup states in draft PR #11; merge to develop only after visual approval.
 **Blocker**: None
 
 **Git status at handoff**:
 
 ```text
-clean
+ M src/ThreeJawGripper.tsx
+ M src/eoat.test.ts
+ M src/eoat.ts
+ M src/simulation.ts
+?? "AGENTS 2.md"
+?? "NOW 2.md"
+?? "continue 2"
+?? "handoff 2"
+?? "src/commissioning 2.ts"
+?? "src/commissioning.test 2.ts"
+?? "tests/r3f-skill-guardrails.test 2.ts"
 ```
 
 ---
