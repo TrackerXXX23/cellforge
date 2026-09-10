@@ -14,8 +14,8 @@ export const UR20_TOOL_DIRECTION_TOLERANCE = THREE.MathUtils.degToRad(15)
 
 const MAX_JOINT_ACCELERATION = 4
 const POSITION_WEIGHT = 1
-const DIRECTION_WEIGHT = 0.02
-const POSTURE_WEIGHT = 0.0005
+const DIRECTION_WEIGHT = 0.15
+const POSTURE_WEIGHT = 0.00001
 const DAMPING_SQUARED = 0.0025
 const SOLVER_RESPONSE = 12
 const JOINT_COUNT = UR20_IK_JOINT_NAMES.length
@@ -95,6 +95,12 @@ function updateToolDirectionError(
 export function isUr20TcpPoseAccepted(tcpError: number, directionError: number) {
   return tcpError <= UR20_TCP_TOLERANCE
     && directionError <= UR20_TOOL_DIRECTION_TOLERANCE
+}
+
+// Leave tracking margin for the velocity-limited rendered chain.
+function isPlannerPoseAccepted(positionError: number, directionError: number) {
+  return positionError <= UR20_TCP_TOLERANCE * 0.5
+    && directionError <= UR20_TOOL_DIRECTION_TOLERANCE * 0.5
 }
 
 function solveNormalEquations(workspace: Ur20IkWorkspace) {
@@ -192,7 +198,7 @@ function runPlannerIterations(
     tcp.getWorldPosition(workspace.toolPosition)
     updateToolDirectionError(tcp, workspace)
     const tcpError = workspace.toolPosition.distanceTo(workspace.target)
-    if (isUr20TcpPoseAccepted(tcpError, workspace.directionError)) return tcpError
+    if (isPlannerPoseAccepted(tcpError, workspace.directionError)) return tcpError
     if (!calculateDampedLeastSquaresStep(robot, tcp, workspace)) break
 
     for (let index = 0; index < JOINT_COUNT; index += 1) {
@@ -224,7 +230,7 @@ export function solveUr20IkTarget(
   workspace.targetDirection.set(toolDirection[0], toolDirection[1], toolDirection[2]).normalize()
 
   const firstError = runPlannerIterations(robot, tcp, workspace)
-  if (isUr20TcpPoseAccepted(firstError, workspace.directionError)) return firstError
+  if (isPlannerPoseAccepted(firstError, workspace.directionError)) return firstError
   let bestScore = firstError + workspace.directionError * 0.1
   for (let index = 0; index < JOINT_COUNT; index += 1) {
     workspace.bestJoints[index] = robot.joints[UR20_IK_JOINT_NAMES[index]].angle
@@ -234,7 +240,7 @@ export function solveUr20IkTarget(
   robot.updateMatrixWorld(true)
   const secondError = runPlannerIterations(robot, tcp, workspace)
   const secondScore = secondError + workspace.directionError * 0.1
-  if (isUr20TcpPoseAccepted(secondError, workspace.directionError)) return secondError
+  if (isPlannerPoseAccepted(secondError, workspace.directionError)) return secondError
   if (secondScore < bestScore) {
     bestScore = secondScore
     for (let index = 0; index < JOINT_COUNT; index += 1) {
@@ -247,7 +253,7 @@ export function solveUr20IkTarget(
     robot.updateMatrixWorld(true)
     const cncError = runPlannerIterations(robot, tcp, workspace)
     const cncScore = cncError + workspace.directionError * 0.1
-    if (isUr20TcpPoseAccepted(cncError, workspace.directionError)) return cncError
+    if (isPlannerPoseAccepted(cncError, workspace.directionError)) return cncError
     if (cncScore < bestScore) {
       bestScore = cncScore
       for (let index = 0; index < JOINT_COUNT; index += 1) {
@@ -274,7 +280,7 @@ export function solveUr20IkTarget(
         robot.updateMatrixWorld(true)
         const candidateError = runPlannerIterations(robot, tcp, workspace)
         const candidateScore = candidateError + workspace.directionError * 0.1
-        if (isUr20TcpPoseAccepted(candidateError, workspace.directionError)) return candidateError
+        if (isPlannerPoseAccepted(candidateError, workspace.directionError)) return candidateError
         if (candidateScore < bestScore) {
           bestScore = candidateScore
           for (let index = 0; index < JOINT_COUNT; index += 1) {

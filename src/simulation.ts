@@ -75,6 +75,7 @@ const keyframes: MotionKeyframe[] = [
   { at: 0.19, targetKey: 'infeed-pick', toolDirection: [0, -1, 0], action: 'Twisting three jaws down onto raw part' },
   { at: 0.21, targetKey: 'infeed-pick', toolDirection: [0, -1, 0], action: 'Verifying raw-part grip' },
   { at: 0.27, targetKey: 'infeed-approach', toolDirection: [0, -1, 0], action: 'Lifting raw part vertically' },
+  { at: 0.305, target: [0.4, 1.2, 0.8], toolDirection: [0, -1, 0], action: 'Routing around robot base to CNC' },
   { at: 0.34, target: [0.72, 1.55, -0.25], toolDirection: [1, 0, 0], action: 'Moving to CNC approach' },
   { at: 0.4, target: CNC_CHUCK_TARGET, toolDirection: [1, 0, 0], action: 'Loading CNC chuck' },
   { at: 0.46, target: CNC_CHUCK_TARGET, toolDirection: [1, 0, 0], action: 'Releasing raw part' },
@@ -87,6 +88,8 @@ const keyframes: MotionKeyframe[] = [
   { at: 0.8, target: [-1.13, 0.88, -0.92], toolDirection: [0, -1, 0], action: 'Moving to outfeed approach' },
   { at: 0.84, target: OUTFEED_PLACE_TARGET, toolDirection: [0, -1, 0], action: 'Descending to outfeed slot' },
   { at: 0.86, target: OUTFEED_PLACE_TARGET, toolDirection: [0, -1, 0], action: 'Releasing finished part' },
+  { at: 0.92, target: [-0.3, 1.15, -0.9], toolDirection: [0, -1, 0], action: 'Returning around robot base' },
+  { at: 0.96, target: [0.55, 1.15, -0.7], toolDirection: [0, -1, 0], action: 'Returning around robot base' },
   { at: 1, target: HOME_TARGET, toolDirection: [0, -1, 0], action: 'Returning home' },
 ]
 

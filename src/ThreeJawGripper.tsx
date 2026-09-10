@@ -76,6 +76,7 @@ function Jaw({ angle, jawRef }: JawProps) {
 }
 
 interface ThreeJawGripperProps {
+  paused: boolean
   motion: MotionState
   tcpRef: RefObject<THREE.Object3D | null>
 }
@@ -95,13 +96,14 @@ function dampJaw(
   )
 }
 
-export function ThreeJawGripper({ motion, tcpRef }: ThreeJawGripperProps) {
+export function ThreeJawGripper({ motion, tcpRef, paused }: ThreeJawGripperProps) {
   const rotorRef = useRef<THREE.Group>(null)
   const firstJawRef = useRef<THREE.Group>(null)
   const secondJawRef = useRef<THREE.Group>(null)
   const thirdJawRef = useRef<THREE.Group>(null)
 
   useFrame((_, delta) => {
+    if (paused) return
     const jawRadius = motion.gripperClosed ? THREE_JAW_CLOSED_RADIUS : THREE_JAW_OPEN_RADIUS
     const rotorAngle = motion.gripperClosed ? THREE_JAW_TWIST_ANGLE : 0
     const jawAxialOffset = motion.gripperClosed ? 0 : -THREE_JAW_AXIAL_TRAVEL

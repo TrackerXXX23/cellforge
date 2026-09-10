@@ -15,7 +15,11 @@ import { sampleMotion, type MotionPlan, type Vec3 } from './simulation'
 import type { CellObject, RunState } from './types'
 import { Ur20Robot } from './Ur20Robot'
 
+import type { MotionTelemetry } from './cycleAcceptance'
+
 interface SceneProps {
+  telemetry: React.RefObject<MotionTelemetry | null>
+  motionToken: string
   selected: CellObject
   onSelect: (object: CellObject) => void
   progress: number
@@ -178,6 +182,8 @@ function CellLoadingFallback() {
 }
 
 function Cell({
+  telemetry,
+  motionToken,
   selected,
   onSelect,
   progress,
@@ -235,8 +241,8 @@ function Cell({
         shadow-normalBias={0.04}
       />
       <directionalLight position={[5, 3, -4]} intensity={0.7} color="#c9ddff" />
-      <Ur20Robot selected={selected === 'robot'} onSelect={(event) => select(event, () => onSelect('robot'))} motion={motion} />
-      <CncMachine selected={selected === 'cnc'} onSelect={() => onSelect('cnc')} motion={motion} />
+      <Ur20Robot telemetry={telemetry} motionToken={motionToken} progress={progress} paused={runState === 'paused' || runState === 'failed'} selected={selected === 'robot'} onSelect={(event) => select(event, () => onSelect('robot'))} motion={motion} />
+      <CncMachine paused={runState === 'paused' || runState === 'failed'} selected={selected === 'cnc'} onSelect={() => onSelect('cnc')} motion={motion} />
       {showRevisionGhost && <InfeedRevisionGhost />}
       <PartTable
         kind="infeed"
@@ -327,7 +333,7 @@ function Cell({
         infiniteGrid={false}
       />
       <ContactShadows position={[0, 0.005, 0]} opacity={0.34} scale={9} blur={2.5} far={4.5} />
-      <OrbitControls makeDefault target={motion.target} minDistance={1.2} maxDistance={8.5} maxPolarAngle={Math.PI / 2.05} />
+      <OrbitControls makeDefault target={[0.55, 0.85, 0]} minDistance={1.2} maxDistance={8.5} maxPolarAngle={Math.PI / 2.05} />
     </>
   )
 }
@@ -336,7 +342,7 @@ export function CommissioningScene(props: SceneProps) {
   return (
     <Canvas
       shadows="basic"
-      camera={{ position: [-2.5, 2.7, 3.5], fov: 32, near: 0.1, far: 100 }}
+      camera={{ position: [-4.5, 3.7, 5.5], fov: 42, near: 0.1, far: 100 }}
       gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping }}
       dpr={[1, 1.75]}
       onPointerMissed={() => props.onSelect('robot')}

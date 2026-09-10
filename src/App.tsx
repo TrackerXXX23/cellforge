@@ -1,5 +1,9 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import {
+  acceptsTelemetry, createCycleEvidence, CYCLE_SAMPLES, isCycleVerified, recordAcceptedSample,
+  type CycleEvidence, type MotionTelemetry,
+} from './cycleAcceptance'
+import {
   evaluateCommissioning,
   recoveryProposals,
   type CausalTraceEntry,
@@ -77,7 +81,12 @@ export default function App() {
   const [released, setReleased] = useState(false)
   const [showEnvelope, setShowEnvelope] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
-  const startedAt = useRef(0)
+  const waitingMs = useRef(0)
+  const telemetry = useRef<MotionTelemetry | null>(null)
+  const evidence = useRef<CycleEvidence | null>(null)
+  const [runId, setRunId] = useState(0)
+  const revisionKey = JSON.stringify({ fixtureShiftMm, appliedRepair, version: 'ur20-cycle/v1' })
+  const motionToken = `${revisionKey}:${runId}`
 
   const activeRepair = previewRepair ?? appliedRepair
   const activeEvaluation = useMemo(
@@ -98,7 +107,9 @@ export default function App() {
   const checksPassed = activeEvaluation.checks.filter((check) => check.status === 'pass').length
   const details = objectDetails[selected]
   const canRun = committedEvaluation.deployable && previewRepair === null && !released
-  const canRelease = isChanged && appliedRepair !== null && runState === 'complete' && !released
+  const canRelease = isChanged && appliedRepair !== null && runState === 'complete'
+    && isCycleVerified(evidence.current, revisionKey) && committedEvaluation.deployable
+    && previewRepair === null && !released
   const isExecutionActive = runState === 'running' || runState === 'paused'
 
   const activePhase: WorkflowPhase = released || runState === 'complete'
@@ -119,30 +130,43 @@ export default function App() {
 
   useEffect(() => {
     if (runState !== 'running') return
-
+    let currentProgress = progress
+    let lastTick = performance.now()
     let frame = 0
-    let lastProgressUpdate = 0
-    startedAt.current = performance.now() - progress * committedEvaluation.cycleSeconds * 1000
-
     const tick = (now: number) => {
-      const nextProgress = Math.min(1, (now - startedAt.current) / (committedEvaluation.cycleSeconds * 1000))
-      if (nextProgress >= 1 || now - lastProgressUpdate >= 1000 / 30) {
-        setProgress(nextProgress)
-        lastProgressUpdate = now
+      const elapsed = Math.max(0, now - lastTick)
+      lastTick = now
+      const result = evidence.current
+      if (import.meta.env.DEV) {
+        Object.assign(window, { __CELLFORGE_CYCLE__: {
+          evidence: result, telemetry: telemetry.current, motionToken, currentProgress, waitingMs: waitingMs.current,
+        } })
       }
-
-      if (nextProgress >= 1) {
-        setRunState('complete')
-        setToast(`Repaired cycle verified · ${committedEvaluation.cycleSeconds.toFixed(1)} s`)
+      if (!result || result.revisionKey !== revisionKey) return
+      result.elapsedSeconds += elapsed / 1000
+      waitingMs.current += elapsed
+      if (acceptsTelemetry(telemetry.current, motionToken, currentProgress, performance.now())
+          && waitingMs.current >= committedEvaluation.cycleSeconds * 1000 / CYCLE_SAMPLES) {
+        recordAcceptedSample(result, telemetry.current!)
+        if (isCycleVerified(result, revisionKey)) {
+          setRunState('complete')
+          setToast('Cycle verified · all 241 sampled UR20 poses accepted')
+          return
+        }
+        currentProgress = result.acceptedSamples / CYCLE_SAMPLES
+        setProgress(currentProgress)
+        waitingMs.current = 0
+      } else if (waitingMs.current > 8000) {
+        result.failure = `Motion acceptance timed out at ${(currentProgress * 100).toFixed(1)}% · check TCP tracking, solver and joint limits`
+        setRunState('failed')
+        setToast(result.failure)
         return
       }
-
       frame = requestAnimationFrame(tick)
     }
-
     frame = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(frame)
-  }, [committedEvaluation.cycleSeconds, runState])
+  }, [committedEvaluation.cycleSeconds, runState, motionToken, revisionKey])
 
   useEffect(() => {
     const handleSpacebar = (event: KeyboardEvent) => {
@@ -166,6 +190,10 @@ export default function App() {
   }, [toast])
 
   function resetExecution() {
+    waitingMs.current = 0
+    evidence.current = null
+    telemetry.current = null
+    setRunId((id) => id + 1)
     setRunState('ready')
     setProgress(0)
     setReleased(false)
@@ -218,6 +246,10 @@ export default function App() {
       return
     }
 
+    waitingMs.current = 0
+    evidence.current = createCycleEvidence(revisionKey)
+    telemetry.current = null
+    setRunId((id) => id + 1)
     setProgress(0)
     setRunState('running')
     setToast(`Executing Revision ${isChanged ? '08' : '07'} against the validated motion plan`)
@@ -243,7 +275,9 @@ export default function App() {
     }
 
     const artifact = {
-      schema: 'cellforge.job/v1',
+      schema: 'cellforge.job/v2',
+      delivery: { status: 'local-export', runtimeAcknowledged: false },
+      cycleEvidence: { ...evidence.current, positionToleranceMm: 18, directionToleranceDegrees: 15, coverage: '241 sampled poses; planned P02 tool-envelope clearance only; no full-arm collision or hardware certification' },
       job: 'OP-1042 · CNC housing',
       revision: 8,
       generatedAt: new Date().toISOString(),
@@ -257,7 +291,8 @@ export default function App() {
         status: 'passed',
         method: committedEvaluation.clearanceMethod,
         minimumClearanceMm: committedEvaluation.minimumClearanceMm,
-        cycleSeconds: committedEvaluation.cycleSeconds,
+        nominalCycleSeconds: committedEvaluation.cycleSeconds,
+        measuredRunSeconds: evidence.current?.elapsedSeconds,
         checks: committedEvaluation.checks,
       },
     }
@@ -266,9 +301,9 @@ export default function App() {
     link.href = url
     link.download = 'cellforge-op-1042-r08.json'
     link.click()
-    URL.revokeObjectURL(url)
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000)
     setReleased(true)
-    setToast('Revision 08 released · deployment artifact acknowledged')
+    setToast('Revision 08 released · local artifact exported')
   }
 
   function selectTrace(entry: CausalTraceEntry) {
@@ -279,12 +314,14 @@ export default function App() {
 
   const stateTitle = released
     ? 'Revision 08 released'
+    : runState === 'failed'
+      ? evidence.current?.failure ?? 'Motion verification failed'
     : runState === 'running'
       ? motion.action
       : runState === 'paused'
         ? `Paused · ${motion.action}`
         : runState === 'complete'
-          ? 'Repaired cycle verified'
+          ? 'Cycle verified · 241 measured poses'
           : previewRepair
             ? 'Previewing repair candidate'
             : appliedRepair
@@ -352,8 +389,8 @@ export default function App() {
             </div>
             <div className="revision-copy">
               <strong>{released ? 'Released revision' : isChanged ? 'Commissioning draft' : 'Commissioned baseline'}</strong>
-              <p>{released ? 'SimRT acknowledged · evidence attached' : isChanged ? '1 layout change · 1 affected path' : 'Validated 21 Jul · 14:32'}</p>
-              {isChanged && <span>{released ? 'Revision 08 · immutable release record' : 'Compared with Revision 07'}</span>}
+              <p>{released ? 'Local export · runtime not connected' : isChanged ? '1 layout change · 1 affected path' : 'Reference layout · replay to verify'}</p>
+              {isChanged && <span>{released ? 'Revision 08 · local export record' : 'Compared with Revision 07'}</span>}
             </div>
           </div>
 
@@ -381,7 +418,7 @@ export default function App() {
 
           <div className="runtime-bridge">
             <div><span className={`pulse-dot ${runState === 'running' ? 'running' : ''}`} /><span>Deterministic runtime</span></div>
-            <strong>{runState === 'running' ? 'Executing current revision' : runState === 'paused' ? 'Execution paused · Space to resume' : runState === 'complete' ? 'Cycle evidence captured' : 'Ready · local simulation'}</strong>
+            <strong>{runState === 'running' ? 'Executing current revision' : runState === 'paused' ? 'Execution paused · Space to resume' : runState === 'complete' ? 'Cycle evidence captured' : runState === 'failed' ? 'Verification failed · release blocked' : 'Ready · local simulation'}</strong>
           </div>
         </aside>
 
@@ -391,6 +428,8 @@ export default function App() {
               <CommissioningScene
                 selected={selected}
                 onSelect={setSelected}
+                telemetry={telemetry}
+                motionToken={motionToken}
                 progress={progress}
                 runState={runState}
                 faultInjected={false}
@@ -406,20 +445,20 @@ export default function App() {
           </SceneErrorBoundary>
 
           <div className="viewport-meta">
-            <span className="view-chip"><Icon name="cube" size={14} />Tool tracking · mm</span>
+            <span className="view-chip"><Icon name="cube" size={14} />Cell overview · m</span>
             <button className={`view-chip toggle ${showEnvelope ? 'on' : ''}`} onClick={() => setShowEnvelope((current) => !current)}>
               <Icon name="eye" size={14} />Reach envelope
             </button>
             {isChanged && <span className="view-chip delta-chip">REV 07 → 08&nbsp;&nbsp; ΔX +180 mm</span>}
           </div>
 
-          <div className={`commissioning-ribbon ${pathState === 'blocked' ? 'has-fault' : ''} ${pathState === 'repaired' ? 'has-repair' : ''}`}>
+          <div className={`commissioning-ribbon ${pathState === 'blocked' || runState === 'failed' ? 'has-fault' : ''} ${pathState === 'repaired' ? 'has-repair' : ''}`}>
             <div className="ribbon-state">
-              <span className="micro-label">{pathState === 'blocked' ? 'VALIDATION BLOCKED' : previewRepair ? 'REPAIR PREVIEW' : runState === 'paused' ? 'CYCLE PAUSED · SPACE TO RESUME' : runState === 'complete' ? 'CYCLE VERIFIED' : 'COMMISSIONING STATE'}</span>
+              <span className="micro-label">{pathState === 'blocked' ? 'VALIDATION BLOCKED' : previewRepair ? 'REPAIR PREVIEW' : runState === 'paused' ? 'CYCLE PAUSED · SPACE TO RESUME' : runState === 'failed' ? 'MOTION VERIFICATION FAILED' : runState === 'complete' ? 'CYCLE VERIFIED' : 'COMMISSIONING STATE'}</span>
               <strong>{stateTitle}</strong>
             </div>
             <div className="progress-track"><span style={{ width: `${Math.max(3, progress * 100)}%` }} /></div>
-            <div className="ribbon-metric"><span>Cycle</span><strong>{activeEvaluation.cycleSeconds.toFixed(1)} s</strong></div>
+            <div className="ribbon-metric"><span>{runState === 'complete' ? 'Measured run' : 'Nominal cycle'}</span><strong>{(runState === 'complete' ? evidence.current?.elapsedSeconds ?? 0 : activeEvaluation.cycleSeconds).toFixed(1)} s</strong></div>
             <div className="ribbon-metric"><span>Clearance</span><strong>{activeEvaluation.minimumClearanceMm} mm</strong></div>
             {released ? (
               <button className="run-button release-action" disabled><Icon name="check" size={16} />Revision released</button>
@@ -456,8 +495,8 @@ export default function App() {
               </div>
               <div className="baseline-evidence">
                 <span className="micro-label">COMMISSIONED EVIDENCE</span>
-                <strong>Revision 07 passes all gates</strong>
-                <p>{baselineEvaluation.cycleSeconds.toFixed(1)} s cycle · 84 mm minimum clearance · {checksPassed}/{activeEvaluation.checks.length} checks passed</p>
+                <strong>Baseline preflight passes</strong>
+                <p>{baselineEvaluation.cycleSeconds.toFixed(1)} s nominal cycle · 84 mm P02 clearance · {checksPassed}/{activeEvaluation.checks.length} checks passed</p>
               </div>
               <div className="change-action">
                 <span className="micro-label">RECORD A FLOOR CHANGE</span>
@@ -471,15 +510,15 @@ export default function App() {
               <div className="panel-heading impact-heading">
                 <div>
                   <span className="micro-label">{released ? 'REVISION 08 · RELEASED' : appliedRepair ? 'REVISION 08 · REPAIRED' : previewRepair ? 'REPAIR PREVIEW · NOT APPLIED' : 'BLOCKING FINDING · V-014'}</span>
-                  <strong>{released ? 'Runtime acknowledged the repaired job' : appliedRepair ? 'Repair passes commissioning gates' : previewRepair ? `${recoveryProposals.find((proposal) => proposal.id === previewRepair)?.label} clears P02` : 'P02 swept envelope enters Fixture A keep-out'}</strong>
-                  <p>{released ? `${activeEvaluation.cycleSeconds.toFixed(1)} s cycle evidence and ${activeEvaluation.minimumClearanceMm} mm clearance were attached to the release.` : appliedRepair ? `${activeEvaluation.minimumClearanceMm} mm predicted clearance · ${activeEvaluation.cycleSeconds.toFixed(1)} s cycle. ${runState === 'complete' ? 'The verification run passed and the draft is ready for release.' : 'The repair is saved in the draft and must complete a verification run.'}` : previewRepair ? `${activeEvaluation.minimumClearanceMm} mm predicted clearance · ${activeEvaluation.cycleSeconds.toFixed(1)} s cycle. The commissioned job is unchanged until this candidate is applied.` : 'Fixture A moved 180 mm. The pick remains reachable, but P02 now violates the 50 mm clearance rule.'}</p>
+                  <strong>{released ? 'Verified job exported locally' : appliedRepair ? 'Repair passes preflight checks' : previewRepair ? `${recoveryProposals.find((proposal) => proposal.id === previewRepair)?.label} clears P02` : 'P02 swept envelope enters Fixture A keep-out'}</strong>
+                  <p>{released ? `${(evidence.current?.elapsedSeconds ?? 0).toFixed(1)} s measured run and ${activeEvaluation.minimumClearanceMm} mm clearance were attached to the release.` : appliedRepair ? `${activeEvaluation.minimumClearanceMm} mm predicted clearance · ${activeEvaluation.cycleSeconds.toFixed(1)} s cycle. ${runState === 'complete' ? 'The verification run passed and the draft is ready for release.' : 'The repair is saved in the draft and must complete a verification run.'}` : previewRepair ? `${activeEvaluation.minimumClearanceMm} mm predicted clearance · ${activeEvaluation.cycleSeconds.toFixed(1)} s cycle. The commissioned job is unchanged until this candidate is applied.` : 'Fixture A moved 180 mm. The pick remains reachable, but P02 now violates the 50 mm clearance rule.'}</p>
                 </div>
               </div>
 
               <div className="impact-metrics">
                 <div><span>Pose delta</span><strong>ΔX +180 mm</strong></div>
                 <div><span>Segment</span><strong>P02</strong></div>
-                <div><span>{released || runState === 'complete' ? 'Verified' : activeEvaluation.deployable ? 'Predicted' : 'Measured'}</span><strong>{activeEvaluation.minimumClearanceMm} mm</strong></div>
+                <div><span>{released || runState === 'complete' ? 'P02 scoped' : activeEvaluation.deployable ? 'Predicted' : 'Measured'}</span><strong>{activeEvaluation.minimumClearanceMm} mm</strong></div>
                 <div><span>Required</span><strong>50 mm</strong></div>
               </div>
 
@@ -489,7 +528,7 @@ export default function App() {
                   <li key={entry.layer} className={entry.status}>
                     <button onClick={() => selectTrace(entry)}>
                       <span className="trace-node" />
-                      <span><small>{entry.layer.replace('-', ' ')}</small><strong>{released && entry.layer === 'deployment-gate' ? 'Revision 08 released to SimRT' : entry.label}</strong></span>
+                      <span><small>{entry.layer.replace('-', ' ')}</small><strong>{released && entry.layer === 'deployment-gate' ? 'Revision 08 exported locally' : entry.label}</strong></span>
                     </button>
                   </li>
                 ))}
@@ -531,13 +570,17 @@ export default function App() {
               {!released && <button className="restore-link" onClick={restoreBaseline}>Restore Revision 07 fixture position</button>}
             </>
           )}
+          <div className="baseline-evidence">
+            <span className="micro-label">VERIFICATION SCOPE</span>
+            <p>241 sampled TCP poses · 18 mm / 15° · joint limits. Clearance covers the planned P02 tool envelope only; full-arm collisions are not checked.</p>
+          </div>
         </aside>
       </section>
 
       <footer className="statusbar">
-        <div><span className="status-dot" />{released ? 'Runtime acknowledged OP-1042-r08' : 'Simulation runtime ready'}</div>
+        <div><span className="status-dot" />{released ? 'Local export OP-1042-r08 · no runtime acknowledgement' : 'Simulation runtime ready'}</div>
         <div>Robot <strong>UR20</strong></div>
-        <div>Controller <strong>SimRT 4.8</strong></div>
+        <div>Controller <strong>Local prototype</strong></div>
         <div className="statusbar-spacer" />
         <div>Revision <strong>{released ? '08 released' : isChanged ? '08 draft' : '07 validated'}</strong></div>
         <div className="coordinate-readout">X {fixtureShiftMm.toFixed(1)}&nbsp;&nbsp; Y 0000.0&nbsp;&nbsp; Z 0000.0</div>
