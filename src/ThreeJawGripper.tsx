@@ -62,12 +62,12 @@ function Jaw({ angle, jawRef }: JawProps) {
   return (
     <group rotation-z={angle}>
       <group name="GripperJaw" ref={jawRef} position={[THREE_JAW_OPEN_RADIUS, 0, -THREE_JAW_AXIAL_TRAVEL]}>
-        <mesh position-z={0.108} castShadow receiveShadow>
-          <boxGeometry args={[0.028, 0.026, 0.024]} />
+        <mesh name="GripperJawCarrier" position-z={0.072} castShadow receiveShadow>
+          <boxGeometry args={[0.028, 0.026, 0.032]} />
           <primitive object={jawMaterial} attach="material" />
         </mesh>
-        <mesh position={[0, 0, 0.137]} castShadow receiveShadow>
-          <boxGeometry args={[0.012, 0.025, 0.058]} />
+        <mesh name="GripperContactPad" position={[0, 0, 0.125]} castShadow receiveShadow>
+          <boxGeometry args={[0.012, 0.025, 0.082]} />
           <primitive object={contactMaterial} attach="material" />
         </mesh>
       </group>

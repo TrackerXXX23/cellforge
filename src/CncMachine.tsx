@@ -1,6 +1,6 @@
 import { useGLTF } from '@react-three/drei'
 import { ThreeEvent, useFrame } from '@react-three/fiber'
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import {
   CNC_ASSET_NODES,
@@ -80,6 +80,11 @@ function setLampState(node: THREE.Object3D, active: boolean) {
 }
 
 export function CncMachine({ motionToken, motion, selected, onSelect, paused, cncContact }: CncMachineProps) {
+  const workpieceRef = useRef<THREE.Mesh>(null)
+  useEffect(() => {
+    cncContact.registerCellBody('chuck-stock', workpieceRef.current!)
+    return () => cncContact.unregisterCellBody('chuck-stock')
+  }, [cncContact])
   const { scene } = useGLTF(CNC_ASSET_URL)
   const machineScene = useMemo(() => {
     const instance = scene.clone(true)
@@ -164,7 +169,7 @@ export function CncMachine({ motionToken, motion, selected, onSelect, paused, cn
         distance={2.5}
         decay={2}
       />
-      <mesh
+      <mesh ref={workpieceRef} name="ChuckWorkpiece" userData={{stockRole:'chuck'}}
         position={CNC_WORKPIECE_LOCAL_POSITION}
         rotation-z={Math.PI / 2}
         visible={motion.partAtMachine}

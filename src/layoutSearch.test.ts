@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { layoutCandidates, searchLayouts } from './layoutSearch'
 import type { PlanningEvidence } from './pathPlanning'
-const pass = (seconds = 50): PlanningEvidence => ({ method:'asset-rehearsal/v2-jerk', failure:null, acceptedSamples:1441,
+const pass = (seconds = 50): PlanningEvidence => ({ method:'asset-rehearsal/v3-cell-contact', failure:null, acceptedSamples:1441,
   frames:3000, simulatedSeconds:seconds, maxJointVelocity:1, maxJointAcceleration:4, maxJointJerk:120, tcpTravelMeters:14, coverage:'test' })
 
 describe('bounded automatic layout and path search', () => {

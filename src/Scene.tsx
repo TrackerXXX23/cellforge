@@ -1,3 +1,4 @@
+import { CELL_BODY_IDS, FENCE_PANELS } from './cellBodies'
 import { searchLayouts, type SearchRequest } from './layoutSearch'
 import { tableSlot, TABLE_SIZE, TABLE_TOP_Y, TABLE_LEGS, type CellLayout } from './cellLayout'
 import { geometryForLayout, rehearsePlan, type PlanningRequest } from './pathPlanning'
@@ -104,8 +105,8 @@ function PartTable({
   const positionX = layout[kind][0] + (kind === 'infeed' ? fixtureShiftMeters : 0)
   const positionZ = layout[kind][2]
   const partIndices = kind === 'infeed'
-    ? [0, 1, 2, 3, 4, 5].filter((index) => !(rawRemoved && index === 2))
-    : [0, 1, 2, ...(finishedPlaced ? [5] : [])]
+    ? [0, 1, 2, 3, 4, 5]
+    : [0, 1, 2, 5]
 
   return (
     <group ref={root} name={`${kind}-table`} position-x={positionX} position-y={layout[kind][1]} position-z={positionZ} onClick={(event) => select(event, onSelect)}>
@@ -122,14 +123,14 @@ function PartTable({
       ))}
       {partIndices.map((index) => {
         return (
-          <mesh userData={{ contactIgnored: true }} key={index} position={tableSlot(index)} castShadow>
+          <mesh name={`${kind}-stock-${index}`} userData={{stockRole: kind === 'infeed' && index === 2 ? 'source' : kind === 'outfeed' && index === 5 ? 'placed' : 'loose'}} visible={kind === 'infeed' ? !(rawRemoved && index === 2) : index !== 5 || finishedPlaced} key={index} position={tableSlot(index)} castShadow>
             <cylinderGeometry args={[WORKPIECE_RADIUS, WORKPIECE_RADIUS, WORKPIECE_HEIGHT, 32]} />
             <meshStandardMaterial color={kind === 'infeed' ? RAW_WORKPIECE_COLOR : FINISHED_WORKPIECE_COLOR} metalness={0.56} roughness={0.31} />
           </mesh>
         )
       })}
       {kind === 'infeed' && faultInjected && (
-        <mesh position={[0.72, 0.75, 0]} rotation-x={Math.PI / 2}>
+        <mesh userData={{ contactIgnored: true }} position={[0.72, 0.75, 0]} rotation-x={Math.PI / 2}>
           <ringGeometry args={[0.12, 0.16, 32]} />
           <meshBasicMaterial color={amber} />
         </mesh>
@@ -151,7 +152,7 @@ function InfeedRevisionGhost({ layout }: { layout: CellLayout }) {
           <meshBasicMaterial color={cobalt} wireframe transparent opacity={0.18} depthWrite={false} />
         </mesh>
       ))}
-      <mesh rotation-x={-Math.PI / 2} position-y={0.02}>
+      <mesh userData={{ contactIgnored: true }} rotation-x={-Math.PI / 2} position-y={0.02}>
         <ringGeometry args={[0.79, 0.82, 64]} />
         <meshBasicMaterial color={cobalt} transparent opacity={0.32} depthWrite={false} />
       </mesh>
@@ -159,23 +160,46 @@ function InfeedRevisionGhost({ layout }: { layout: CellLayout }) {
   )
 }
 
-function SafetyScanner({ faultInjected }: Pick<SceneProps, 'faultInjected'>) {
+function SafetyScanner({ faultInjected, cncContact }: Pick<SceneProps, 'faultInjected'> & {cncContact: ReturnType<typeof createCncContactMonitor>}) {
+  const root = useRef<THREE.Group>(null)
+  useEffect(() => {
+    cncContact.registerCellBody('scanner', root.current!)
+    return () => cncContact.unregisterCellBody('scanner')
+  }, [cncContact])
   return (
-    <group position={[0.78, 0, 2.55]}>
-      <mesh position-y={0.12} castShadow>
+    <group ref={root} name="scanner" position={[0.78, 0, 2.55]}>
+      <mesh name="ScannerHousing" position-y={0.12} castShadow>
         <boxGeometry args={[0.24, 0.24, 0.24]} />
         <meshStandardMaterial color={graphite} />
       </mesh>
-      <mesh position-y={0.26}>
+      <mesh name="ScannerLens" position-y={0.26}>
         <sphereGeometry args={[0.055, 20, 20]} />
         <meshBasicMaterial color={faultInjected ? '#f04d35' : '#44b58d'} />
       </mesh>
-      <mesh rotation-x={-Math.PI / 2} position-y={0.02}>
+      <mesh userData={{ contactIgnored: true }} rotation-x={-Math.PI / 2} position-y={0.02}>
         <circleGeometry args={[2.1, 64, 0, Math.PI]} />
         <meshBasicMaterial color={faultInjected ? '#f04d35' : cobalt} transparent opacity={0.065} side={THREE.DoubleSide} />
       </mesh>
     </group>
   )
+}
+
+function CellBoundary({cncContact}: {cncContact: ReturnType<typeof createCncContactMonitor>}) {
+  const root = useRef<THREE.Group>(null)
+  useEffect(() => {
+    for (const id of ['floor', ...FENCE_PANELS.map(panel => panel.id)]) cncContact.registerCellBody(id, root.current!.getObjectByName(id)!)
+    return () => { for (const id of ['floor', ...FENCE_PANELS.map(panel => panel.id)]) cncContact.unregisterCellBody(id) }
+  }, [cncContact])
+  return <group ref={root}>
+    <mesh name="floor" position-y={-0.09} receiveShadow>
+      <boxGeometry args={[10, 0.1, 8]} />
+      <meshStandardMaterial color="#eef1f0" roughness={0.92} />
+    </mesh>
+    {FENCE_PANELS.map(panel => <mesh key={panel.id} name={panel.id} position={panel.position}>
+      <boxGeometry args={panel.size} />
+      <meshStandardMaterial color="#7d8c89" transparent opacity={0.12} depthWrite={false} />
+    </mesh>)}
+  </group>
 }
 
 function CellLoadingFallback() {
@@ -239,7 +263,7 @@ function Cell({
     )),
     [activePath, baselinePath],
   )
-  const cncContact = useMemo(() => createCncContactMonitor(2), [])
+  const cncContact = useMemo(() => createCncContactMonitor(2, CELL_BODY_IDS), [])
   useEffect(() => {
     if (import.meta.env.DEV) Object.assign(window, { __CELLFORGE_GEOMETRY__: () => cncContact.getGeometry() })
     planningRequest.current = (plan, cancelled) => rehearsePlan(cncContact.getGeometry(), plan, cancelled)
@@ -274,7 +298,8 @@ function Cell({
         fixtureShiftMeters={fixtureShiftMeters}
       />
       <PartTable layout={layout} cncContact={cncContact} kind="outfeed" selected={selected === 'outfeed'} onSelect={() => onSelect('outfeed')} finishedPlaced={motion.finishedPlaced} />
-      <SafetyScanner faultInjected={faultInjected} />
+      <SafetyScanner faultInjected={faultInjected} cncContact={cncContact} />
+      <CellBoundary cncContact={cncContact} />
 
       {showRevisionGhost && fixtureShiftMm !== 0 && (
         <group>
@@ -336,10 +361,6 @@ function Cell({
           </mesh>
         </>
       )}
-      <mesh rotation-x={-Math.PI / 2} position-y={-0.04} receiveShadow>
-        <planeGeometry args={[10, 8]} />
-        <meshStandardMaterial color="#eef1f0" roughness={0.92} />
-      </mesh>
       <Grid
         position={[0, -0.02, 0]}
         args={[10, 8]}

@@ -38,10 +38,10 @@ describe('parameterized layout and path contracts', () => {
   it('fails closed before any accepted samples when geometry is missing', async () => {
     const evaluation = evaluateCommissioning({fixtureShiftMm:0,repairId:null})
     const plan = {infeedApproachTarget:evaluation.approachTarget,infeedPickTarget:evaluation.pickTarget}
-    const absent = await rehearsePlan({robot:null,machine:null,tables:[]},plan)
+    const absent = await rehearsePlan({robot:null,machine:null,tables:[],cellBodies:[]},plan)
     expect(absent.failure).toContain('unavailable')
     expect(absent.acceptedSamples).toBe(0)
-    const incomplete = await rehearsePlan({robot:new THREE.Group(),machine:new THREE.Group(),tables:[new THREE.Group(),new THREE.Group()]},plan)
+    const incomplete = await rehearsePlan({robot:new THREE.Group(),machine:new THREE.Group(),tables:[new THREE.Group(),new THREE.Group()],cellBodies:['floor','scanner','fence-back','fence-right','chuck-stock'].map(id=>({id,root:new THREE.Group()}))},plan)
     expect(incomplete.failure).toContain('missing required')
     expect(incomplete.frames).toBe(0)
   })

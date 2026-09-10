@@ -1,0 +1,1233 @@
+{
+  "baseline": {
+    "method": "bounded-layout-path-search/v1",
+    "cancelled": false,
+    "candidates": [
+      {
+        "candidate": {
+          "id": "reference/baseline/standard",
+          "layout": {
+            "id": "reference",
+            "label": "Reference tables",
+            "infeed": [
+              -1.55,
+              0,
+              1.15
+            ],
+            "outfeed": [
+              -1.55,
+              0,
+              -1.15
+            ]
+          },
+          "fixtureShiftMm": 0,
+          "repairId": null,
+          "motionPlan": {
+            "infeedApproachTarget": [
+              -1.1300000000000001,
+              0.88,
+              0.9199999999999999
+            ],
+            "infeedPickTarget": [
+              -1.1300000000000001,
+              0.675,
+              0.9199999999999999
+            ],
+            "outfeedPlaceTarget": [
+              -1.1300000000000001,
+              0.675,
+              -0.9199999999999999
+            ],
+            "transferLift": 0
+          }
+        },
+        "failure": "Planning blocked at sample 1150: Self swept contact: base_link_inertia / upper_arm_link",
+        "evidence": {
+          "method": "asset-rehearsal/v3-cell-contact",
+          "failure": "Planning blocked at sample 1150: Self swept contact: base_link_inertia / upper_arm_link",
+          "acceptedSamples": 1150,
+          "frames": 2868,
+          "simulatedSeconds": 47.8,
+          "maxJointVelocity": 1.794444444444463,
+          "maxJointAcceleration": 4.000000000000625,
+          "maxJointJerk": 120.0000000002106,
+          "tcpTravelMeters": 14.332130295646753,
+          "coverage": "1441 measured poses; approximate swept arm/tool/payload bounds against CNC, tables, loose stock, scanner housing, floor and two boundary panels; non-adjacent robot links and tool/payload self-contact. Connected-link and internal gripper pairs excluded; named grasp and support contacts allowed. Excludes triangle-exact continuous collision, grasp forces, scanner protective-field logic and hardware certification.",
+          "failurePose": {
+            "sample": 1150,
+            "joints": [
+              2.312355007745341,
+              -0.7502597057037635,
+              0.2586670400569871,
+              -1.0508909474488026,
+              -1.570656946468974,
+              0
+            ]
+          }
+        }
+      },
+      {
+        "candidate": {
+          "id": "reference/baseline/raised-transfer",
+          "layout": {
+            "id": "reference",
+            "label": "Reference tables",
+            "infeed": [
+              -1.55,
+              0,
+              1.15
+            ],
+            "outfeed": [
+              -1.55,
+              0,
+              -1.15
+            ]
+          },
+          "fixtureShiftMm": 0,
+          "repairId": null,
+          "motionPlan": {
+            "infeedApproachTarget": [
+              -1.1300000000000001,
+              0.88,
+              0.9199999999999999
+            ],
+            "infeedPickTarget": [
+              -1.1300000000000001,
+              0.675,
+              0.9199999999999999
+            ],
+            "outfeedPlaceTarget": [
+              -1.1300000000000001,
+              0.675,
+              -0.9199999999999999
+            ],
+            "transferLift": 0.1
+          }
+        },
+        "failure": "Planning blocked at sample 1150: Self swept contact: base_link_inertia / upper_arm_link",
+        "evidence": {
+          "method": "asset-rehearsal/v3-cell-contact",
+          "failure": "Planning blocked at sample 1150: Self swept contact: base_link_inertia / upper_arm_link",
+          "acceptedSamples": 1150,
+          "frames": 2905,
+          "simulatedSeconds": 48.416666666666664,
+          "maxJointVelocity": 1.794444444444463,
+          "maxJointAcceleration": 4.000000000000625,
+          "maxJointJerk": 120.0000000002106,
+          "tcpTravelMeters": 14.565503803313932,
+          "coverage": "1441 measured poses; approximate swept arm/tool/payload bounds against CNC, tables, loose stock, scanner housing, floor and two boundary panels; non-adjacent robot links and tool/payload self-contact. Connected-link and internal gripper pairs excluded; named grasp and support contacts allowed. Excludes triangle-exact continuous collision, grasp forces, scanner protective-field logic and hardware certification.",
+          "failurePose": {
+            "sample": 1150,
+            "joints": [
+              2.312355007745341,
+              -0.7502597057037635,
+              0.2586670400569871,
+              -1.0508909474488026,
+              -1.570656946468974,
+              0
+            ]
+          }
+        }
+      },
+      {
+        "candidate": {
+          "id": "compact/baseline/standard",
+          "layout": {
+            "id": "compact",
+            "label": "Closer tables",
+            "infeed": [
+              -1.4,
+              0,
+              1
+            ],
+            "outfeed": [
+              -1.4,
+              0,
+              -1
+            ]
+          },
+          "fixtureShiftMm": 0,
+          "repairId": null,
+          "motionPlan": {
+            "infeedApproachTarget": [
+              -0.98,
+              0.88,
+              0.77
+            ],
+            "infeedPickTarget": [
+              -0.98,
+              0.675,
+              0.77
+            ],
+            "outfeedPlaceTarget": [
+              -0.98,
+              0.675,
+              -0.77
+            ],
+            "transferLift": 0
+          }
+        },
+        "failure": null,
+        "evidence": {
+          "method": "asset-rehearsal/v3-cell-contact",
+          "failure": null,
+          "acceptedSamples": 1441,
+          "frames": 3213,
+          "simulatedSeconds": 53.55,
+          "maxJointVelocity": 1.794444444444463,
+          "maxJointAcceleration": 4.000000000001425,
+          "maxJointJerk": 120.0000000002106,
+          "tcpTravelMeters": 15.069230465724475,
+          "coverage": "1441 measured poses; approximate swept arm/tool/payload bounds against CNC, tables, loose stock, scanner housing, floor and two boundary panels; non-adjacent robot links and tool/payload self-contact. Connected-link and internal gripper pairs excluded; named grasp and support contacts allowed. Excludes triangle-exact continuous collision, grasp forces, scanner protective-field logic and hardware certification."
+        }
+      },
+      {
+        "candidate": {
+          "id": "compact/baseline/raised-transfer",
+          "layout": {
+            "id": "compact",
+            "label": "Closer tables",
+            "infeed": [
+              -1.4,
+              0,
+              1
+            ],
+            "outfeed": [
+              -1.4,
+              0,
+              -1
+            ]
+          },
+          "fixtureShiftMm": 0,
+          "repairId": null,
+          "motionPlan": {
+            "infeedApproachTarget": [
+              -0.98,
+              0.88,
+              0.77
+            ],
+            "infeedPickTarget": [
+              -0.98,
+              0.675,
+              0.77
+            ],
+            "outfeedPlaceTarget": [
+              -0.98,
+              0.675,
+              -0.77
+            ],
+            "transferLift": 0.1
+          }
+        },
+        "failure": null,
+        "evidence": {
+          "method": "asset-rehearsal/v3-cell-contact",
+          "failure": null,
+          "acceptedSamples": 1441,
+          "frames": 3243,
+          "simulatedSeconds": 54.05,
+          "maxJointVelocity": 1.794444444444463,
+          "maxJointAcceleration": 4.000000000000625,
+          "maxJointJerk": 120.0000000002106,
+          "tcpTravelMeters": 15.193462094445911,
+          "coverage": "1441 measured poses; approximate swept arm/tool/payload bounds against CNC, tables, loose stock, scanner housing, floor and two boundary panels; non-adjacent robot links and tool/payload self-contact. Connected-link and internal gripper pairs excluded; named grasp and support contacts allowed. Excludes triangle-exact continuous collision, grasp forces, scanner protective-field logic and hardware certification."
+        }
+      }
+    ],
+    "best": {
+      "candidate": {
+        "id": "compact/baseline/standard",
+        "layout": {
+          "id": "compact",
+          "label": "Closer tables",
+          "infeed": [
+            -1.4,
+            0,
+            1
+          ],
+          "outfeed": [
+            -1.4,
+            0,
+            -1
+          ]
+        },
+        "fixtureShiftMm": 0,
+        "repairId": null,
+        "motionPlan": {
+          "infeedApproachTarget": [
+            -0.98,
+            0.88,
+            0.77
+          ],
+          "infeedPickTarget": [
+            -0.98,
+            0.675,
+            0.77
+          ],
+          "outfeedPlaceTarget": [
+            -0.98,
+            0.675,
+            -0.77
+          ],
+          "transferLift": 0
+        }
+      },
+      "failure": null,
+      "evidence": {
+        "method": "asset-rehearsal/v3-cell-contact",
+        "failure": null,
+        "acceptedSamples": 1441,
+        "frames": 3213,
+        "simulatedSeconds": 53.55,
+        "maxJointVelocity": 1.794444444444463,
+        "maxJointAcceleration": 4.000000000001425,
+        "maxJointJerk": 120.0000000002106,
+        "tcpTravelMeters": 15.069230465724475,
+        "coverage": "1441 measured poses; approximate swept arm/tool/payload bounds against CNC, tables, loose stock, scanner housing, floor and two boundary panels; non-adjacent robot links and tool/payload self-contact. Connected-link and internal gripper pairs excluded; named grasp and support contacts allowed. Excludes triangle-exact continuous collision, grasp forces, scanner protective-field logic and hardware certification."
+      }
+    }
+  },
+  "shifted": {
+    "method": "bounded-layout-path-search/v1",
+    "cancelled": false,
+    "candidates": [
+      {
+        "candidate": {
+          "id": "reference/baseline/standard",
+          "layout": {
+            "id": "reference",
+            "label": "Reference tables",
+            "infeed": [
+              -1.55,
+              0,
+              1.15
+            ],
+            "outfeed": [
+              -1.55,
+              0,
+              -1.15
+            ]
+          },
+          "fixtureShiftMm": 180,
+          "repairId": null,
+          "motionPlan": {
+            "infeedApproachTarget": [
+              -1.1300000000000001,
+              0.88,
+              0.9199999999999999
+            ],
+            "infeedPickTarget": [
+              -1.1300000000000001,
+              0.675,
+              0.9199999999999999
+            ],
+            "outfeedPlaceTarget": [
+              -1.1300000000000001,
+              0.675,
+              -0.9199999999999999
+            ],
+            "transferLift": 0
+          }
+        },
+        "failure": "P02 preflight blocked",
+        "evidence": null
+      },
+      {
+        "candidate": {
+          "id": "reference/baseline/raised-transfer",
+          "layout": {
+            "id": "reference",
+            "label": "Reference tables",
+            "infeed": [
+              -1.55,
+              0,
+              1.15
+            ],
+            "outfeed": [
+              -1.55,
+              0,
+              -1.15
+            ]
+          },
+          "fixtureShiftMm": 180,
+          "repairId": null,
+          "motionPlan": {
+            "infeedApproachTarget": [
+              -1.1300000000000001,
+              0.88,
+              0.9199999999999999
+            ],
+            "infeedPickTarget": [
+              -1.1300000000000001,
+              0.675,
+              0.9199999999999999
+            ],
+            "outfeedPlaceTarget": [
+              -1.1300000000000001,
+              0.675,
+              -0.9199999999999999
+            ],
+            "transferLift": 0.1
+          }
+        },
+        "failure": "P02 preflight blocked",
+        "evidence": null
+      },
+      {
+        "candidate": {
+          "id": "reference/lifted-approach/standard",
+          "layout": {
+            "id": "reference",
+            "label": "Reference tables",
+            "infeed": [
+              -1.55,
+              0,
+              1.15
+            ],
+            "outfeed": [
+              -1.55,
+              0,
+              -1.15
+            ]
+          },
+          "fixtureShiftMm": 180,
+          "repairId": "lifted-approach",
+          "motionPlan": {
+            "infeedApproachTarget": [
+              -0.9500000000000002,
+              1.02,
+              0.9199999999999999
+            ],
+            "infeedPickTarget": [
+              -0.9500000000000002,
+              0.675,
+              0.9199999999999999
+            ],
+            "outfeedPlaceTarget": [
+              -1.1300000000000001,
+              0.675,
+              -0.9199999999999999
+            ],
+            "transferLift": 0
+          }
+        },
+        "failure": "Planning blocked at sample 1150: Self swept contact: base_link_inertia / upper_arm_link",
+        "evidence": {
+          "method": "asset-rehearsal/v3-cell-contact",
+          "failure": "Planning blocked at sample 1150: Self swept contact: base_link_inertia / upper_arm_link",
+          "acceptedSamples": 1150,
+          "frames": 2693,
+          "simulatedSeconds": 44.88333333333333,
+          "maxJointVelocity": 1.794444444444463,
+          "maxJointAcceleration": 4.000000000000625,
+          "maxJointJerk": 120.00000000030653,
+          "tcpTravelMeters": 12.824472064395554,
+          "coverage": "1441 measured poses; approximate swept arm/tool/payload bounds against CNC, tables, loose stock, scanner housing, floor and two boundary panels; non-adjacent robot links and tool/payload self-contact. Connected-link and internal gripper pairs excluded; named grasp and support contacts allowed. Excludes triangle-exact continuous collision, grasp forces, scanner protective-field logic and hardware certification.",
+          "failurePose": {
+            "sample": 1150,
+            "joints": [
+              2.312355007745341,
+              -0.7502597057037635,
+              0.2586670400569871,
+              -1.0508909474488026,
+              -1.570656946468974,
+              0
+            ]
+          }
+        }
+      },
+      {
+        "candidate": {
+          "id": "reference/lifted-approach/raised-transfer",
+          "layout": {
+            "id": "reference",
+            "label": "Reference tables",
+            "infeed": [
+              -1.55,
+              0,
+              1.15
+            ],
+            "outfeed": [
+              -1.55,
+              0,
+              -1.15
+            ]
+          },
+          "fixtureShiftMm": 180,
+          "repairId": "lifted-approach",
+          "motionPlan": {
+            "infeedApproachTarget": [
+              -0.9500000000000002,
+              1.02,
+              0.9199999999999999
+            ],
+            "infeedPickTarget": [
+              -0.9500000000000002,
+              0.675,
+              0.9199999999999999
+            ],
+            "outfeedPlaceTarget": [
+              -1.1300000000000001,
+              0.675,
+              -0.9199999999999999
+            ],
+            "transferLift": 0.1
+          }
+        },
+        "failure": "Planning blocked at sample 1150: Self swept contact: base_link_inertia / upper_arm_link",
+        "evidence": {
+          "method": "asset-rehearsal/v3-cell-contact",
+          "failure": "Planning blocked at sample 1150: Self swept contact: base_link_inertia / upper_arm_link",
+          "acceptedSamples": 1150,
+          "frames": 2715,
+          "simulatedSeconds": 45.25,
+          "maxJointVelocity": 1.794444444444463,
+          "maxJointAcceleration": 4.000000000000625,
+          "maxJointJerk": 120.0000000002106,
+          "tcpTravelMeters": 12.881849465793188,
+          "coverage": "1441 measured poses; approximate swept arm/tool/payload bounds against CNC, tables, loose stock, scanner housing, floor and two boundary panels; non-adjacent robot links and tool/payload self-contact. Connected-link and internal gripper pairs excluded; named grasp and support contacts allowed. Excludes triangle-exact continuous collision, grasp forces, scanner protective-field logic and hardware certification.",
+          "failurePose": {
+            "sample": 1150,
+            "joints": [
+              2.312355007745341,
+              -0.7502597057037635,
+              0.2586670400569871,
+              -1.0508909474488026,
+              -1.570656946468974,
+              0
+            ]
+          }
+        }
+      },
+      {
+        "candidate": {
+          "id": "reference/side-entry/standard",
+          "layout": {
+            "id": "reference",
+            "label": "Reference tables",
+            "infeed": [
+              -1.55,
+              0,
+              1.15
+            ],
+            "outfeed": [
+              -1.55,
+              0,
+              -1.15
+            ]
+          },
+          "fixtureShiftMm": 180,
+          "repairId": "side-entry",
+          "motionPlan": {
+            "infeedApproachTarget": [
+              -0.9665000000000001,
+              0.88,
+              1.0699999999999998
+            ],
+            "infeedPickTarget": [
+              -0.9500000000000002,
+              0.675,
+              0.9199999999999999
+            ],
+            "outfeedPlaceTarget": [
+              -1.1300000000000001,
+              0.675,
+              -0.9199999999999999
+            ],
+            "transferLift": 0
+          }
+        },
+        "failure": "Planning blocked at sample 1150: Self swept contact: base_link_inertia / upper_arm_link",
+        "evidence": {
+          "method": "asset-rehearsal/v3-cell-contact",
+          "failure": "Planning blocked at sample 1150: Self swept contact: base_link_inertia / upper_arm_link",
+          "acceptedSamples": 1150,
+          "frames": 2741,
+          "simulatedSeconds": 45.68333333333333,
+          "maxJointVelocity": 1.794444444444463,
+          "maxJointAcceleration": 4.000000000000625,
+          "maxJointJerk": 120.0000000002106,
+          "tcpTravelMeters": 13.091396167331533,
+          "coverage": "1441 measured poses; approximate swept arm/tool/payload bounds against CNC, tables, loose stock, scanner housing, floor and two boundary panels; non-adjacent robot links and tool/payload self-contact. Connected-link and internal gripper pairs excluded; named grasp and support contacts allowed. Excludes triangle-exact continuous collision, grasp forces, scanner protective-field logic and hardware certification.",
+          "failurePose": {
+            "sample": 1150,
+            "joints": [
+              2.312355007745341,
+              -0.7502597057037635,
+              0.2586670400569871,
+              -1.0508909474488026,
+              -1.570656946468974,
+              0
+            ]
+          }
+        }
+      },
+      {
+        "candidate": {
+          "id": "reference/side-entry/raised-transfer",
+          "layout": {
+            "id": "reference",
+            "label": "Reference tables",
+            "infeed": [
+              -1.55,
+              0,
+              1.15
+            ],
+            "outfeed": [
+              -1.55,
+              0,
+              -1.15
+            ]
+          },
+          "fixtureShiftMm": 180,
+          "repairId": "side-entry",
+          "motionPlan": {
+            "infeedApproachTarget": [
+              -0.9665000000000001,
+              0.88,
+              1.0699999999999998
+            ],
+            "infeedPickTarget": [
+              -0.9500000000000002,
+              0.675,
+              0.9199999999999999
+            ],
+            "outfeedPlaceTarget": [
+              -1.1300000000000001,
+              0.675,
+              -0.9199999999999999
+            ],
+            "transferLift": 0.1
+          }
+        },
+        "failure": "Planning blocked at sample 1150: Self swept contact: base_link_inertia / upper_arm_link",
+        "evidence": {
+          "method": "asset-rehearsal/v3-cell-contact",
+          "failure": "Planning blocked at sample 1150: Self swept contact: base_link_inertia / upper_arm_link",
+          "acceptedSamples": 1150,
+          "frames": 2752,
+          "simulatedSeconds": 45.86666666666667,
+          "maxJointVelocity": 1.794444444444463,
+          "maxJointAcceleration": 4.000000000000625,
+          "maxJointJerk": 120.00000000030653,
+          "tcpTravelMeters": 13.125370777135851,
+          "coverage": "1441 measured poses; approximate swept arm/tool/payload bounds against CNC, tables, loose stock, scanner housing, floor and two boundary panels; non-adjacent robot links and tool/payload self-contact. Connected-link and internal gripper pairs excluded; named grasp and support contacts allowed. Excludes triangle-exact continuous collision, grasp forces, scanner protective-field logic and hardware certification.",
+          "failurePose": {
+            "sample": 1150,
+            "joints": [
+              2.312355007745341,
+              -0.7502597057037635,
+              0.2586670400569871,
+              -1.0508909474488026,
+              -1.570656946468974,
+              0
+            ]
+          }
+        }
+      },
+      {
+        "candidate": {
+          "id": "compact/baseline/standard",
+          "layout": {
+            "id": "compact",
+            "label": "Closer tables",
+            "infeed": [
+              -1.4,
+              0,
+              1
+            ],
+            "outfeed": [
+              -1.4,
+              0,
+              -1
+            ]
+          },
+          "fixtureShiftMm": 180,
+          "repairId": null,
+          "motionPlan": {
+            "infeedApproachTarget": [
+              -0.98,
+              0.88,
+              0.77
+            ],
+            "infeedPickTarget": [
+              -0.98,
+              0.675,
+              0.77
+            ],
+            "outfeedPlaceTarget": [
+              -0.98,
+              0.675,
+              -0.77
+            ],
+            "transferLift": 0
+          }
+        },
+        "failure": "P02 preflight blocked",
+        "evidence": null
+      },
+      {
+        "candidate": {
+          "id": "compact/baseline/raised-transfer",
+          "layout": {
+            "id": "compact",
+            "label": "Closer tables",
+            "infeed": [
+              -1.4,
+              0,
+              1
+            ],
+            "outfeed": [
+              -1.4,
+              0,
+              -1
+            ]
+          },
+          "fixtureShiftMm": 180,
+          "repairId": null,
+          "motionPlan": {
+            "infeedApproachTarget": [
+              -0.98,
+              0.88,
+              0.77
+            ],
+            "infeedPickTarget": [
+              -0.98,
+              0.675,
+              0.77
+            ],
+            "outfeedPlaceTarget": [
+              -0.98,
+              0.675,
+              -0.77
+            ],
+            "transferLift": 0.1
+          }
+        },
+        "failure": "P02 preflight blocked",
+        "evidence": null
+      },
+      {
+        "candidate": {
+          "id": "compact/lifted-approach/standard",
+          "layout": {
+            "id": "compact",
+            "label": "Closer tables",
+            "infeed": [
+              -1.4,
+              0,
+              1
+            ],
+            "outfeed": [
+              -1.4,
+              0,
+              -1
+            ]
+          },
+          "fixtureShiftMm": 180,
+          "repairId": "lifted-approach",
+          "motionPlan": {
+            "infeedApproachTarget": [
+              -0.8,
+              1.02,
+              0.77
+            ],
+            "infeedPickTarget": [
+              -0.8,
+              0.675,
+              0.77
+            ],
+            "outfeedPlaceTarget": [
+              -0.98,
+              0.675,
+              -0.77
+            ],
+            "transferLift": 0
+          }
+        },
+        "failure": null,
+        "evidence": {
+          "method": "asset-rehearsal/v3-cell-contact",
+          "failure": null,
+          "acceptedSamples": 1441,
+          "frames": 3209,
+          "simulatedSeconds": 53.483333333333334,
+          "maxJointVelocity": 1.794444444444463,
+          "maxJointAcceleration": 4.000000000000625,
+          "maxJointJerk": 120.0000000002106,
+          "tcpTravelMeters": 14.938733030896794,
+          "coverage": "1441 measured poses; approximate swept arm/tool/payload bounds against CNC, tables, loose stock, scanner housing, floor and two boundary panels; non-adjacent robot links and tool/payload self-contact. Connected-link and internal gripper pairs excluded; named grasp and support contacts allowed. Excludes triangle-exact continuous collision, grasp forces, scanner protective-field logic and hardware certification."
+        }
+      },
+      {
+        "candidate": {
+          "id": "compact/lifted-approach/raised-transfer",
+          "layout": {
+            "id": "compact",
+            "label": "Closer tables",
+            "infeed": [
+              -1.4,
+              0,
+              1
+            ],
+            "outfeed": [
+              -1.4,
+              0,
+              -1
+            ]
+          },
+          "fixtureShiftMm": 180,
+          "repairId": "lifted-approach",
+          "motionPlan": {
+            "infeedApproachTarget": [
+              -0.8,
+              1.02,
+              0.77
+            ],
+            "infeedPickTarget": [
+              -0.8,
+              0.675,
+              0.77
+            ],
+            "outfeedPlaceTarget": [
+              -0.98,
+              0.675,
+              -0.77
+            ],
+            "transferLift": 0.1
+          }
+        },
+        "failure": null,
+        "evidence": {
+          "method": "asset-rehearsal/v3-cell-contact",
+          "failure": null,
+          "acceptedSamples": 1441,
+          "frames": 3235,
+          "simulatedSeconds": 53.916666666666664,
+          "maxJointVelocity": 1.794444444444463,
+          "maxJointAcceleration": 4.000000000001425,
+          "maxJointJerk": 120.00000000030653,
+          "tcpTravelMeters": 15.058161450235174,
+          "coverage": "1441 measured poses; approximate swept arm/tool/payload bounds against CNC, tables, loose stock, scanner housing, floor and two boundary panels; non-adjacent robot links and tool/payload self-contact. Connected-link and internal gripper pairs excluded; named grasp and support contacts allowed. Excludes triangle-exact continuous collision, grasp forces, scanner protective-field logic and hardware certification."
+        }
+      },
+      {
+        "candidate": {
+          "id": "compact/side-entry/standard",
+          "layout": {
+            "id": "compact",
+            "label": "Closer tables",
+            "infeed": [
+              -1.4,
+              0,
+              1
+            ],
+            "outfeed": [
+              -1.4,
+              0,
+              -1
+            ]
+          },
+          "fixtureShiftMm": 180,
+          "repairId": "side-entry",
+          "motionPlan": {
+            "infeedApproachTarget": [
+              -0.8165,
+              0.88,
+              0.92
+            ],
+            "infeedPickTarget": [
+              -0.8,
+              0.675,
+              0.77
+            ],
+            "outfeedPlaceTarget": [
+              -0.98,
+              0.675,
+              -0.77
+            ],
+            "transferLift": 0
+          }
+        },
+        "failure": null,
+        "evidence": {
+          "method": "asset-rehearsal/v3-cell-contact",
+          "failure": null,
+          "acceptedSamples": 1441,
+          "frames": 3190,
+          "simulatedSeconds": 53.166666666666664,
+          "maxJointVelocity": 1.794444444444463,
+          "maxJointAcceleration": 4.000000000000625,
+          "maxJointJerk": 120.0000000002106,
+          "tcpTravelMeters": 14.912542196018228,
+          "coverage": "1441 measured poses; approximate swept arm/tool/payload bounds against CNC, tables, loose stock, scanner housing, floor and two boundary panels; non-adjacent robot links and tool/payload self-contact. Connected-link and internal gripper pairs excluded; named grasp and support contacts allowed. Excludes triangle-exact continuous collision, grasp forces, scanner protective-field logic and hardware certification."
+        }
+      },
+      {
+        "candidate": {
+          "id": "compact/side-entry/raised-transfer",
+          "layout": {
+            "id": "compact",
+            "label": "Closer tables",
+            "infeed": [
+              -1.4,
+              0,
+              1
+            ],
+            "outfeed": [
+              -1.4,
+              0,
+              -1
+            ]
+          },
+          "fixtureShiftMm": 180,
+          "repairId": "side-entry",
+          "motionPlan": {
+            "infeedApproachTarget": [
+              -0.8165,
+              0.88,
+              0.92
+            ],
+            "infeedPickTarget": [
+              -0.8,
+              0.675,
+              0.77
+            ],
+            "outfeedPlaceTarget": [
+              -0.98,
+              0.675,
+              -0.77
+            ],
+            "transferLift": 0.1
+          }
+        },
+        "failure": null,
+        "evidence": {
+          "method": "asset-rehearsal/v3-cell-contact",
+          "failure": null,
+          "acceptedSamples": 1441,
+          "frames": 3220,
+          "simulatedSeconds": 53.666666666666664,
+          "maxJointVelocity": 1.794444444444463,
+          "maxJointAcceleration": 4.000000000000625,
+          "maxJointJerk": 120.0000000002106,
+          "tcpTravelMeters": 15.02819912911371,
+          "coverage": "1441 measured poses; approximate swept arm/tool/payload bounds against CNC, tables, loose stock, scanner housing, floor and two boundary panels; non-adjacent robot links and tool/payload self-contact. Connected-link and internal gripper pairs excluded; named grasp and support contacts allowed. Excludes triangle-exact continuous collision, grasp forces, scanner protective-field logic and hardware certification."
+        }
+      }
+    ],
+    "best": {
+      "candidate": {
+        "id": "compact/side-entry/standard",
+        "layout": {
+          "id": "compact",
+          "label": "Closer tables",
+          "infeed": [
+            -1.4,
+            0,
+            1
+          ],
+          "outfeed": [
+            -1.4,
+            0,
+            -1
+          ]
+        },
+        "fixtureShiftMm": 180,
+        "repairId": "side-entry",
+        "motionPlan": {
+          "infeedApproachTarget": [
+            -0.8165,
+            0.88,
+            0.92
+          ],
+          "infeedPickTarget": [
+            -0.8,
+            0.675,
+            0.77
+          ],
+          "outfeedPlaceTarget": [
+            -0.98,
+            0.675,
+            -0.77
+          ],
+          "transferLift": 0
+        }
+      },
+      "failure": null,
+      "evidence": {
+        "method": "asset-rehearsal/v3-cell-contact",
+        "failure": null,
+        "acceptedSamples": 1441,
+        "frames": 3190,
+        "simulatedSeconds": 53.166666666666664,
+        "maxJointVelocity": 1.794444444444463,
+        "maxJointAcceleration": 4.000000000000625,
+        "maxJointJerk": 120.0000000002106,
+        "tcpTravelMeters": 14.912542196018228,
+        "coverage": "1441 measured poses; approximate swept arm/tool/payload bounds against CNC, tables, loose stock, scanner housing, floor and two boundary panels; non-adjacent robot links and tool/payload self-contact. Connected-link and internal gripper pairs excluded; named grasp and support contacts allowed. Excludes triangle-exact continuous collision, grasp forces, scanner protective-field logic and hardware certification."
+      }
+    }
+  },
+  "repeatedWinner": "compact/baseline/standard",
+  "cancelled": true,
+  "blocked": {
+    "method": "bounded-layout-path-search/v1",
+    "cancelled": false,
+    "candidates": [
+      {
+        "candidate": {
+          "id": "reference/baseline/standard",
+          "layout": {
+            "id": "reference",
+            "label": "Reference tables",
+            "infeed": [
+              -1.55,
+              0,
+              1.15
+            ],
+            "outfeed": [
+              -1.55,
+              0,
+              -1.15
+            ]
+          },
+          "fixtureShiftMm": 0,
+          "repairId": null,
+          "motionPlan": {
+            "infeedApproachTarget": [
+              -1.1300000000000001,
+              0.88,
+              0.9199999999999999
+            ],
+            "infeedPickTarget": [
+              -1.1300000000000001,
+              0.675,
+              0.9199999999999999
+            ],
+            "outfeedPlaceTarget": [
+              -1.1300000000000001,
+              0.675,
+              -0.9199999999999999
+            ],
+            "transferLift": 0
+          }
+        },
+        "failure": "Planning blocked at sample 0: CNC swept contact: root-mesh_006 / DoorGlass",
+        "evidence": {
+          "method": "asset-rehearsal/v3-cell-contact",
+          "failure": "Planning blocked at sample 0: CNC swept contact: root-mesh_006 / DoorGlass",
+          "acceptedSamples": 0,
+          "frames": 1,
+          "simulatedSeconds": 0.016666666666666666,
+          "maxJointVelocity": 0,
+          "maxJointAcceleration": 0,
+          "maxJointJerk": 0,
+          "tcpTravelMeters": 0,
+          "coverage": "1441 measured poses; approximate swept arm/tool/payload bounds against CNC, tables, loose stock, scanner housing, floor and two boundary panels; non-adjacent robot links and tool/payload self-contact. Connected-link and internal gripper pairs excluded; named grasp and support contacts allowed. Excludes triangle-exact continuous collision, grasp forces, scanner protective-field logic and hardware certification.",
+          "failurePose": {
+            "sample": 0,
+            "joints": [
+              -0.48878478315100493,
+              -1.6057955044273755,
+              1.8150498294815105,
+              -1.8150498294815105,
+              -1.5707967186354286,
+              0
+            ]
+          }
+        }
+      },
+      {
+        "candidate": {
+          "id": "reference/baseline/raised-transfer",
+          "layout": {
+            "id": "reference",
+            "label": "Reference tables",
+            "infeed": [
+              -1.55,
+              0,
+              1.15
+            ],
+            "outfeed": [
+              -1.55,
+              0,
+              -1.15
+            ]
+          },
+          "fixtureShiftMm": 0,
+          "repairId": null,
+          "motionPlan": {
+            "infeedApproachTarget": [
+              -1.1300000000000001,
+              0.88,
+              0.9199999999999999
+            ],
+            "infeedPickTarget": [
+              -1.1300000000000001,
+              0.675,
+              0.9199999999999999
+            ],
+            "outfeedPlaceTarget": [
+              -1.1300000000000001,
+              0.675,
+              -0.9199999999999999
+            ],
+            "transferLift": 0.1
+          }
+        },
+        "failure": "Planning blocked at sample 0: CNC swept contact: root-mesh_006 / DoorGlass",
+        "evidence": {
+          "method": "asset-rehearsal/v3-cell-contact",
+          "failure": "Planning blocked at sample 0: CNC swept contact: root-mesh_006 / DoorGlass",
+          "acceptedSamples": 0,
+          "frames": 1,
+          "simulatedSeconds": 0.016666666666666666,
+          "maxJointVelocity": 0,
+          "maxJointAcceleration": 0,
+          "maxJointJerk": 0,
+          "tcpTravelMeters": 0,
+          "coverage": "1441 measured poses; approximate swept arm/tool/payload bounds against CNC, tables, loose stock, scanner housing, floor and two boundary panels; non-adjacent robot links and tool/payload self-contact. Connected-link and internal gripper pairs excluded; named grasp and support contacts allowed. Excludes triangle-exact continuous collision, grasp forces, scanner protective-field logic and hardware certification.",
+          "failurePose": {
+            "sample": 0,
+            "joints": [
+              -0.48878478315100493,
+              -1.6057955044273755,
+              1.8150498294815105,
+              -1.8150498294815105,
+              -1.5707967186354286,
+              0
+            ]
+          }
+        }
+      },
+      {
+        "candidate": {
+          "id": "compact/baseline/standard",
+          "layout": {
+            "id": "compact",
+            "label": "Closer tables",
+            "infeed": [
+              -1.4,
+              0,
+              1
+            ],
+            "outfeed": [
+              -1.4,
+              0,
+              -1
+            ]
+          },
+          "fixtureShiftMm": 0,
+          "repairId": null,
+          "motionPlan": {
+            "infeedApproachTarget": [
+              -0.98,
+              0.88,
+              0.77
+            ],
+            "infeedPickTarget": [
+              -0.98,
+              0.675,
+              0.77
+            ],
+            "outfeedPlaceTarget": [
+              -0.98,
+              0.675,
+              -0.77
+            ],
+            "transferLift": 0
+          }
+        },
+        "failure": "Planning blocked at sample 0: CNC swept contact: root-mesh_006 / DoorGlass",
+        "evidence": {
+          "method": "asset-rehearsal/v3-cell-contact",
+          "failure": "Planning blocked at sample 0: CNC swept contact: root-mesh_006 / DoorGlass",
+          "acceptedSamples": 0,
+          "frames": 1,
+          "simulatedSeconds": 0.016666666666666666,
+          "maxJointVelocity": 0,
+          "maxJointAcceleration": 0,
+          "maxJointJerk": 0,
+          "tcpTravelMeters": 0,
+          "coverage": "1441 measured poses; approximate swept arm/tool/payload bounds against CNC, tables, loose stock, scanner housing, floor and two boundary panels; non-adjacent robot links and tool/payload self-contact. Connected-link and internal gripper pairs excluded; named grasp and support contacts allowed. Excludes triangle-exact continuous collision, grasp forces, scanner protective-field logic and hardware certification.",
+          "failurePose": {
+            "sample": 0,
+            "joints": [
+              -0.48878478315100493,
+              -1.6057955044273755,
+              1.8150498294815105,
+              -1.8150498294815105,
+              -1.5707967186354286,
+              0
+            ]
+          }
+        }
+      },
+      {
+        "candidate": {
+          "id": "compact/baseline/raised-transfer",
+          "layout": {
+            "id": "compact",
+            "label": "Closer tables",
+            "infeed": [
+              -1.4,
+              0,
+              1
+            ],
+            "outfeed": [
+              -1.4,
+              0,
+              -1
+            ]
+          },
+          "fixtureShiftMm": 0,
+          "repairId": null,
+          "motionPlan": {
+            "infeedApproachTarget": [
+              -0.98,
+              0.88,
+              0.77
+            ],
+            "infeedPickTarget": [
+              -0.98,
+              0.675,
+              0.77
+            ],
+            "outfeedPlaceTarget": [
+              -0.98,
+              0.675,
+              -0.77
+            ],
+            "transferLift": 0.1
+          }
+        },
+        "failure": "Planning blocked at sample 0: CNC swept contact: root-mesh_006 / DoorGlass",
+        "evidence": {
+          "method": "asset-rehearsal/v3-cell-contact",
+          "failure": "Planning blocked at sample 0: CNC swept contact: root-mesh_006 / DoorGlass",
+          "acceptedSamples": 0,
+          "frames": 1,
+          "simulatedSeconds": 0.016666666666666666,
+          "maxJointVelocity": 0,
+          "maxJointAcceleration": 0,
+          "maxJointJerk": 0,
+          "tcpTravelMeters": 0,
+          "coverage": "1441 measured poses; approximate swept arm/tool/payload bounds against CNC, tables, loose stock, scanner housing, floor and two boundary panels; non-adjacent robot links and tool/payload self-contact. Connected-link and internal gripper pairs excluded; named grasp and support contacts allowed. Excludes triangle-exact continuous collision, grasp forces, scanner protective-field logic and hardware certification.",
+          "failurePose": {
+            "sample": 0,
+            "joints": [
+              -0.48878478315100493,
+              -1.6057955044273755,
+              1.8150498294815105,
+              -1.8150498294815105,
+              -1.5707967186354286,
+              0
+            ]
+          }
+        }
+      }
+    ],
+    "best": null
+  }
+}

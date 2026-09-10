@@ -208,7 +208,7 @@ export function Ur20Robot({ motion, selected, onSelect, telemetry, motionToken, 
       motion.toolDirection,
       motionWorkspace,
     )
-    measurement.contactFailure = cncContact.measure(motionToken, paused)
+    measurement.contactFailure = cncContact.measure(motionToken, paused, motion)
     measurement.sweptFrames = cncContact.frames
     measurement.token = motionToken
     measurement.progress = progress

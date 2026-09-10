@@ -1,3 +1,4 @@
+import { COLLISION_COVERAGE } from './cellBodies'
 import type { LayoutSearchResult, SearchRequest } from './layoutSearch'
 import { MAX_JOINT_ACCELERATION, MAX_JOINT_JERK } from './ur20Ik'
 import { LAYOUT_PRESETS, REFERENCE_LAYOUT, layoutTarget } from './cellLayout'
@@ -97,7 +98,7 @@ export default function App() {
   const telemetry = useRef<MotionTelemetry | null>(null)
   const evidence = useRef<CycleEvidence | null>(null)
   const [runId, setRunId] = useState(0)
-  const revisionKey = JSON.stringify({ layout, fixtureShiftMm, appliedRepair, transferLift, version: 'ur20-cycle/v4-search-jerk' })
+  const revisionKey = JSON.stringify({ layout, fixtureShiftMm, appliedRepair, transferLift, version: 'ur20-cycle/v5-cell-contact' })
   const motionToken = `${revisionKey}:${runId}`
 
   const baselineEvaluation = useMemo(() => evaluateCommissioning({ layout, fixtureShiftMm: 0, repairId: null }), [layout])
@@ -377,7 +378,7 @@ export default function App() {
       planningEvidence,
       searchEvidence,
       motionLimits: { jointAccelerationRadS2: MAX_JOINT_ACCELERATION, jointJerkRadS3: MAX_JOINT_JERK },
-      cycleEvidence: { ...evidence.current, positionToleranceMm: 18, directionToleranceDegrees: 15, coverage: '1441 measured poses; rendered arm/tool/payload swept bounding boxes against CNC and table meshes; planned P02 tool-envelope clearance; named payload/chuck-pad and table-slot support contact allowed; no self-collision, loose stock, scanner/fence collision or hardware certification' },
+      cycleEvidence: { ...evidence.current, positionToleranceMm: 18, directionToleranceDegrees: 15, coverage: COLLISION_COVERAGE },
       job: 'OP-1042 · CNC housing',
       revision: 8,
       generatedAt: new Date().toISOString(),
@@ -430,7 +431,7 @@ export default function App() {
               ? 'Revision 08 ready to run'
               : isChanged
                 ? 'Revision 08 blocked'
-                : isDraft ? 'Layout/path candidate · run to verify' : 'Revision 07 is commissioned'
+                : isDraft ? 'Layout/path candidate · run to verify' : 'Reference layout · run current checks'
 
   const releaseLabel = released
     ? 'Revision 08 released'
@@ -438,7 +439,7 @@ export default function App() {
       ? 'Release revision 08'
       : isDraft
         ? 'Release blocked'
-        : 'Revision 07 validated'
+        : 'Revision 07 · recheck required'
 
   return (
     <main className="app-shell">
@@ -457,8 +458,8 @@ export default function App() {
               <span className="micro-label">CELLS / CNC-01</span>
               <strong>OP-1042 · CNC housing</strong>
             </div>
-            <span className={`revision-chip ${isDraft && !released ? 'draft' : 'validated'}`}>
-              REV {released ? '08 · RELEASED' : isDraft ? '08 · DRAFT' : '07 · VALIDATED'}
+            <span className={`revision-chip ${!released ? 'draft' : 'validated'}`}>
+              REV {released ? '08 · RELEASED' : isDraft ? '08 · DRAFT' : '07 · RECHECK'}
             </span>
           </div>
           <ol className="workflow-phases" aria-label="Commissioning workflow">
@@ -475,8 +476,8 @@ export default function App() {
         </div>
 
         <div className="header-actions">
-          <button className={`deploy-button ${isDraft && !canRelease ? 'blocked' : ''} ${!isDraft || released ? 'released' : ''}`} onClick={releaseRevision} disabled={released || !isDraft}>
-            <Icon name={!isDraft || released ? 'check' : canRelease ? 'download' : 'warning'} size={16} />
+          <button className={`deploy-button ${!canRelease && !released ? 'blocked' : ''} ${released ? 'released' : ''}`} onClick={releaseRevision} disabled={released || !isDraft}>
+            <Icon name={released ? 'check' : canRelease ? 'download' : 'warning'} size={16} />
             {releaseLabel}
           </button>
         </div>
@@ -490,7 +491,7 @@ export default function App() {
               <span className={`revision ${isDraft && !released ? 'draft' : ''}`}>REV {isDraft ? '08' : '07'}</span>
             </div>
             <div className="revision-copy">
-              <strong>{released ? 'Released revision' : isDraft ? 'Commissioning draft' : 'Commissioned baseline'}</strong>
+              <strong>{released ? 'Released revision' : isDraft ? 'Commissioning draft' : 'Reference baseline'}</strong>
               <p>{released ? 'Local export · runtime not connected' : isDraft ? 'Layout candidate · full cycle required' : 'Reference layout · replay to verify'}</p>
               {isChanged && <span>{released ? 'Revision 08 · local export record' : 'Compared with Revision 07'}</span>}
             </div>
@@ -620,7 +621,7 @@ export default function App() {
                 ))}
               </div>
               <div className="baseline-evidence">
-                <span className="micro-label">COMMISSIONED EVIDENCE</span>
+                <span className="micro-label">P02 PREFLIGHT</span>
                 <strong>P02 preflight passes · full path checked on run</strong>
                 <p>{baselineEvaluation.cycleSeconds.toFixed(1)} s nominal cycle · 84 mm P02 clearance · {checksPassed}/{activeEvaluation.checks.length} checks passed</p>
               </div>
@@ -698,7 +699,7 @@ export default function App() {
           )}
           <div className="baseline-evidence">
             <span className="micro-label">VERIFICATION SCOPE</span>
-            <p>1441 measured TCP poses · 18 mm / 15° · joint limits. Before motion: full-path rehearsal on loaded assets. During motion: swept arm/tool/payload bounds against CNC and tables; named payload supports allowed. P02 remains planned tool clearance. Self-collision, loose stock, scanner/fences and hardware acknowledgement are not checked.</p>
+            <p>1441 measured TCP poses · 18 mm / 15° · joint limits. Full-path rehearsal and live swept bounds cover non-adjacent robot links, CNC, tables, stock, scanner housing, floor and boundary panels. Connected joints and named grasp/support contacts are excluded. Approximate geometry; protective-field logic, grasp forces and hardware acknowledgement are not checked.</p>
           </div>
         </aside>
       </section>
@@ -708,7 +709,7 @@ export default function App() {
         <div>Robot <strong>UR20</strong></div>
         <div>Controller <strong>Local prototype</strong></div>
         <div className="statusbar-spacer" />
-        <div>Revision <strong>{released ? '08 released' : isDraft ? '08 draft' : '07 validated'}</strong></div>
+        <div>Revision <strong>{released ? '08 released' : isDraft ? '08 draft' : '07 recheck required'}</strong></div>
         <div className="coordinate-readout">X {fixtureShiftMm.toFixed(1)}&nbsp;&nbsp; Y 0000.0&nbsp;&nbsp; Z 0000.0</div>
       </footer>
 

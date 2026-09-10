@@ -14,6 +14,7 @@ export interface MotionState {
   doorOpen: boolean
   machineRunning: boolean
   rawRemoved: boolean
+  graspContact: 'source' | 'placed' | 'chuck' | null
   partAtMachine: boolean
   partFinished: boolean
   finishedPlaced: boolean
@@ -88,6 +89,8 @@ const keyframes: MotionKeyframe[] = [
   { at: 0.65, target: CNC_CHUCK_TARGET, toolDirection: [1, 0, 0], action: 'Twisting three jaws onto finished part' },
   { at: 0.68, target: CNC_CHUCK_TARGET, toolDirection: [1, 0, 0], action: 'Confirming finished-part grip' },
   { at: 0.7, target: [0.65, 1.06, -0.25], toolDirection: [1, 0, 0], action: 'Unloading CNC' },
+  { at: 0.73, target: [0.4, 1.2, -0.25], toolDirection: [0, -1, 0], action: 'Reorienting outside CNC door' },
+  { at: 0.76, target: [0.4, 1.2, -0.9], toolDirection: [0, -1, 0], action: 'Routing clear of wrist to outfeed' },
   { at: 0.8, targetKey: 'outfeed-approach', toolDirection: [0, -1, 0], action: 'Moving to outfeed approach' },
   { at: 0.84, targetKey: 'outfeed-place', toolDirection: [0, -1, 0], action: 'Descending to outfeed slot' },
   { at: 0.86, targetKey: 'outfeed-place', toolDirection: [0, -1, 0], action: 'Releasing finished part' },
@@ -166,6 +169,7 @@ export function sampleMotion(
     doorOpen,
     machineRunning: normalized >= 0.55 && normalized < 0.575,
     rawRemoved: normalized >= 0.19,
+    graspContact: normalized >= 0.115 && normalized < 0.21 ? 'source' : normalized >= 0.84 && normalized < 0.92 ? 'placed' : (normalized >= 0.4 && normalized < 0.52) || (normalized >= 0.61 && normalized < 0.7) ? 'chuck' : null,
     partAtMachine: normalized >= 0.46 && normalized < 0.68,
     partFinished: normalized >= 0.56,
     finishedPlaced: normalized >= 0.86,

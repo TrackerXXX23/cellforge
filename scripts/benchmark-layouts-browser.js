@@ -28,6 +28,7 @@ async (page) => {
     window.__CELLFORGE_LAYOUT_BENCHMARK__ = results
     return results
   })
-  if (results.some(result => result.failure || result.acceptedSamples !== 1441)) throw new Error(JSON.stringify(results))
+  // Report rejected layouts too: stricter collision coverage can invalidate older paths.
+  if (results.filter(result => result.layout === 'compact').some(result => result.failure || result.acceptedSamples !== 1441)) throw new Error(JSON.stringify(results))
   return results
 }

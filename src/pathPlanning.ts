@@ -1,3 +1,4 @@
+import { CELL_BODY_IDS, COLLISION_COVERAGE } from './cellBodies'
 import type { CellLayout } from './cellLayout'
 import * as THREE from 'three'
 import type { URDFRobot } from 'urdf-loader'
@@ -11,7 +12,7 @@ import { CNC_DOOR_OPEN_OFFSET } from './cnc'
 import { THREE_JAW_TCP_OFFSET, THREE_JAW_CLOSED_RADIUS, THREE_JAW_OPEN_RADIUS, THREE_JAW_AXIAL_TRAVEL, THREE_JAW_TWIST_ANGLE } from './eoat'
 
 export interface PlanningEvidence {
-  method: 'asset-rehearsal/v2-jerk'
+  method: 'asset-rehearsal/v3-cell-contact'
   failure: string | null
   acceptedSamples: number
   frames: number
@@ -21,9 +22,10 @@ export interface PlanningEvidence {
   maxJointJerk: number
   tcpTravelMeters: number
   coverage: string
+  failurePose?: { sample: number; joints: number[] }
 }
 export type PlanningRequest = (plan: MotionPlan, cancelled: () => boolean) => Promise<PlanningEvidence>
-export interface PlanningGeometry { robot: THREE.Object3D | null; machine: THREE.Object3D | null; tables: THREE.Object3D[] }
+export interface PlanningGeometry { robot: THREE.Object3D | null; machine: THREE.Object3D | null; tables: THREE.Object3D[]; cellBodies: { id: string; root: THREE.Object3D }[] }
 
 function worldClone<T extends THREE.Object3D>(source: T): T {
   source.updateWorldMatrix(true, true)
@@ -38,11 +40,11 @@ function worldClone<T extends THREE.Object3D>(source: T): T {
  * pose gates, and approximate swept boxes as execution, at a fixed 60 Hz.
  */
 export async function rehearsePlan(geometry: PlanningGeometry, plan: MotionPlan, cancelled = () => false): Promise<PlanningEvidence> {
-  const result: PlanningEvidence = { method: 'asset-rehearsal/v2-jerk', failure: null, acceptedSamples: 0, frames: 0, simulatedSeconds: 0,
+  const result: PlanningEvidence = { method: 'asset-rehearsal/v3-cell-contact', failure: null, acceptedSamples: 0, frames: 0, simulatedSeconds: 0,
     maxJointVelocity: 0, maxJointAcceleration: 0, maxJointJerk: 0, tcpTravelMeters: 0,
-    coverage: '1441 commanded poses; fixed 60 Hz arm/tool/payload vs CNC and table boxes; named payload support contacts allowed. Excludes self-collision, loose table stock, scanner, fences, grasp forces and hardware acknowledgement.' }
-  if (!geometry.robot || !geometry.machine || geometry.tables.length !== 2) {
-    return { ...result, failure: 'Planning geometry unavailable: robot, CNC and both tables are required' }
+    coverage: COLLISION_COVERAGE }
+  if (!geometry.robot || !geometry.machine || geometry.tables.length !== 2 || !geometry.cellBodies || CELL_BODY_IDS.some(id => !geometry.cellBodies.some(body => body.id === id))) {
+    return { ...result, failure: 'Planning geometry unavailable: robot, CNC, both tables and all cell bodies are required' }
   }
   const robot = worldClone(geometry.robot) as URDFRobot
   const machine = worldClone(geometry.machine)
@@ -65,10 +67,11 @@ export async function rehearsePlan(geometry: PlanningGeometry, plan: MotionPlan,
   const workspace = createUr20IkWorkspace()
   const solver = createUr20IkWorkspace()
   const continuity = createMotionContinuityMonitor()
-  const monitor = createCncContactMonitor(2)
+  const monitor = createCncContactMonitor(2, CELL_BODY_IDS)
   monitor.registerRobot(robot)
   monitor.registerMachine(machine)
   tables.forEach((table, index) => monitor.registerTable(String(index), table))
+  geometry.cellBodies.forEach(({id, root}) => monitor.registerCellBody(id, worldClone(root)))
   door.position.x = CNC_DOOR_OPEN_OFFSET
   spindle.position.y = 1.89
   rotor.rotation.z = 0
@@ -106,9 +109,9 @@ export async function rehearsePlan(geometry: PlanningGeometry, plan: MotionPlan,
         const limits = UR20_COMMISSIONING_LIMITS[UR20_JOINT_NAMES[axis]]
         return !Number.isFinite(angle) || angle < limits[0] || angle > limits[1]
       })
-      const failure = monitor.measure('planning', false) || continuity.measure(joints, delta, false, 'planning') || (invalidJoint ? 'Joint boundary exceeded' : null)
+      const failure = monitor.measure('planning', false, motion) || continuity.measure(joints, delta, false, 'planning') || (invalidJoint ? 'Joint boundary exceeded' : null)
       result.frames++
-      if (failure) { result.failure = `Planning blocked at sample ${index}: ${failure}`; break }
+      if (failure) { result.failure = `Planning blocked at sample ${index}: ${failure}`; result.failurePose = {sample:index, joints}; break }
       const actualError = measureUr20TcpPose(tcp, motion.target, motion.toolDirection, workspace)
       if (hasPrevious) result.tcpTravelMeters += previousTcp.distanceTo(workspace.toolPosition)
       previousTcp.copy(workspace.toolPosition)
