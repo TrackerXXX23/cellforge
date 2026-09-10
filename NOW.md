@@ -3,20 +3,18 @@
 <!-- codex-handoff:start -->
 ## CONTEXT FOR /work
 
-**Last handoff**: 2026-07-22 17:06:29 CST
-**Branch**: `codex/two-finger-gripper-pinch`
+**Last handoff**: 2026-09-09 22:26:10 CST
+**Branch**: `codex/trustworthy-cycle-verification`
 **Active ticket**: `None found`
-**Summary**: Fixed the custom three-jaw gripper's visible wrist attachment with a tool0 mounting collar, overlapping faceplate, and six-bolt flange that extends into the UR20 wrist envelope. Changed the grasp from a subtle radial close to a visible helical action: the three-jaw rotor turns 30 degrees while each jaw advances 18 mm down and closes radially onto the 60 mm blank. Slowed damping so the twist is observable and updated runtime status copy for the raw and finished part grasps. Playwright captured same-camera open, mid-twist, and closed states with 0 console errors. npm run check passes with 38 tests and the production build; npm run test:skill passes all 4 R3F guardrails.
-**Next exact action**: Have the user inspect the mounted open, mid-twist, and closed pickup states in draft PR #11; merge to develop only after visual approval.
+**Summary**: User explicitly replaced waiting for visual approval with autonomous browser verification and iteration. PR #11 is merged into develop at f4cd6cd. Overall goal: a credible virtual commissioning workflow whose verified result is backed by actual simulated robot motion and scoped clearance evidence. First milestone: actual-chain TCP position/direction and joint acceptance across the complete cycle; tracking/solver failures and incomplete runs block release; pause/resume remains correct; exported evidence is revision-bound; local export must not claim runtime deployment acknowledgement. Exercise baseline, both repairs, blocked clearance, tracking failure, interrupted run, and release in browser plus meaningful automated tests. Inspect and improve scene framing where needed to verify motion. Remain explicit about collision coverage and prototype limitations; no hardware integration or certification is implied. No routine user visual approval is required. Follow AGENTS.md publish workflow; no merge authorization granted for the new PR. Previous npm run check passed 38 tests and build; browser recovery and local release flow passed, but existing timer-only verification is insufficient. Existing unrelated duplicate files are preserved separately on local recovery branch codex/recovery-before-trustworthy-cycle; exclude them from feature work. Policy and handoff changes are on codex/trustworthy-cycle-verification.
+**Next exact action**: Run ./continue, establish the trustworthy-cycle goal, and implement actual UR20 motion acceptance as the cycle completion and release gate; autonomously browser-test and iterate through success and failure paths, then publish a verified draft PR to develop.
 **Blocker**: None
 
 **Git status at handoff**:
 
 ```text
- M src/ThreeJawGripper.tsx
- M src/eoat.test.ts
- M src/eoat.ts
- M src/simulation.ts
+ M AGENTS.md
+ M NOW.md
 ?? "AGENTS 2.md"
 ?? "NOW 2.md"
 ?? "continue 2"
