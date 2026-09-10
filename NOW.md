@@ -6,7 +6,7 @@
 **Last handoff**: 2026-09-10 00:26:47 CST
 **Branch**: `codex/automatic-layout-jerk-motion`
 **Active ticket**: `None found`
-**Summary**: Implemented bounded automatic layout/path search and jerk-limited motion on codex/automatic-layout-jerk-motion, based on PR #14 head 8632ec5. Baseline and shifted winners completed 1441 measured poses in 51.02 s and 50.51 s, with jerk within 120 rad/s^3 tolerance and settled home. Candidate comparisons, cancellation, all-blocked geometry, pause/resume, mobile width, and revision-bound exports verified. Parent PRs #13/#14 unchanged. See docs/automatic-search-verification.md. No merge or deploy.
+**Summary**: Published draft PR #15 targeting develop: https://github.com/TrackerXXX23/cellforge/pull/15 (implementation 45d800c). Implemented bounded automatic layout/path search and jerk-limited motion on codex/automatic-layout-jerk-motion, based on PR #14 head 8632ec5. Baseline and shifted winners completed 1441 measured poses in 51.02 s and 50.51 s, with jerk within 120 rad/s^3 tolerance and settled home. Candidate comparisons, cancellation, all-blocked geometry, pause/resume, mobile width, and revision-bound exports verified. Parent PRs #13/#14 unchanged. See docs/automatic-search-verification.md. No merge or deploy.
 **Next exact action**: Review the dependent draft PR; next implement self-collision and remaining cell-body coverage. Merge only with authorization.
 **Blocker**: None
 
@@ -40,7 +40,7 @@
 <!-- codex-handoff:end -->
 ## Current state
 
-- Active branch: `codex/automatic-layout-jerk-motion`, based on PR #14 head `8632ec5`. Depends on open [PR #14](https://github.com/TrackerXXX23/cellforge/pull/14), which depends on [PR #13](https://github.com/TrackerXXX23/cellforge/pull/13). Parent branches and recovery/continuation branches remain unchanged. No merge/deploy authorization.
+- [Draft PR #15](https://github.com/TrackerXXX23/cellforge/pull/15) targets `develop`; implementation commit `45d800c`. Active branch: `codex/automatic-layout-jerk-motion`, based on PR #14 head `8632ec5`. Depends on open [PR #14](https://github.com/TrackerXXX23/cellforge/pull/14), which depends on [PR #13](https://github.com/TrackerXXX23/cellforge/pull/13). Parent branches and recovery/continuation branches remain unchanged. No merge/deploy authorization.
 - Bounded search compares table presets, transfer heights, and fixture repairs; ranks only full passing asset rehearsals. Search applies a winner, then requires a separate measured run. Exports include comparisons, selected path, configured acceleration/jerk limits, and matching revision evidence.
 - Jerk-limited integration and signed runtime measurement enforce prototype 4 rad/s² acceleration and 120 rad/s³ jerk, with numerical monitoring tolerance. Final home requires velocity and acceleration settling. Compared with the prior compact profile, baseline rehearsal is about 14% slower.
 - Live winners: baseline 51.02 s; shifted side entry 50.51 s; both accepted all 1,441 poses and exported matching evidence with no hardware acknowledgement. Cancellation/stale export, all-blocked geometry, deterministic search, pause/resume, and 390 px width passed.
