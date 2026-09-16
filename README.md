@@ -7,6 +7,8 @@ Chet Paslawski. It connects an interactive 3D cell to deterministic process
 state, robot kinematics, layout/path comparison and revision-bound exports.
 It is a working software prototype; it does not control physical equipment.
 
+**[Open the live CellForge demo](https://cellforge-orcin.vercel.app)**
+
 ![CellForge verified closer-table cycle](docs/self-cell-verified.png)
 
 © 2023 Universal Robots A/S. Use hereof is subject to Universal Robots A/S’
@@ -14,7 +16,9 @@ Terms and Conditions for Use of Graphical Documentation.
 
 ## Try the workflow
 
-Requires Node.js 22.12+ and npm. No API keys, hosted model or backend required.
+Open the [hosted demo](https://cellforge-orcin.vercel.app), or run it locally.
+Local development requires Node.js 22.12+ and npm. No API keys, hosted model
+or backend are required.
 
 ```bash
 npm ci

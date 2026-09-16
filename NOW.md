@@ -4,24 +4,23 @@ Updated September 16, 2026.
 
 ## Current work
 
-User requested a public open-source release to accompany a Trener application.
-Release branch `codex/public-release` starts from develop and includes the
-latest stacked self/cell collision milestone (`bbeb915`, PRs #13–16).
-Original recovery checkout and feature branches are preserved.
+Branch `codex/hosted-demo` fast-forwarded the merged release from `main` onto
+the `develop` lineage. CellForge is deployed at
+https://cellforge-orcin.vercel.app and the public GitHub repository homepage
+points to that URL. The Vercel project is connected to the GitHub repository
+for future deployments.
 
-Added MIT licence for original code, separate third-party asset notices,
-contributor instructions and a corrected README/demo guide. Refreshed lockfile
-removes the reported dependency advisories. No simulation source changes.
-Fresh clean install, 81 tests, typecheck and build pass; zero reported npm
-advisories. Automated full-history and issue/comment secret scans found no
-matches. See docs/public-release-review.md for scope and limits.
+The hosted production build loaded the VMC GLB and UR20 URDF assets, rejected
+the unsafe reference layout at sample 1150, selected the closer-table layout,
+accepted all 1,441 measured poses in 51.8 seconds, and downloaded the Revision
+08 evidence artifact. Desktop and 390 px mobile layouts were inspected. The
+browser reported no console errors; the existing Three.js deprecation and
+Collada Z-up warnings remain.
 
 ## Next exact action
 
-Finish browser acceptance, push the release PR to develop, verify CI and
-promote tested code to main for the user-requested public release. Keep
-third-party asset terms separate from the application licence. Verify the
-public repository anonymously before using its link in applications.
+Review the hosted-demo documentation PR and merge it into `develop` when CI is
+green, then promote it to `main`. No application has been submitted.
 
 ## Next product milestone
 
