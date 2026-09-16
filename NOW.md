@@ -3,11 +3,11 @@
 <!-- codex-handoff:start -->
 ## CONTEXT FOR /work
 
-**Last handoff**: 2026-09-16 16:59:00 CST
+**Last handoff**: 2026-09-16 17:02:00 CST
 **Branch**: `codex/play-first-demo`
 **Active ticket**: `None found`
-**Summary**: Superseded the wide CNC-loading detour from cc9e707 after user review found it mechanically worse. The replacement restores the compact robot-side transfer, keeps the tool vertical through clearance, performs the wrist reorientation outside the CNC door over a longer eased segment, and enters the chuck axially. The full 1,441-pose planner passes; measured motion crossed loading and machining into unloading with no runtime errors, under 0.96 rad/s observed joint speed, and 21 mm maximum TCP tracking error during the audited reorientation. The reference layout remains blocked by upper-arm/base contact at pose 1147, moved-fixture recovery still finds a passing candidate, and npm run check passes 82 tests plus build. Screenshot: output/playwright/cnc-loading-reorientation.png. No push/deploy/merge/promotion performed.
-**Next exact action**: Keep this branch local. Wait for explicit user approval before any push, deployment, merge, promotion, or release because Vercel auto-deploys pushes.
+**Summary**: Published the accepted play-first demo and compact CNC-loading correction. Commit 0c5641c restores the robot-side transfer, keeps the tool vertical through clearance, performs the wrist reorientation outside the CNC door over a longer eased segment, and enters the chuck axially. `npm run check`, GitHub CI, the full 1,441-pose planner, blocked-layout rejection, and moved-fixture recovery pass. Draft PR #20 targets `develop`. Vercel production deployment dpl_FRTRAMNoViPyUfwesUkSN5eXaACz is Ready at https://cellforge-orcin.vercel.app; public browser verification loaded the new demo with zero console errors and started the normal robot cycle.
+**Next exact action**: Review draft PR #20. Do not mark ready or merge without explicit approval.
 **Blocker**: None
 
 **Git status at handoff**:
@@ -22,7 +22,8 @@ Updated September 16, 2026.
 
 ## Current work
 
-Branch `codex/play-first-demo` contains the complete local-only demo polish.
+Branch `codex/play-first-demo` contains the published demo polish and is open as
+draft PR #20 against `develop`.
 The app opens on the passing closer-table layout with a prominent Run cell
 action, direct Pause/Resume and Reset controls, and Normal run, Moved fixture,
 and Blocked layout scenarios. Commissioning evidence and export controls are
@@ -68,12 +69,11 @@ instructions remain a documented future idea in `docs/demo-polish-plan.md`.
 
 ## Next exact action
 
-Keep this branch local and wait for explicit user approval before any push,
-deployment, merge, promotion, or release. Vercel auto-deploys pushes.
+Review draft PR #20. Do not mark ready or merge without explicit approval.
 
 ## Next product milestone
 
-After user approval, publish the verified play-first slice. A later product
+Production is live at `https://cellforge-orcin.vercel.app`. A later product
 milestone can add free-text job instructions without weakening the existing
 collision, measured-motion, or release gates. Exact stock removal, protective
 field logic, grasp forces, and hardware acknowledgement remain out of scope.
