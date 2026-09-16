@@ -30,6 +30,7 @@ interface CncMachineProps {
   paused: boolean
   motion: MotionState
   selected: boolean
+  interiorView: boolean
   onSelect: () => void
 }
 
@@ -79,7 +80,7 @@ function setLampState(node: THREE.Object3D, active: boolean) {
   })
 }
 
-export function CncMachine({ motionToken, motion, selected, onSelect, paused, cncContact }: CncMachineProps) {
+export function CncMachine({ motionToken, motion, selected, interiorView, onSelect, paused, cncContact }: CncMachineProps) {
   const workpieceRef = useRef<THREE.Mesh>(null)
   useEffect(() => {
     cncContact.registerCellBody('chuck-stock', workpieceRef.current!)
@@ -102,6 +103,8 @@ export function CncMachine({ motionToken, motion, selected, onSelect, paused, cn
     }
   }, [machineScene])
   const spindleHomeY = useMemo(() => nodes.spindle.position.y, [nodes.spindle])
+  const spindleHomeX = useMemo(() => nodes.spindle.position.x, [nodes.spindle])
+  const spindleHomeZ = useMemo(() => nodes.spindle.position.z, [nodes.spindle])
   const shellMaterials = useMemo(() => collectMaterials(nodes.shell), [nodes.shell])
 
   useEffect(() => {
@@ -116,12 +119,12 @@ export function CncMachine({ motionToken, motion, selected, onSelect, paused, cn
 
   useEffect(() => {
     for (const material of shellMaterials) {
-      material.transparent = selected
-      material.opacity = selected ? cutawayOpacity : 1
-      material.depthWrite = !selected
+      material.transparent = interiorView
+      material.opacity = interiorView ? cutawayOpacity : 1
+      material.depthWrite = !interiorView
       material.needsUpdate = true
     }
-  }, [selected, shellMaterials])
+  }, [interiorView, shellMaterials])
 
   useEffect(() => {
     setLampState(nodes.stackAmber, !motion.machineRunning)
@@ -131,8 +134,10 @@ export function CncMachine({ motionToken, motion, selected, onSelect, paused, cn
   useEffect(() => {
     nodes.door.position.x = CNC_DOOR_OPEN_OFFSET
     nodes.spindle.position.y = spindleHomeY + 0.44
+    nodes.spindle.position.x = spindleHomeX
+    nodes.spindle.position.z = spindleHomeZ
     machineScene.updateWorldMatrix(true, true)
-  }, [motionToken, nodes, spindleHomeY, machineScene])
+  }, [motionToken, nodes, spindleHomeX, spindleHomeY, spindleHomeZ, machineScene])
 
   useFrame((_, delta) => {
     if (paused) return
@@ -140,7 +145,10 @@ export function CncMachine({ motionToken, motion, selected, onSelect, paused, cn
     nodes.door.position.x = THREE.MathUtils.damp(nodes.door.position.x, doorTarget, 8, delta)
     const spindleTarget = spindleHomeY + (motion.machineRunning ? 0.14 : 0.44)
     nodes.spindle.position.y = THREE.MathUtils.damp(nodes.spindle.position.y, spindleTarget, 8, delta)
-    if (motion.machineRunning) nodes.spindle.rotation.y += delta * 18
+    const cutSweep = motion.machineRunning ? Math.sin(motion.machiningProgress * Math.PI * 2) * 0.1 : 0
+    nodes.spindle.position.x = THREE.MathUtils.damp(nodes.spindle.position.x, spindleHomeX + cutSweep, 9, delta)
+    nodes.spindle.position.z = THREE.MathUtils.damp(nodes.spindle.position.z, spindleHomeZ + (motion.machineRunning ? 0.045 : 0), 9, delta)
+    if (motion.machineRunning) nodes.spindle.rotation.y += delta * 24
     machineScene.updateWorldMatrix(true, true)
   }, -2)
 

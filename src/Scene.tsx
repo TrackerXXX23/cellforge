@@ -33,6 +33,7 @@ interface SceneProps {
   runState: RunState
   faultInjected: boolean
   showEnvelope: boolean
+  showMachineInterior: boolean
   fixtureShiftMm: number
   baselinePath: readonly Vec3[]
   activePath: readonly Vec3[]
@@ -225,6 +226,7 @@ function Cell({
   runState,
   faultInjected,
   showEnvelope,
+  showMachineInterior,
   fixtureShiftMm,
   baselinePath,
   activePath,
@@ -287,7 +289,7 @@ function Cell({
       />
       <directionalLight position={[5, 3, -4]} intensity={0.7} color="#c9ddff" />
       <Ur20Robot cncContact={cncContact} telemetry={telemetry} motionToken={motionToken} progress={progress} paused={runState !== 'running'} selected={selected === 'robot'} onSelect={(event) => select(event, () => onSelect('robot'))} motion={motion} />
-      <CncMachine motionToken={motionToken} cncContact={cncContact} paused={runState !== 'running'} selected={selected === 'cnc'} onSelect={() => onSelect('cnc')} motion={motion} />
+      <CncMachine motionToken={motionToken} cncContact={cncContact} paused={runState !== 'running'} selected={selected === 'cnc'} interiorView={showMachineInterior} onSelect={() => onSelect('cnc')} motion={motion} />
       {showRevisionGhost && <InfeedRevisionGhost layout={layout} />}
       <PartTable
         layout={layout} cncContact={cncContact} kind="infeed"

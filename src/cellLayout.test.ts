@@ -54,5 +54,5 @@ it('records a raised transfer even when the table layout is unchanged', () => {
   const standard={infeedApproachTarget:evaluation.approachTarget,infeedPickTarget:evaluation.pickTarget}
   const raised={...standard,transferLift:0.1}
   expect(sampleMotion(0.305,'running',raised).target[1]-sampleMotion(0.305,'running',standard).target[1]).toBeCloseTo(0.1)
-  expect(sampleMotion(0.4,'running',raised).target).toEqual(sampleMotion(0.4,'running',standard).target)
+  expect(sampleMotion(0.43,'running',raised).target).toEqual(sampleMotion(0.43,'running',standard).target)
 })

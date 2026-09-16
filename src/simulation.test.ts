@@ -35,6 +35,7 @@ describe('machine-tending motion plan', () => {
     expect(beforePick.rawRemoved).toBe(false)
     expect(carryingRaw).toMatchObject({ carrying: 'raw', gripperClosed: true, rawRemoved: true })
     expect(machining).toMatchObject({ carrying: null, partAtMachine: true, machineRunning: true, doorOpen: false })
+    expect(machining.machiningProgress).toBeGreaterThan(0)
     expect(carryingFinished).toMatchObject({ carrying: 'finished', gripperClosed: true, partFinished: true })
     expect(placed).toMatchObject({ carrying: null, gripperClosed: false, finishedPlaced: true })
   })
@@ -73,6 +74,25 @@ describe('machine-tending motion plan', () => {
     expect(sampleMotion(0.56, 'running').doorOpen).toBe(false)
     expect(sampleMotion(0.62, 'running').doorOpen).toBe(true)
     expect(sampleMotion(0.82, 'running').doorOpen).toBe(false)
+  })
+
+  it('reorients for the CNC only after reaching the clear outside-door pose', () => {
+    const highClearance = sampleMotion(0.305, 'running')
+    const outsideDoor = sampleMotion(0.345, 'running')
+    const approach = sampleMotion(0.405, 'running')
+
+    expect(highClearance.target[0]).toBeCloseTo(0.4)
+    expect(highClearance.target[1]).toBeCloseTo(1.2)
+    expect(highClearance.target[2]).toBeCloseTo(0.8)
+    expect(highClearance.toolDirection).toEqual([0, -1, 0])
+    expect(outsideDoor.target[0]).toBeCloseTo(0.4)
+    expect(outsideDoor.target[1]).toBeCloseTo(1.2)
+    expect(outsideDoor.target[2]).toBeCloseTo(-0.25)
+    expect(outsideDoor.toolDirection).toEqual([0, -1, 0])
+    expect(approach.target[0]).toBeCloseTo(0.72)
+    expect(approach.target[1]).toBeCloseTo(1.06)
+    expect(approach.target[2]).toBeCloseTo(-0.25)
+    expect(approach.toolDirection).toEqual([1, 0, 0])
   })
 
   it('orients the tool down at fixtures and into the CNC chuck', () => {

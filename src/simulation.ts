@@ -13,6 +13,7 @@ export interface MotionState {
   carrying: PayloadState
   doorOpen: boolean
   machineRunning: boolean
+  machiningProgress: number
   rawRemoved: boolean
   graspContact: 'source' | 'placed' | 'chuck' | null
   partAtMachine: boolean
@@ -79,10 +80,10 @@ const keyframes: MotionKeyframe[] = [
   { at: 0.21, targetKey: 'infeed-pick', toolDirection: [0, -1, 0], action: 'Verifying raw-part grip' },
   { at: 0.27, targetKey: 'infeed-approach', toolDirection: [0, -1, 0], action: 'Lifting raw part vertically' },
   { at: 0.305, target: [0.4, 1.2, 0.8], toolDirection: [0, -1, 0], action: 'Routing around robot base to CNC' },
-  { at: 0.325, target: [0.4, 1.2, -0.25], toolDirection: [0, -1, 0], action: 'Aligning outside CNC door' },
-  { at: 0.35, target: [0.72, 1.06, -0.25], toolDirection: [1, 0, 0], action: 'Moving to CNC approach' },
-  { at: 0.4, target: CNC_CHUCK_TARGET, toolDirection: [1, 0, 0], action: 'Loading CNC chuck' },
-  { at: 0.46, target: CNC_CHUCK_TARGET, toolDirection: [1, 0, 0], action: 'Releasing raw part' },
+  { at: 0.345, target: [0.4, 1.2, -0.25], toolDirection: [0, -1, 0], action: 'Aligning outside CNC door' },
+  { at: 0.405, target: [0.72, 1.06, -0.25], toolDirection: [1, 0, 0], action: 'Reorienting for CNC approach' },
+  { at: 0.455, target: CNC_CHUCK_TARGET, toolDirection: [1, 0, 0], action: 'Loading CNC chuck' },
+  { at: 0.47, target: CNC_CHUCK_TARGET, toolDirection: [1, 0, 0], action: 'Releasing raw part' },
   { at: 0.51, target: [0.65, 1.06, -0.25], toolDirection: [1, 0, 0], action: 'Clearing CNC door' },
   { at: 0.57, target: [0.65, 1.06, -0.25], toolDirection: [1, 0, 0], action: 'Running machine handshake' },
   { at: 0.61, target: [0.65, 1.06, -0.25], toolDirection: [1, 0, 0], action: 'Returning to CNC approach' },
@@ -105,7 +106,7 @@ function resolveTarget(frame: MotionKeyframe, plan: MotionPlan): Vec3 {
   const outfeed = plan.outfeedPlaceTarget ?? OUTFEED_PLACE_TARGET
   if (frame.targetKey === 'outfeed-place') return outfeed
   if (frame.targetKey === 'outfeed-approach') return [outfeed[0], outfeed[1] + 0.205, outfeed[2]]
-  if (frame.target && frame.at >= 0.305 && frame.at <= 0.325) {
+  if (frame.target && frame.at >= 0.305 && frame.at <= 0.345) {
     return [frame.target[0], frame.target[1] + (plan.transferLift ?? 0), frame.target[2]]
   }
   return frame.target ?? HOME_TARGET
@@ -117,7 +118,7 @@ function clamp01(value: number) {
 
 function smoothstep(value: number) {
   const t = clamp01(value)
-  return t * t * (3 - 2 * t)
+  return t * t * t * (t * (t * 6 - 15) + 10)
 }
 
 function interpolateTarget(from: Vec3, to: Vec3, amount: number): Vec3 {
@@ -153,9 +154,10 @@ export function sampleMotion(
   const to = keyframes[endIndex]
   const segmentProgress = from.at === to.at ? 1 : smoothstep((normalized - from.at) / (to.at - from.at))
 
-  const carryingRaw = normalized >= 0.19 && normalized < 0.46
+  const carryingRaw = normalized >= 0.19 && normalized < 0.47
   const carryingFinished = normalized >= 0.68 && normalized < 0.86
-  const doorOpen = normalized < 0.52 || (normalized >= 0.575 && normalized < 0.78)
+  const doorOpen = normalized < 0.52 || (normalized >= 0.61 && normalized < 0.78)
+  const machiningProgress = clamp01((normalized - 0.52) / 0.09)
 
   return {
     target: interpolateTarget(resolveTarget(from, plan), resolveTarget(to, plan), segmentProgress),
@@ -167,10 +169,11 @@ export function sampleMotion(
       || (normalized >= 0.65 && normalized < 0.68),
     carrying: carryingRaw ? 'raw' : carryingFinished ? 'finished' : null,
     doorOpen,
-    machineRunning: normalized >= 0.55 && normalized < 0.575,
+    machineRunning: normalized >= 0.52 && normalized < 0.61,
+    machiningProgress,
     rawRemoved: normalized >= 0.19,
-    graspContact: normalized >= 0.115 && normalized < 0.21 ? 'source' : normalized >= 0.84 && normalized < 0.92 ? 'placed' : (normalized >= 0.4 && normalized < 0.52) || (normalized >= 0.61 && normalized < 0.7) ? 'chuck' : null,
-    partAtMachine: normalized >= 0.46 && normalized < 0.68,
+    graspContact: normalized >= 0.115 && normalized < 0.21 ? 'source' : normalized >= 0.84 && normalized < 0.92 ? 'placed' : (normalized >= 0.455 && normalized < 0.52) || (normalized >= 0.61 && normalized < 0.7) ? 'chuck' : null,
+    partAtMachine: normalized >= 0.47 && normalized < 0.68,
     partFinished: normalized >= 0.56,
     finishedPlaced: normalized >= 0.86,
   }
