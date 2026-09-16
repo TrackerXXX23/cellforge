@@ -3,10 +3,10 @@
 <!-- codex-handoff:start -->
 ## CONTEXT FOR /work
 
-**Last handoff**: 2026-09-16 17:02:00 CST
+**Last handoff**: 2026-09-16 17:07:00 CST
 **Branch**: `codex/play-first-demo`
 **Active ticket**: `None found`
-**Summary**: Published the accepted play-first demo and compact CNC-loading correction. Commit 0c5641c restores the robot-side transfer, keeps the tool vertical through clearance, performs the wrist reorientation outside the CNC door over a longer eased segment, and enters the chuck axially. `npm run check`, GitHub CI, the full 1,441-pose planner, blocked-layout rejection, and moved-fixture recovery pass. Draft PR #20 targets `develop`. Vercel production deployment dpl_FRTRAMNoViPyUfwesUkSN5eXaACz is Ready at https://cellforge-orcin.vercel.app; public browser verification loaded the new demo with zero console errors and started the normal robot cycle.
+**Summary**: Published the accepted play-first demo and compact CNC-loading correction. Commit 0c5641c restores the robot-side transfer, keeps the tool vertical through clearance, performs the wrist reorientation outside the CNC door over a longer eased segment, and enters the chuck axially. `npm run check`, GitHub CI, the full 1,441-pose planner, blocked-layout rejection, and moved-fixture recovery pass. Draft PR #20 targets `develop`. Vercel production deployment dpl_FRTRAMNoViPyUfwesUkSN5eXaACz is Ready at https://cellforge-orcin.vercel.app; public browser verification loaded the new demo with zero console errors and started the normal robot cycle. GitHub profile commit 1544764 now leads with the live demo, labels the public repository as MIT open source, and links the project image to production. The CellForge README on this branch documents the current scenarios and 82-test check.
 **Next exact action**: Review draft PR #20. Do not mark ready or merge without explicit approval.
 **Blocker**: None
 

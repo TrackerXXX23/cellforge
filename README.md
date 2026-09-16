@@ -1,6 +1,6 @@
 # CellForge
 
-**Configure a robotic workcell, find a feasible motion plan, and inspect the evidence before releasing a job.**
+**Choose a cell scenario, run one CNC part, and inspect the engineering evidence behind the result.**
 
 CellForge is a React, TypeScript and Three.js simulation workbench built by
 Chet Paslawski. It connects an interactive 3D cell to deterministic process
@@ -25,17 +25,17 @@ npm ci
 npm run dev
 ```
 
-1. Click **Replay baseline**. The reference layout is intentionally rejected
-   during full-path rehearsal for approximate self-contact near sample 1150.
-   A passing P02 clearance check alone cannot authorize the full run.
-2. Click **Find best layout & path**. The bounded search compares table
-   positions and transfer paths, then selects a complete passing rehearsal.
-3. Run the selected closer-table cycle. Watch the robot load/unload the CNC;
-   completion requires all 1,441 ordered measured poses and a settled home.
-4. Use **Update fixture position** to introduce a +180 mm infeed change. The
-   clearance failure blocks execution. Compare repairs or search again.
-5. Run the repaired revision and export its local JSON job artifact. It
-   contains matching planning/execution evidence and explicitly reports
+1. Leave **Normal run** selected and click **Run cell**. Watch the UR20 pick
+   stock, load the CNC, machine the part, unload it and return home.
+2. Use **Pause**, **Resume** and **Reset** to inspect the live sequence. A
+   successful cycle still requires all 1,441 ordered measured poses.
+3. Choose **Moved fixture** to load a +180 mm infeed change. Its 9 mm P02
+   clearance fails the 50 mm requirement; **Find working layout** runs the
+   bounded recovery search and applies a passing candidate.
+4. Choose **Blocked layout** and run it to see full-path rehearsal reject the
+   reference setup for approximate self-contact near measured pose 1147.
+5. Expand **Technical details** for commissioning evidence and local export.
+   Exported JSON remains revision-bound and reports
    `runtimeAcknowledged: false`.
 
 Measured simulation runs take longer than the nominal 24-second sequence.
@@ -79,7 +79,7 @@ Start with [`src/App.tsx`](src/App.tsx), [`src/layoutSearch.ts`](src/layoutSearc
 npm run check
 ```
 
-Runs TypeScript, 81 automated tests and the production build. Tests cover
+Runs TypeScript, 82 automated tests and the production build. Tests cover
 collision bounds, motion continuity, incomplete/stale evidence and related
 failure conditions. Browser evidence and reproducible scripts are documented
 in [self/cell collision verification](docs/self-cell-collision-verification.md).
