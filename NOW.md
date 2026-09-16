@@ -1,27 +1,30 @@
 # CellForge handoff
 
-## Current state
+Updated September 16, 2026.
 
-- Branch: `codex/r3f-skill-testing`, created from `develop` at the clean `main` commit `5c99f45`.
-- Branch model: `main` → `develop` → feature branch.
-- Infrastructure: project R3F guardrail tests, full verification command, and GitHub CI are implemented and verified on this branch.
-- Repository: `https://github.com/TrackerXXX23/cellforge` (private).
-- Draft PR: `https://github.com/TrackerXXX23/cellforge/pull/1` targeting `develop`.
+## Current work
 
-## Changed
+User requested a public open-source release to accompany a Trener application.
+Release branch `codex/public-release` starts from develop and includes the
+latest stacked self/cell collision milestone (`bbeb915`, PRs #13–16).
+Original recovery checkout and feature branches are preserved.
 
-- Added AST-based checks for React state writes and object allocation inside `useFrame`.
-- Added delta enforcement for `MathUtils.damp` and Suspense enforcement for lazy components.
-- Added `npm run test:skill` and `npm run check`.
-- Added CI for `develop` and `main` pushes and pull requests.
-- Added repository branch, verification, and handoff conventions.
-- Verified `npm run check`: typecheck passed, all 8 tests passed, and the production build completed.
-- The production build retains the existing warning for a scene chunk over 500 kB.
-
-## Blocked
-
-- None.
+Added MIT licence for original code, separate third-party asset notices,
+contributor instructions and a corrected README/demo guide. Refreshed lockfile
+removes the reported dependency advisories. No simulation source changes.
+Fresh clean install, 81 tests, typecheck and build pass; zero reported npm
+advisories. Automated full-history and issue/comment secret scans found no
+matches. See docs/public-release-review.md for scope and limits.
 
 ## Next exact action
 
-Wait for PR #1 checks, address any failures, then mark the PR ready and merge it into `develop`.
+Finish browser acceptance, push the release PR to develop, verify CI and
+promote tested code to main for the user-requested public release. Keep
+third-party asset terms separate from the application licence. Verify the
+public repository anonymously before using its link in applications.
+
+## Next product milestone
+
+Improve the rejected reference outfeed route and expand collision-aware
+candidate selection. Approximate geometry and absent hardware integration
+remain explicit limitations.

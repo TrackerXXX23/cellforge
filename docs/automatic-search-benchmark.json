@@ -1,0 +1,1123 @@
+{
+  "baseline": {
+    "method": "bounded-layout-path-search/v1",
+    "cancelled": false,
+    "candidates": [
+      {
+        "candidate": {
+          "id": "reference/baseline/standard",
+          "layout": {
+            "id": "reference",
+            "label": "Reference tables",
+            "infeed": [
+              -1.55,
+              0,
+              1.15
+            ],
+            "outfeed": [
+              -1.55,
+              0,
+              -1.15
+            ]
+          },
+          "fixtureShiftMm": 0,
+          "repairId": null,
+          "motionPlan": {
+            "infeedApproachTarget": [
+              -1.1300000000000001,
+              0.88,
+              0.9199999999999999
+            ],
+            "infeedPickTarget": [
+              -1.1300000000000001,
+              0.675,
+              0.9199999999999999
+            ],
+            "outfeedPlaceTarget": [
+              -1.1300000000000001,
+              0.675,
+              -0.9199999999999999
+            ],
+            "transferLift": 0
+          }
+        },
+        "failure": null,
+        "evidence": {
+          "method": "asset-rehearsal/v2-jerk",
+          "failure": null,
+          "acceptedSamples": 1441,
+          "frames": 3419,
+          "simulatedSeconds": 56.983333333333334,
+          "maxJointVelocity": 1.794444444444463,
+          "maxJointAcceleration": 4.000000000001425,
+          "maxJointJerk": 120.0000000002106,
+          "tcpTravelMeters": 16.579050818879974,
+          "coverage": "1441 commanded poses; fixed 60 Hz arm/tool/payload vs CNC and table boxes; named payload support contacts allowed. Excludes self-collision, loose table stock, scanner, fences, grasp forces and hardware acknowledgement."
+        }
+      },
+      {
+        "candidate": {
+          "id": "reference/baseline/raised-transfer",
+          "layout": {
+            "id": "reference",
+            "label": "Reference tables",
+            "infeed": [
+              -1.55,
+              0,
+              1.15
+            ],
+            "outfeed": [
+              -1.55,
+              0,
+              -1.15
+            ]
+          },
+          "fixtureShiftMm": 0,
+          "repairId": null,
+          "motionPlan": {
+            "infeedApproachTarget": [
+              -1.1300000000000001,
+              0.88,
+              0.9199999999999999
+            ],
+            "infeedPickTarget": [
+              -1.1300000000000001,
+              0.675,
+              0.9199999999999999
+            ],
+            "outfeedPlaceTarget": [
+              -1.1300000000000001,
+              0.675,
+              -0.9199999999999999
+            ],
+            "transferLift": 0.1
+          }
+        },
+        "failure": null,
+        "evidence": {
+          "method": "asset-rehearsal/v2-jerk",
+          "failure": null,
+          "acceptedSamples": 1441,
+          "frames": 3456,
+          "simulatedSeconds": 57.6,
+          "maxJointVelocity": 1.794444444444463,
+          "maxJointAcceleration": 4.000000000001425,
+          "maxJointJerk": 120.0000000002106,
+          "tcpTravelMeters": 16.812424326549806,
+          "coverage": "1441 commanded poses; fixed 60 Hz arm/tool/payload vs CNC and table boxes; named payload support contacts allowed. Excludes self-collision, loose table stock, scanner, fences, grasp forces and hardware acknowledgement."
+        }
+      },
+      {
+        "candidate": {
+          "id": "compact/baseline/standard",
+          "layout": {
+            "id": "compact",
+            "label": "Closer tables",
+            "infeed": [
+              -1.4,
+              0,
+              1
+            ],
+            "outfeed": [
+              -1.4,
+              0,
+              -1
+            ]
+          },
+          "fixtureShiftMm": 0,
+          "repairId": null,
+          "motionPlan": {
+            "infeedApproachTarget": [
+              -0.98,
+              0.88,
+              0.77
+            ],
+            "infeedPickTarget": [
+              -0.98,
+              0.675,
+              0.77
+            ],
+            "outfeedPlaceTarget": [
+              -0.98,
+              0.675,
+              -0.77
+            ],
+            "transferLift": 0
+          }
+        },
+        "failure": null,
+        "evidence": {
+          "method": "asset-rehearsal/v2-jerk",
+          "failure": null,
+          "acceptedSamples": 1441,
+          "frames": 3049,
+          "simulatedSeconds": 50.81666666666667,
+          "maxJointVelocity": 1.794444444444463,
+          "maxJointAcceleration": 4.000000000001425,
+          "maxJointJerk": 120.0000000002106,
+          "tcpTravelMeters": 13.694386950400594,
+          "coverage": "1441 commanded poses; fixed 60 Hz arm/tool/payload vs CNC and table boxes; named payload support contacts allowed. Excludes self-collision, loose table stock, scanner, fences, grasp forces and hardware acknowledgement."
+        }
+      },
+      {
+        "candidate": {
+          "id": "compact/baseline/raised-transfer",
+          "layout": {
+            "id": "compact",
+            "label": "Closer tables",
+            "infeed": [
+              -1.4,
+              0,
+              1
+            ],
+            "outfeed": [
+              -1.4,
+              0,
+              -1
+            ]
+          },
+          "fixtureShiftMm": 0,
+          "repairId": null,
+          "motionPlan": {
+            "infeedApproachTarget": [
+              -0.98,
+              0.88,
+              0.77
+            ],
+            "infeedPickTarget": [
+              -0.98,
+              0.675,
+              0.77
+            ],
+            "outfeedPlaceTarget": [
+              -0.98,
+              0.675,
+              -0.77
+            ],
+            "transferLift": 0.1
+          }
+        },
+        "failure": null,
+        "evidence": {
+          "method": "asset-rehearsal/v2-jerk",
+          "failure": null,
+          "acceptedSamples": 1441,
+          "frames": 3079,
+          "simulatedSeconds": 51.31666666666667,
+          "maxJointVelocity": 1.794444444444463,
+          "maxJointAcceleration": 4.000000000000625,
+          "maxJointJerk": 120.0000000002106,
+          "tcpTravelMeters": 13.818618579122033,
+          "coverage": "1441 commanded poses; fixed 60 Hz arm/tool/payload vs CNC and table boxes; named payload support contacts allowed. Excludes self-collision, loose table stock, scanner, fences, grasp forces and hardware acknowledgement."
+        }
+      }
+    ],
+    "best": {
+      "candidate": {
+        "id": "compact/baseline/standard",
+        "layout": {
+          "id": "compact",
+          "label": "Closer tables",
+          "infeed": [
+            -1.4,
+            0,
+            1
+          ],
+          "outfeed": [
+            -1.4,
+            0,
+            -1
+          ]
+        },
+        "fixtureShiftMm": 0,
+        "repairId": null,
+        "motionPlan": {
+          "infeedApproachTarget": [
+            -0.98,
+            0.88,
+            0.77
+          ],
+          "infeedPickTarget": [
+            -0.98,
+            0.675,
+            0.77
+          ],
+          "outfeedPlaceTarget": [
+            -0.98,
+            0.675,
+            -0.77
+          ],
+          "transferLift": 0
+        }
+      },
+      "failure": null,
+      "evidence": {
+        "method": "asset-rehearsal/v2-jerk",
+        "failure": null,
+        "acceptedSamples": 1441,
+        "frames": 3049,
+        "simulatedSeconds": 50.81666666666667,
+        "maxJointVelocity": 1.794444444444463,
+        "maxJointAcceleration": 4.000000000001425,
+        "maxJointJerk": 120.0000000002106,
+        "tcpTravelMeters": 13.694386950400594,
+        "coverage": "1441 commanded poses; fixed 60 Hz arm/tool/payload vs CNC and table boxes; named payload support contacts allowed. Excludes self-collision, loose table stock, scanner, fences, grasp forces and hardware acknowledgement."
+      }
+    }
+  },
+  "shifted": {
+    "method": "bounded-layout-path-search/v1",
+    "cancelled": false,
+    "candidates": [
+      {
+        "candidate": {
+          "id": "reference/baseline/standard",
+          "layout": {
+            "id": "reference",
+            "label": "Reference tables",
+            "infeed": [
+              -1.55,
+              0,
+              1.15
+            ],
+            "outfeed": [
+              -1.55,
+              0,
+              -1.15
+            ]
+          },
+          "fixtureShiftMm": 180,
+          "repairId": null,
+          "motionPlan": {
+            "infeedApproachTarget": [
+              -1.1300000000000001,
+              0.88,
+              0.9199999999999999
+            ],
+            "infeedPickTarget": [
+              -1.1300000000000001,
+              0.675,
+              0.9199999999999999
+            ],
+            "outfeedPlaceTarget": [
+              -1.1300000000000001,
+              0.675,
+              -0.9199999999999999
+            ],
+            "transferLift": 0
+          }
+        },
+        "failure": "P02 preflight blocked",
+        "evidence": null
+      },
+      {
+        "candidate": {
+          "id": "reference/baseline/raised-transfer",
+          "layout": {
+            "id": "reference",
+            "label": "Reference tables",
+            "infeed": [
+              -1.55,
+              0,
+              1.15
+            ],
+            "outfeed": [
+              -1.55,
+              0,
+              -1.15
+            ]
+          },
+          "fixtureShiftMm": 180,
+          "repairId": null,
+          "motionPlan": {
+            "infeedApproachTarget": [
+              -1.1300000000000001,
+              0.88,
+              0.9199999999999999
+            ],
+            "infeedPickTarget": [
+              -1.1300000000000001,
+              0.675,
+              0.9199999999999999
+            ],
+            "outfeedPlaceTarget": [
+              -1.1300000000000001,
+              0.675,
+              -0.9199999999999999
+            ],
+            "transferLift": 0.1
+          }
+        },
+        "failure": "P02 preflight blocked",
+        "evidence": null
+      },
+      {
+        "candidate": {
+          "id": "reference/lifted-approach/standard",
+          "layout": {
+            "id": "reference",
+            "label": "Reference tables",
+            "infeed": [
+              -1.55,
+              0,
+              1.15
+            ],
+            "outfeed": [
+              -1.55,
+              0,
+              -1.15
+            ]
+          },
+          "fixtureShiftMm": 180,
+          "repairId": "lifted-approach",
+          "motionPlan": {
+            "infeedApproachTarget": [
+              -0.9500000000000002,
+              1.02,
+              0.9199999999999999
+            ],
+            "infeedPickTarget": [
+              -0.9500000000000002,
+              0.675,
+              0.9199999999999999
+            ],
+            "outfeedPlaceTarget": [
+              -1.1300000000000001,
+              0.675,
+              -0.9199999999999999
+            ],
+            "transferLift": 0
+          }
+        },
+        "failure": null,
+        "evidence": {
+          "method": "asset-rehearsal/v2-jerk",
+          "failure": null,
+          "acceptedSamples": 1441,
+          "frames": 3244,
+          "simulatedSeconds": 54.06666666666667,
+          "maxJointVelocity": 1.794444444444463,
+          "maxJointAcceleration": 4.000000000001425,
+          "maxJointJerk": 120.00000000030653,
+          "tcpTravelMeters": 15.071392587628791,
+          "coverage": "1441 commanded poses; fixed 60 Hz arm/tool/payload vs CNC and table boxes; named payload support contacts allowed. Excludes self-collision, loose table stock, scanner, fences, grasp forces and hardware acknowledgement."
+        }
+      },
+      {
+        "candidate": {
+          "id": "reference/lifted-approach/raised-transfer",
+          "layout": {
+            "id": "reference",
+            "label": "Reference tables",
+            "infeed": [
+              -1.55,
+              0,
+              1.15
+            ],
+            "outfeed": [
+              -1.55,
+              0,
+              -1.15
+            ]
+          },
+          "fixtureShiftMm": 180,
+          "repairId": "lifted-approach",
+          "motionPlan": {
+            "infeedApproachTarget": [
+              -0.9500000000000002,
+              1.02,
+              0.9199999999999999
+            ],
+            "infeedPickTarget": [
+              -0.9500000000000002,
+              0.675,
+              0.9199999999999999
+            ],
+            "outfeedPlaceTarget": [
+              -1.1300000000000001,
+              0.675,
+              -0.9199999999999999
+            ],
+            "transferLift": 0.1
+          }
+        },
+        "failure": null,
+        "evidence": {
+          "method": "asset-rehearsal/v2-jerk",
+          "failure": null,
+          "acceptedSamples": 1441,
+          "frames": 3266,
+          "simulatedSeconds": 54.43333333333333,
+          "maxJointVelocity": 1.794444444444463,
+          "maxJointAcceleration": 4.000000000001425,
+          "maxJointJerk": 120.0000000002106,
+          "tcpTravelMeters": 15.128769989029065,
+          "coverage": "1441 commanded poses; fixed 60 Hz arm/tool/payload vs CNC and table boxes; named payload support contacts allowed. Excludes self-collision, loose table stock, scanner, fences, grasp forces and hardware acknowledgement."
+        }
+      },
+      {
+        "candidate": {
+          "id": "reference/side-entry/standard",
+          "layout": {
+            "id": "reference",
+            "label": "Reference tables",
+            "infeed": [
+              -1.55,
+              0,
+              1.15
+            ],
+            "outfeed": [
+              -1.55,
+              0,
+              -1.15
+            ]
+          },
+          "fixtureShiftMm": 180,
+          "repairId": "side-entry",
+          "motionPlan": {
+            "infeedApproachTarget": [
+              -0.9665000000000001,
+              0.88,
+              1.0699999999999998
+            ],
+            "infeedPickTarget": [
+              -0.9500000000000002,
+              0.675,
+              0.9199999999999999
+            ],
+            "outfeedPlaceTarget": [
+              -1.1300000000000001,
+              0.675,
+              -0.9199999999999999
+            ],
+            "transferLift": 0
+          }
+        },
+        "failure": null,
+        "evidence": {
+          "method": "asset-rehearsal/v2-jerk",
+          "failure": null,
+          "acceptedSamples": 1441,
+          "frames": 3292,
+          "simulatedSeconds": 54.86666666666667,
+          "maxJointVelocity": 1.794444444444463,
+          "maxJointAcceleration": 4.000000000001425,
+          "maxJointJerk": 120.0000000002106,
+          "tcpTravelMeters": 15.33831669056477,
+          "coverage": "1441 commanded poses; fixed 60 Hz arm/tool/payload vs CNC and table boxes; named payload support contacts allowed. Excludes self-collision, loose table stock, scanner, fences, grasp forces and hardware acknowledgement."
+        }
+      },
+      {
+        "candidate": {
+          "id": "reference/side-entry/raised-transfer",
+          "layout": {
+            "id": "reference",
+            "label": "Reference tables",
+            "infeed": [
+              -1.55,
+              0,
+              1.15
+            ],
+            "outfeed": [
+              -1.55,
+              0,
+              -1.15
+            ]
+          },
+          "fixtureShiftMm": 180,
+          "repairId": "side-entry",
+          "motionPlan": {
+            "infeedApproachTarget": [
+              -0.9665000000000001,
+              0.88,
+              1.0699999999999998
+            ],
+            "infeedPickTarget": [
+              -0.9500000000000002,
+              0.675,
+              0.9199999999999999
+            ],
+            "outfeedPlaceTarget": [
+              -1.1300000000000001,
+              0.675,
+              -0.9199999999999999
+            ],
+            "transferLift": 0.1
+          }
+        },
+        "failure": null,
+        "evidence": {
+          "method": "asset-rehearsal/v2-jerk",
+          "failure": null,
+          "acceptedSamples": 1441,
+          "frames": 3303,
+          "simulatedSeconds": 55.05,
+          "maxJointVelocity": 1.794444444444463,
+          "maxJointAcceleration": 4.000000000001425,
+          "maxJointJerk": 120.00000000030653,
+          "tcpTravelMeters": 15.372291300371728,
+          "coverage": "1441 commanded poses; fixed 60 Hz arm/tool/payload vs CNC and table boxes; named payload support contacts allowed. Excludes self-collision, loose table stock, scanner, fences, grasp forces and hardware acknowledgement."
+        }
+      },
+      {
+        "candidate": {
+          "id": "compact/baseline/standard",
+          "layout": {
+            "id": "compact",
+            "label": "Closer tables",
+            "infeed": [
+              -1.4,
+              0,
+              1
+            ],
+            "outfeed": [
+              -1.4,
+              0,
+              -1
+            ]
+          },
+          "fixtureShiftMm": 180,
+          "repairId": null,
+          "motionPlan": {
+            "infeedApproachTarget": [
+              -0.98,
+              0.88,
+              0.77
+            ],
+            "infeedPickTarget": [
+              -0.98,
+              0.675,
+              0.77
+            ],
+            "outfeedPlaceTarget": [
+              -0.98,
+              0.675,
+              -0.77
+            ],
+            "transferLift": 0
+          }
+        },
+        "failure": "P02 preflight blocked",
+        "evidence": null
+      },
+      {
+        "candidate": {
+          "id": "compact/baseline/raised-transfer",
+          "layout": {
+            "id": "compact",
+            "label": "Closer tables",
+            "infeed": [
+              -1.4,
+              0,
+              1
+            ],
+            "outfeed": [
+              -1.4,
+              0,
+              -1
+            ]
+          },
+          "fixtureShiftMm": 180,
+          "repairId": null,
+          "motionPlan": {
+            "infeedApproachTarget": [
+              -0.98,
+              0.88,
+              0.77
+            ],
+            "infeedPickTarget": [
+              -0.98,
+              0.675,
+              0.77
+            ],
+            "outfeedPlaceTarget": [
+              -0.98,
+              0.675,
+              -0.77
+            ],
+            "transferLift": 0.1
+          }
+        },
+        "failure": "P02 preflight blocked",
+        "evidence": null
+      },
+      {
+        "candidate": {
+          "id": "compact/lifted-approach/standard",
+          "layout": {
+            "id": "compact",
+            "label": "Closer tables",
+            "infeed": [
+              -1.4,
+              0,
+              1
+            ],
+            "outfeed": [
+              -1.4,
+              0,
+              -1
+            ]
+          },
+          "fixtureShiftMm": 180,
+          "repairId": "lifted-approach",
+          "motionPlan": {
+            "infeedApproachTarget": [
+              -0.8,
+              1.02,
+              0.77
+            ],
+            "infeedPickTarget": [
+              -0.8,
+              0.675,
+              0.77
+            ],
+            "outfeedPlaceTarget": [
+              -0.98,
+              0.675,
+              -0.77
+            ],
+            "transferLift": 0
+          }
+        },
+        "failure": null,
+        "evidence": {
+          "method": "asset-rehearsal/v2-jerk",
+          "failure": null,
+          "acceptedSamples": 1441,
+          "frames": 3045,
+          "simulatedSeconds": 50.75,
+          "maxJointVelocity": 1.794444444444463,
+          "maxJointAcceleration": 4.000000000000625,
+          "maxJointJerk": 120.0000000002106,
+          "tcpTravelMeters": 13.563889515572912,
+          "coverage": "1441 commanded poses; fixed 60 Hz arm/tool/payload vs CNC and table boxes; named payload support contacts allowed. Excludes self-collision, loose table stock, scanner, fences, grasp forces and hardware acknowledgement."
+        }
+      },
+      {
+        "candidate": {
+          "id": "compact/lifted-approach/raised-transfer",
+          "layout": {
+            "id": "compact",
+            "label": "Closer tables",
+            "infeed": [
+              -1.4,
+              0,
+              1
+            ],
+            "outfeed": [
+              -1.4,
+              0,
+              -1
+            ]
+          },
+          "fixtureShiftMm": 180,
+          "repairId": "lifted-approach",
+          "motionPlan": {
+            "infeedApproachTarget": [
+              -0.8,
+              1.02,
+              0.77
+            ],
+            "infeedPickTarget": [
+              -0.8,
+              0.675,
+              0.77
+            ],
+            "outfeedPlaceTarget": [
+              -0.98,
+              0.675,
+              -0.77
+            ],
+            "transferLift": 0.1
+          }
+        },
+        "failure": null,
+        "evidence": {
+          "method": "asset-rehearsal/v2-jerk",
+          "failure": null,
+          "acceptedSamples": 1441,
+          "frames": 3071,
+          "simulatedSeconds": 51.18333333333333,
+          "maxJointVelocity": 1.794444444444463,
+          "maxJointAcceleration": 4.000000000001425,
+          "maxJointJerk": 120.00000000030653,
+          "tcpTravelMeters": 13.683317934911292,
+          "coverage": "1441 commanded poses; fixed 60 Hz arm/tool/payload vs CNC and table boxes; named payload support contacts allowed. Excludes self-collision, loose table stock, scanner, fences, grasp forces and hardware acknowledgement."
+        }
+      },
+      {
+        "candidate": {
+          "id": "compact/side-entry/standard",
+          "layout": {
+            "id": "compact",
+            "label": "Closer tables",
+            "infeed": [
+              -1.4,
+              0,
+              1
+            ],
+            "outfeed": [
+              -1.4,
+              0,
+              -1
+            ]
+          },
+          "fixtureShiftMm": 180,
+          "repairId": "side-entry",
+          "motionPlan": {
+            "infeedApproachTarget": [
+              -0.8165,
+              0.88,
+              0.92
+            ],
+            "infeedPickTarget": [
+              -0.8,
+              0.675,
+              0.77
+            ],
+            "outfeedPlaceTarget": [
+              -0.98,
+              0.675,
+              -0.77
+            ],
+            "transferLift": 0
+          }
+        },
+        "failure": null,
+        "evidence": {
+          "method": "asset-rehearsal/v2-jerk",
+          "failure": null,
+          "acceptedSamples": 1441,
+          "frames": 3026,
+          "simulatedSeconds": 50.43333333333333,
+          "maxJointVelocity": 1.794444444444463,
+          "maxJointAcceleration": 4.000000000000625,
+          "maxJointJerk": 120.0000000002106,
+          "tcpTravelMeters": 13.53769868069171,
+          "coverage": "1441 commanded poses; fixed 60 Hz arm/tool/payload vs CNC and table boxes; named payload support contacts allowed. Excludes self-collision, loose table stock, scanner, fences, grasp forces and hardware acknowledgement."
+        }
+      },
+      {
+        "candidate": {
+          "id": "compact/side-entry/raised-transfer",
+          "layout": {
+            "id": "compact",
+            "label": "Closer tables",
+            "infeed": [
+              -1.4,
+              0,
+              1
+            ],
+            "outfeed": [
+              -1.4,
+              0,
+              -1
+            ]
+          },
+          "fixtureShiftMm": 180,
+          "repairId": "side-entry",
+          "motionPlan": {
+            "infeedApproachTarget": [
+              -0.8165,
+              0.88,
+              0.92
+            ],
+            "infeedPickTarget": [
+              -0.8,
+              0.675,
+              0.77
+            ],
+            "outfeedPlaceTarget": [
+              -0.98,
+              0.675,
+              -0.77
+            ],
+            "transferLift": 0.1
+          }
+        },
+        "failure": null,
+        "evidence": {
+          "method": "asset-rehearsal/v2-jerk",
+          "failure": null,
+          "acceptedSamples": 1441,
+          "frames": 3056,
+          "simulatedSeconds": 50.93333333333333,
+          "maxJointVelocity": 1.794444444444463,
+          "maxJointAcceleration": 4.000000000000625,
+          "maxJointJerk": 120.0000000002106,
+          "tcpTravelMeters": 13.653354843730286,
+          "coverage": "1441 commanded poses; fixed 60 Hz arm/tool/payload vs CNC and table boxes; named payload support contacts allowed. Excludes self-collision, loose table stock, scanner, fences, grasp forces and hardware acknowledgement."
+        }
+      }
+    ],
+    "best": {
+      "candidate": {
+        "id": "compact/side-entry/standard",
+        "layout": {
+          "id": "compact",
+          "label": "Closer tables",
+          "infeed": [
+            -1.4,
+            0,
+            1
+          ],
+          "outfeed": [
+            -1.4,
+            0,
+            -1
+          ]
+        },
+        "fixtureShiftMm": 180,
+        "repairId": "side-entry",
+        "motionPlan": {
+          "infeedApproachTarget": [
+            -0.8165,
+            0.88,
+            0.92
+          ],
+          "infeedPickTarget": [
+            -0.8,
+            0.675,
+            0.77
+          ],
+          "outfeedPlaceTarget": [
+            -0.98,
+            0.675,
+            -0.77
+          ],
+          "transferLift": 0
+        }
+      },
+      "failure": null,
+      "evidence": {
+        "method": "asset-rehearsal/v2-jerk",
+        "failure": null,
+        "acceptedSamples": 1441,
+        "frames": 3026,
+        "simulatedSeconds": 50.43333333333333,
+        "maxJointVelocity": 1.794444444444463,
+        "maxJointAcceleration": 4.000000000000625,
+        "maxJointJerk": 120.0000000002106,
+        "tcpTravelMeters": 13.53769868069171,
+        "coverage": "1441 commanded poses; fixed 60 Hz arm/tool/payload vs CNC and table boxes; named payload support contacts allowed. Excludes self-collision, loose table stock, scanner, fences, grasp forces and hardware acknowledgement."
+      }
+    }
+  },
+  "repeatedWinner": "compact/baseline/standard",
+  "cancelled": true,
+  "blocked": {
+    "method": "bounded-layout-path-search/v1",
+    "cancelled": false,
+    "candidates": [
+      {
+        "candidate": {
+          "id": "reference/baseline/standard",
+          "layout": {
+            "id": "reference",
+            "label": "Reference tables",
+            "infeed": [
+              -1.55,
+              0,
+              1.15
+            ],
+            "outfeed": [
+              -1.55,
+              0,
+              -1.15
+            ]
+          },
+          "fixtureShiftMm": 0,
+          "repairId": null,
+          "motionPlan": {
+            "infeedApproachTarget": [
+              -1.1300000000000001,
+              0.88,
+              0.9199999999999999
+            ],
+            "infeedPickTarget": [
+              -1.1300000000000001,
+              0.675,
+              0.9199999999999999
+            ],
+            "outfeedPlaceTarget": [
+              -1.1300000000000001,
+              0.675,
+              -0.9199999999999999
+            ],
+            "transferLift": 0
+          }
+        },
+        "failure": "Planning blocked at sample 0: CNC swept contact: root-mesh_006 / DoorGlass",
+        "evidence": {
+          "method": "asset-rehearsal/v2-jerk",
+          "failure": "Planning blocked at sample 0: CNC swept contact: root-mesh_006 / DoorGlass",
+          "acceptedSamples": 0,
+          "frames": 1,
+          "simulatedSeconds": 0.016666666666666666,
+          "maxJointVelocity": 0,
+          "maxJointAcceleration": 0,
+          "maxJointJerk": 0,
+          "tcpTravelMeters": 0,
+          "coverage": "1441 commanded poses; fixed 60 Hz arm/tool/payload vs CNC and table boxes; named payload support contacts allowed. Excludes self-collision, loose table stock, scanner, fences, grasp forces and hardware acknowledgement."
+        }
+      },
+      {
+        "candidate": {
+          "id": "reference/baseline/raised-transfer",
+          "layout": {
+            "id": "reference",
+            "label": "Reference tables",
+            "infeed": [
+              -1.55,
+              0,
+              1.15
+            ],
+            "outfeed": [
+              -1.55,
+              0,
+              -1.15
+            ]
+          },
+          "fixtureShiftMm": 0,
+          "repairId": null,
+          "motionPlan": {
+            "infeedApproachTarget": [
+              -1.1300000000000001,
+              0.88,
+              0.9199999999999999
+            ],
+            "infeedPickTarget": [
+              -1.1300000000000001,
+              0.675,
+              0.9199999999999999
+            ],
+            "outfeedPlaceTarget": [
+              -1.1300000000000001,
+              0.675,
+              -0.9199999999999999
+            ],
+            "transferLift": 0.1
+          }
+        },
+        "failure": "Planning blocked at sample 0: CNC swept contact: root-mesh_006 / DoorGlass",
+        "evidence": {
+          "method": "asset-rehearsal/v2-jerk",
+          "failure": "Planning blocked at sample 0: CNC swept contact: root-mesh_006 / DoorGlass",
+          "acceptedSamples": 0,
+          "frames": 1,
+          "simulatedSeconds": 0.016666666666666666,
+          "maxJointVelocity": 0,
+          "maxJointAcceleration": 0,
+          "maxJointJerk": 0,
+          "tcpTravelMeters": 0,
+          "coverage": "1441 commanded poses; fixed 60 Hz arm/tool/payload vs CNC and table boxes; named payload support contacts allowed. Excludes self-collision, loose table stock, scanner, fences, grasp forces and hardware acknowledgement."
+        }
+      },
+      {
+        "candidate": {
+          "id": "compact/baseline/standard",
+          "layout": {
+            "id": "compact",
+            "label": "Closer tables",
+            "infeed": [
+              -1.4,
+              0,
+              1
+            ],
+            "outfeed": [
+              -1.4,
+              0,
+              -1
+            ]
+          },
+          "fixtureShiftMm": 0,
+          "repairId": null,
+          "motionPlan": {
+            "infeedApproachTarget": [
+              -0.98,
+              0.88,
+              0.77
+            ],
+            "infeedPickTarget": [
+              -0.98,
+              0.675,
+              0.77
+            ],
+            "outfeedPlaceTarget": [
+              -0.98,
+              0.675,
+              -0.77
+            ],
+            "transferLift": 0
+          }
+        },
+        "failure": "Planning blocked at sample 0: CNC swept contact: root-mesh_006 / DoorGlass",
+        "evidence": {
+          "method": "asset-rehearsal/v2-jerk",
+          "failure": "Planning blocked at sample 0: CNC swept contact: root-mesh_006 / DoorGlass",
+          "acceptedSamples": 0,
+          "frames": 1,
+          "simulatedSeconds": 0.016666666666666666,
+          "maxJointVelocity": 0,
+          "maxJointAcceleration": 0,
+          "maxJointJerk": 0,
+          "tcpTravelMeters": 0,
+          "coverage": "1441 commanded poses; fixed 60 Hz arm/tool/payload vs CNC and table boxes; named payload support contacts allowed. Excludes self-collision, loose table stock, scanner, fences, grasp forces and hardware acknowledgement."
+        }
+      },
+      {
+        "candidate": {
+          "id": "compact/baseline/raised-transfer",
+          "layout": {
+            "id": "compact",
+            "label": "Closer tables",
+            "infeed": [
+              -1.4,
+              0,
+              1
+            ],
+            "outfeed": [
+              -1.4,
+              0,
+              -1
+            ]
+          },
+          "fixtureShiftMm": 0,
+          "repairId": null,
+          "motionPlan": {
+            "infeedApproachTarget": [
+              -0.98,
+              0.88,
+              0.77
+            ],
+            "infeedPickTarget": [
+              -0.98,
+              0.675,
+              0.77
+            ],
+            "outfeedPlaceTarget": [
+              -0.98,
+              0.675,
+              -0.77
+            ],
+            "transferLift": 0.1
+          }
+        },
+        "failure": "Planning blocked at sample 0: CNC swept contact: root-mesh_006 / DoorGlass",
+        "evidence": {
+          "method": "asset-rehearsal/v2-jerk",
+          "failure": "Planning blocked at sample 0: CNC swept contact: root-mesh_006 / DoorGlass",
+          "acceptedSamples": 0,
+          "frames": 1,
+          "simulatedSeconds": 0.016666666666666666,
+          "maxJointVelocity": 0,
+          "maxJointAcceleration": 0,
+          "maxJointJerk": 0,
+          "tcpTravelMeters": 0,
+          "coverage": "1441 commanded poses; fixed 60 Hz arm/tool/payload vs CNC and table boxes; named payload support contacts allowed. Excludes self-collision, loose table stock, scanner, fences, grasp forces and hardware acknowledgement."
+        }
+      }
+    ],
+    "best": null
+  }
+}

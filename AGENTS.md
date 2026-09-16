@@ -8,6 +8,14 @@
 - Target feature pull requests at `develop`. Promote tested `develop` changes to `main` separately.
 - Do not commit feature work directly to `main` or `develop`.
 
+## Completion workflow
+
+- For implementation work, continue through the publish point; do not stop at a verified but uncommitted or unpushed state.
+- Unless the user explicitly requests local-only work, once `npm run check` passes: review the final diff, update `NOW.md`, stage only task-owned files, commit with the required message format, push the work branch, and open a draft pull request targeting `develop`.
+- Do not ask whether to commit, push, or open the draft pull request; those are the default completion steps for a finished feature slice.
+- Preserve and exclude unrelated user changes or untracked files from the commit.
+- Report the pull request URL, CI state, and the next product milestone. Mark ready or merge only when the user or the active handoff explicitly authorizes it.
+
 ## React Three Fiber work
 
 - Read `.codex/skills/r3f-best-practices/SKILL.md` before writing, reviewing, or optimizing R3F code.
@@ -18,6 +26,11 @@
 - Treat robotics simulation results as engineering aids, not certified safety results.
 
 ## Verification
+
+- Codex owns visual and functional acceptance. Use browser tools to inspect the running app, exercise the complete workflow and meaningful failure cases, capture evidence, and iterate until defects within scope are fixed.
+- Do not stop for user visual approval or ask the user to test routine implementation work. Browser verification and self-review replace that approval gate, including the former PR #11 visual-review handoff.
+- A passing build or elapsed simulation timer alone is not acceptance. Verify actual motion outcomes, blocked failure paths, and truthful export/release status. Record evidence and remaining limitations in the handoff.
+- This autonomous verification rule does not itself authorize merging PRs or deploying; follow the completion workflow for publishing a verified draft PR.
 
 Run the narrowest useful command while iterating:
 
@@ -33,3 +46,15 @@ CI runs `npm run check` for pushes and pull requests involving `develop` or `mai
 - Keep `NOW.md` current with changes, blockers, the next exact action, and the active branch or PR.
 - Run `./continue` to print the branch, working tree, current handoff, and likely active tickets.
 - Follow the global commit format: `type(scope): summary` with `Why`, `What`, and `Notes` sections.
+
+<!-- Shared Codex/Claude handoff standard -->
+## Agent Handoff
+
+Start resumed sessions with:
+
+```bash
+./continue
+```
+
+Before stopping substantial work, run `./handoff --next "next exact action" "what changed and what remains"` to update `NOW.md` plus the active ticket when available. If `./handoff` is missing, update `NOW.md`, an active ticket, or the closest repo handoff document manually with the next exact action, current branch, blockers, and any PR/commit to continue from.
+<!-- /Shared Codex/Claude handoff standard -->

@@ -1,4 +1,4 @@
-export type RunState = 'ready' | 'running' | 'complete'
+export type RunState = 'ready' | 'running' | 'paused' | 'complete' | 'failed'
 
 export type CellObject = 'robot' | 'cnc' | 'infeed' | 'outfeed'
 

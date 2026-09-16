@@ -1,114 +1,107 @@
 # CellForge
 
-An interactive virtual-commissioning workbench for high-mix robotic machine tending.
+**Configure a robotic workcell, find a feasible motion plan, and inspect the evidence before releasing a job.**
 
-![CellForge commissioning workspace](output/playwright/cellforge-preview.png)
+CellForge is a React, TypeScript and Three.js simulation workbench built by
+Chet Paslawski. It connects an interactive 3D cell to deterministic process
+state, robot kinematics, layout/path comparison and revision-bound exports.
+It is a working software prototype; it does not control physical equipment.
 
-CellForge is a browser-based workbench for designing and validating robotic machine-tending cycles before deployment. It brings cell configuration, motion planning, safety checks, process sequencing, and runtime artifacts into one workflow.
+![CellForge verified closer-table cycle](docs/self-cell-verified.png)
 
-Before a workcell reaches the shop floor, an integrator should be able to verify that every target is reachable, motion stays within approved boundaries, machine interlocks are satisfied, and layout changes cannot produce an unsafe run.
+© 2023 Universal Robots A/S. Use hereof is subject to Universal Robots A/S’
+Terms and Conditions for Use of Graphical Documentation.
 
-## The 60-second demo
+## Try the workflow
 
-1. Inspect the authored machine-tending sequence and click components in the 3D cell.
-2. Run the 14.8-second cycle and watch the robot, CNC door, and sequence state advance together.
-3. Inject a `+180 mm` infeed-fixture shift.
-4. See reach, clearance, and cycle-time findings update—and deployment become blocked.
-5. Restore the commissioned baseline and export the versioned runtime job artifact.
+Requires Node.js 22.12+ and npm. No API keys, hosted model or backend required.
 
-The workflow follows the same path as a commissioning task: configure → validate → disturb → diagnose → deploy.
+```bash
+npm ci
+npm run dev
+```
 
-## Current vertical slice
+1. Click **Replay baseline**. The reference layout is intentionally rejected
+   during full-path rehearsal for approximate self-contact near sample 1150.
+   A passing P02 clearance check alone cannot authorize the full run.
+2. Click **Find best layout & path**. The bounded search compares table
+   positions and transfer paths, then selects a complete passing rehearsal.
+3. Run the selected closer-table cycle. Watch the robot load/unload the CNC;
+   completion requires all 1,441 ordered measured poses and a settled home.
+4. Use **Update fixture position** to introduce a +180 mm infeed change. The
+   clearance failure blocks execution. Compare repairs or search again.
+5. Run the repaired revision and export its local JSON job artifact. It
+   contains matching planning/execution evidence and explicitly reports
+   `runtimeAcknowledged: false`.
 
-- React + TypeScript product shell with a responsive, keyboard-accessible control surface
-- Three.js scene rendered through React Three Fiber
-- Procedural six-axis arm, CNC enclosure, material fixtures, parts, and safety scanner
-- Target-driven machine-tending state machine with duration-weighted sequence stages
-- Analytic inverse kinematics for each tool target, with workspace reconstruction tests
-- Hard motion gate for joint limits, floor height, reach, and the CNC solid volume/door aperture
-- Real payload transfer: fixture → gripper → CNC → gripper → outfeed
-- Interlocked CNC door, machine handshake, gripper state, and unsafe-run blocking
-- Component selection with domain-specific configuration data
-- Reach-envelope and planned-path overlays
-- Fault injection with derived preflight and deployment state
-- Versioned JSON job-artifact export
-- Reduced-motion support and a mobile layout
+Measured simulation runs take longer than the nominal 24-second sequence.
+Changing the layout or path invalidates previous run evidence.
+
+## What is implemented
+
+- React/TypeScript configuration, findings, repair comparison and release UI.
+- Three.js scene through React Three Fiber/Drei; licensed UR20 URDF assets,
+  custom three-jaw gripper and project-authored CNC machine.
+- Damped-least-squares inverse kinematics with tool-position/direction targets.
+- Full-path rehearsal against cloned loaded geometry before live animation.
+- Bounded layout/path search with complete-candidate ranking and cancellation.
+- Joint velocity, acceleration and jerk monitoring; measured pose acceptance.
+- Approximate swept bounds for non-adjacent robot links, CNC, tables, stock,
+  scanner housing, floor and boundary panels, with named contact exclusions.
+- Interlocked process sequencing, simulated payload transfers, pause/resume,
+  failed-run blocking and revision-matched JSON export.
 
 ## Architecture
 
 ```text
-Job intent + cell config
-          │
-          ▼
-  React product state ──────► Preflight rules ──────► Deploy gate
-          │                         │                       │
-          ▼                         ▼                       ▼
- Three.js digital twin      Findings + metrics      cellforge.job/v1
-          │
-          ▼
- Simulated runtime clock ───► Sequence + machine + robot state
+Cell configuration + typed job state
+    → bounded candidate search → full-path rehearsal
+    → selected motion plan → rendered URDF telemetry
+    → ordered pose / contact / continuity acceptance
+    → revision-bound evidence → local job export
 ```
 
-The deterministic process state and kinematics live outside the scene graph. Three.js consumes validated targets and limits animation-specific transforms to `useFrame` callbacks, keeping process behavior independent from rendering.
+Process state and validation live outside the scene graph. The renderer
+consumes planned targets; the release gate consumes measured evidence.
 
-## Scope and limitations
+Start with [`src/App.tsx`](src/App.tsx), [`src/layoutSearch.ts`](src/layoutSearch.ts),
+[`src/pathPlanning.ts`](src/pathPlanning.ts),
+[`src/cycleAcceptance.ts`](src/cycleAcceptance.ts) and
+[`src/cncContact.ts`](src/cncContact.ts).
 
-The current robot and checks are a product prototype, not a certified engineering simulator:
-
-- Motion uses analytic IK against the procedural arm, not a manufacturer URDF or controller-specific motion planner.
-- Reach and clearance findings are scenario-derived, not yet computed by a physics engine.
-- The “planner” sequence is seeded data; no hosted LLM is represented as running.
-- Runtime synchronization is local and deterministic; there is no PLC or robot-driver connection.
-
-## Roadmap
-
-### 1. Real geometry and kinematics
-
-Load a permissively licensed URDF, implement forward/inverse kinematics, expose joint limits, and calculate TCP poses from the actual chain.
-
-### 2. Computed commissioning checks
-
-Use Three.js bounds and a BVH-accelerated collision layer for swept-volume clearance, unreachable targets, joint-limit violations, and fixture collisions. Persist findings with scene-object references.
-
-### 3. Product ↔ runtime bridge
-
-Add a small Fastify/WebSocket service that executes a typed state machine, streams telemetry and faults, supports reconnect/replay, and validates `cellforge.job/v1` at the boundary.
-
-### 4. Structured AI job authoring
-
-Translate natural-language intent into a constrained skill graph, validate the generated schema, require human approval for ambiguous frames or devices, and keep deterministic simulation as the acceptance gate.
-
-### 5. Verification and operations
-
-Add unit tests for job validation, browser tests for the fault/recovery flow, a recorded demo, performance budgets, and an architecture note covering safety boundaries and failure modes.
-
-## Run locally
+## Verification
 
 ```bash
-npm install
-npm run dev
+npm run check
 ```
 
-Production verification:
+Runs TypeScript, 81 automated tests and the production build. Tests cover
+collision bounds, motion continuity, incomplete/stale evidence and related
+failure conditions. Browser evidence and reproducible scripts are documented
+in [self/cell collision verification](docs/self-cell-collision-verification.md).
+Historical measured results are dated there; they are not hardware benchmarks.
+See [release review](docs/public-release-review.md) for the current audit.
 
-```bash
-npm run typecheck
-npm test
-npm run build
-```
+## Scope
 
-## Stack
+This is an engineering/product prototype, **not a certified simulator or
+industrial safety system**. Collision bounds are approximate, not exact
+continuous triangle collision. Connected-link/internal-gripper and named
+support/grasp contacts have exclusions. Protective-field logic, grasp physics,
+obstacle-obstacle layout collisions, calibration, PLC/robot-driver integration
+and hardware acknowledgement are not implemented. Search covers a small
+explicit candidate family, not general or globally optimal planning.
 
-- React 19
-- TypeScript 5.9
-- Three.js 0.185
-- React Three Fiber + Drei
-- Vite 8
+## Licence and assets
 
-## Engineering principles
+Original CellForge application code and project-authored assets are under the
+[MIT licence](LICENSE). Third-party assets retain their own terms, including
+restricted Universal Robots graphical-documentation terms. The entire asset
+bundle is **not** MIT licensed. See [third-party notices](THIRD_PARTY_NOTICES.md)
+and the pinned provenance files before redistribution.
 
-- Unsafe configurations block execution rather than producing best-effort motion.
-- Process state is explicit, deterministic, and testable outside the renderer.
-- The same typed job model drives simulation, validation, and export.
-- Physical assumptions and unsupported integrations remain visible at the product boundary.
-- Visual feedback explains what the cell is doing, what failed, and what must change before deployment.
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). Improvements to collision-aware
+configuration selection, candidate coverage and testable runtime boundaries
+are welcome. Keep safety and hardware limitations explicit.

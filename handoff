@@ -1,0 +1,198 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd "$(dirname "$0")"
+
+usage() {
+  cat <<'EOUSAGE'
+Usage:
+  ./handoff [--next "next exact action"] [--blocker "blocker or none"] [--ticket path] summary...
+  printf 'summary from stdin\n' | ./handoff --next "next exact action"
+
+Writes a durable handoff checkpoint to NOW.md and the matching active ticket when found.
+EOUSAGE
+}
+
+next_action=""
+blocker="None"
+ticket_path=""
+summary_parts=()
+
+while [[ "$#" -gt 0 ]]; do
+  case "$1" in
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    --next)
+      [[ "$#" -ge 2 ]] || { echo "handoff: --next requires text" >&2; exit 2; }
+      next_action="$2"
+      shift 2
+      ;;
+    --blocker|--blocked)
+      [[ "$#" -ge 2 ]] || { echo "handoff: --blocker requires text" >&2; exit 2; }
+      blocker="$2"
+      shift 2
+      ;;
+    --ticket)
+      [[ "$#" -ge 2 ]] || { echo "handoff: --ticket requires a path" >&2; exit 2; }
+      ticket_path="$2"
+      shift 2
+      ;;
+    --)
+      shift
+      while [[ "$#" -gt 0 ]]; do
+        summary_parts+=("$1")
+        shift
+      done
+      ;;
+    -*)
+      echo "handoff: unknown option $1" >&2
+      usage >&2
+      exit 2
+      ;;
+    *)
+      summary_parts+=("$1")
+      shift
+      ;;
+  esac
+done
+
+summary="${summary_parts[*]:-}"
+if [[ -z "$summary" && ! -t 0 ]]; then
+  summary="$(cat)"
+fi
+
+summary="$(printf '%s' "$summary" | sed 's/[[:space:]]\+$//')"
+next_action="$(printf '%s' "$next_action" | sed 's/[[:space:]]\+$//')"
+blocker="$(printf '%s' "$blocker" | sed 's/[[:space:]]\+$//')"
+
+if [[ -z "$summary" ]]; then
+  echo "handoff: provide a summary as arguments or stdin" >&2
+  usage >&2
+  exit 2
+fi
+
+if [[ -z "$next_action" ]]; then
+  echo "handoff: provide --next with the next exact action" >&2
+  usage >&2
+  exit 2
+fi
+
+branch="$(git branch --show-current 2>/dev/null || true)"
+status="$(git status --short 2>/dev/null || true)"
+timestamp="$(date '+%Y-%m-%d %H:%M:%S %Z')"
+
+if [[ -z "$ticket_path" && -n "$branch" ]]; then
+  branch_slug="${branch#*/}"
+  for candidate in \
+    "tickets/ACTIVE/$branch_slug/MASTER_CONTROL.md" \
+    "tickets/ACTIVE/$branch_slug/TICKET.md"; do
+    if [[ -f "$candidate" ]]; then
+      ticket_path="$candidate"
+      break
+    fi
+  done
+fi
+
+if [[ -z "$ticket_path" && -d tickets/ACTIVE && -n "$branch" ]]; then
+  while IFS= read -r candidate; do
+    if grep -Fq "$branch" "$candidate"; then
+      ticket_path="$candidate"
+      break
+    fi
+  done < <(find tickets/ACTIVE -maxdepth 2 \( -name MASTER_CONTROL.md -o -name TICKET.md \) -print | sort)
+fi
+
+if [[ -z "$ticket_path" ]]; then
+  ticket_path="None found"
+fi
+
+export HANDOFF_TIMESTAMP="$timestamp"
+export HANDOFF_BRANCH="$branch"
+export HANDOFF_STATUS="$status"
+export HANDOFF_SUMMARY="$summary"
+export HANDOFF_NEXT="$next_action"
+export HANDOFF_BLOCKER="$blocker"
+export HANDOFF_TICKET="$ticket_path"
+
+python3 - <<'PY'
+import os
+from pathlib import Path
+
+now_path = Path("NOW.md")
+timestamp = os.environ["HANDOFF_TIMESTAMP"]
+branch = os.environ["HANDOFF_BRANCH"] or "unknown"
+status = os.environ["HANDOFF_STATUS"] or "clean"
+summary = os.environ["HANDOFF_SUMMARY"]
+next_action = os.environ["HANDOFF_NEXT"]
+blocker = os.environ["HANDOFF_BLOCKER"] or "None"
+ticket = os.environ["HANDOFF_TICKET"]
+
+block = f"""<!-- codex-handoff:start -->
+## CONTEXT FOR /work
+
+**Last handoff**: {timestamp}
+**Branch**: `{branch}`
+**Active ticket**: `{ticket}`
+**Summary**: {summary}
+**Next exact action**: {next_action}
+**Blocker**: {blocker}
+
+**Git status at handoff**:
+
+```text
+{status}
+```
+
+---
+<!-- codex-handoff:end -->
+"""
+
+if now_path.exists():
+    text = now_path.read_text()
+else:
+    text = "# NOW\n\n"
+
+start = "<!-- codex-handoff:start -->"
+end = "<!-- codex-handoff:end -->"
+
+if start in text and end in text:
+    before = text.split(start, 1)[0]
+    after = text.split(end, 1)[1]
+    text = before.rstrip() + "\n\n" + block + after.lstrip()
+else:
+    lines = text.splitlines()
+    if lines and lines[0].startswith("# "):
+        text = lines[0] + "\n\n" + block + "\n".join(lines[1:]).lstrip() + ("\n" if text.endswith("\n") else "")
+    else:
+        text = block + "\n" + text.lstrip()
+
+now_path.write_text(text)
+
+if ticket != "None found":
+    ticket_path = Path(ticket)
+    if ticket_path.exists():
+        ticket_text = ticket_path.read_text()
+        entry = f"""
+### {timestamp}
+
+- Branch: `{branch}`
+- Summary: {summary}
+- Next exact action: {next_action}
+- Blocker: {blocker}
+"""
+        if "## HANDOFF LOG" not in ticket_text:
+            ticket_text = ticket_text.rstrip() + "\n\n## HANDOFF LOG\n" + entry
+        else:
+            ticket_text = ticket_text.rstrip() + "\n" + entry
+        ticket_path.write_text(ticket_text)
+PY
+
+echo "handoff written"
+echo "- NOW.md"
+if [[ "$ticket_path" != "None found" ]]; then
+  echo "- $ticket_path"
+else
+  echo "- no active ticket matched; NOW.md only"
+fi
