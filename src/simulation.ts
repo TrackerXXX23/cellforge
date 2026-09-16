@@ -13,6 +13,7 @@ export interface MotionState {
   carrying: PayloadState
   doorOpen: boolean
   machineRunning: boolean
+  machiningProgress: number
   rawRemoved: boolean
   graspContact: 'source' | 'placed' | 'chuck' | null
   partAtMachine: boolean
@@ -155,7 +156,8 @@ export function sampleMotion(
 
   const carryingRaw = normalized >= 0.19 && normalized < 0.46
   const carryingFinished = normalized >= 0.68 && normalized < 0.86
-  const doorOpen = normalized < 0.52 || (normalized >= 0.575 && normalized < 0.78)
+  const doorOpen = normalized < 0.52 || (normalized >= 0.61 && normalized < 0.78)
+  const machiningProgress = clamp01((normalized - 0.52) / 0.09)
 
   return {
     target: interpolateTarget(resolveTarget(from, plan), resolveTarget(to, plan), segmentProgress),
@@ -167,7 +169,8 @@ export function sampleMotion(
       || (normalized >= 0.65 && normalized < 0.68),
     carrying: carryingRaw ? 'raw' : carryingFinished ? 'finished' : null,
     doorOpen,
-    machineRunning: normalized >= 0.55 && normalized < 0.575,
+    machineRunning: normalized >= 0.52 && normalized < 0.61,
+    machiningProgress,
     rawRemoved: normalized >= 0.19,
     graspContact: normalized >= 0.115 && normalized < 0.21 ? 'source' : normalized >= 0.84 && normalized < 0.92 ? 'placed' : (normalized >= 0.4 && normalized < 0.52) || (normalized >= 0.61 && normalized < 0.7) ? 'chuck' : null,
     partAtMachine: normalized >= 0.46 && normalized < 0.68,

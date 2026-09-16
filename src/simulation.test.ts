@@ -35,6 +35,7 @@ describe('machine-tending motion plan', () => {
     expect(beforePick.rawRemoved).toBe(false)
     expect(carryingRaw).toMatchObject({ carrying: 'raw', gripperClosed: true, rawRemoved: true })
     expect(machining).toMatchObject({ carrying: null, partAtMachine: true, machineRunning: true, doorOpen: false })
+    expect(machining.machiningProgress).toBeGreaterThan(0)
     expect(carryingFinished).toMatchObject({ carrying: 'finished', gripperClosed: true, partFinished: true })
     expect(placed).toMatchObject({ carrying: null, gripperClosed: false, finishedPlaced: true })
   })
