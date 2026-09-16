@@ -3,17 +3,17 @@
 <!-- codex-handoff:start -->
 ## CONTEXT FOR /work
 
-**Last handoff**: 2026-09-16 16:36:46 CST
+**Last handoff**: 2026-09-16 16:50:06 CST
 **Branch**: `codex/play-first-demo`
 **Active ticket**: `None found`
-**Summary**: All five play-first demo improvements are implemented in local commit 23cf327. Browser acceptance passed normal completion with 1,441 measured poses, machining pause/reset, repeat run, moved-fixture 9 mm block and bounded recovery, reference-layout pose-1150 self-contact and recovery, machine interior, desktop, and 390 px mobile. npm run check passes 81 tests and build. Proof is recorded below and in output/playwright/demo-polish-*.png. Free-text instructions remain deferred in docs/demo-polish-plan.md. No push/deploy/merge/promotion performed.
-**Next exact action**: Keep commit 23cf327 and this branch local. Wait for explicit user approval before any push, deployment, merge, promotion, or release because Vercel auto-deploys pushes.
+**Summary**: Fixed the jerky CNC load in local commit cc9e707. The robot now stages on the aisle side, crosses behind the base away from the operator controls, aligns outside the door, then enters axially; quintic easing removes acceleration discontinuities. Browser acceptance completed all 1,441 measured poses with zero console errors. The reference layout remains blocked by upper-arm/base contact at pose 1147, moved-fixture recovery still finds a passing candidate, and npm run check passes 82 tests plus build. Screenshot: output/playwright/demo-polish-loading-clearance.png. No push/deploy/merge/promotion performed.
+**Next exact action**: Keep commits 23cf327 and cc9e707 local. Wait for explicit user approval before any push, deployment, merge, promotion, or release because Vercel auto-deploys pushes.
 **Blocker**: None
 
 **Git status at handoff**:
 
 ```text
-(clean after the handoff documentation commit)
+clean
 ```
 
 ---
@@ -34,13 +34,17 @@ door is closed; pause and reset stop or home it. Machine interior view exposes
 the animated spindle and finished stock remains visually distinct. Recovery
 uses the existing bounded layout/path search.
 
+Commit `cc9e707` smooths Loading CNC with zero-acceleration endpoint easing
+and a control-panel-clear route: aisle-side staging, continuous rotation behind
+the base, outside-door alignment, then straight axial entry.
+
 Local browser acceptance at `http://127.0.0.1:5173` verified:
 
 - normal closer-table completion with all 1,441 measured poses accepted;
 - pause during Machining, resume/reset, and a repeat run;
 - Moved fixture blocked at 9 mm against the 50 mm P02 requirement, then
   recovered by bounded search;
-- Blocked layout rejected at pose 1150 for robot upper-arm/base self-contact,
+- Blocked layout rejected at pose 1147 for robot upper-arm/base self-contact,
   then recovered to the passing closer-table candidate;
 - evidence invalidation on reset and scenario changes;
 - optional machine-interior view plus desktop and 390 px mobile layouts;
@@ -48,8 +52,9 @@ Local browser acceptance at `http://127.0.0.1:5173` verified:
 
 Screenshots are local in `output/playwright/demo-polish-desktop.png`,
 `demo-polish-machining-paused.png`, `demo-polish-machine-interior.png`,
-`demo-polish-complete.png`, and `demo-polish-mobile.png`. `npm run check`
-passes typecheck, all 81 tests, and the production build. Free-text job
+`demo-polish-complete.png`, `demo-polish-mobile.png`, and
+`demo-polish-loading-clearance.png`. `npm run check` passes typecheck, all 82
+tests, and the production build. Free-text job
 instructions remain a documented future idea in `docs/demo-polish-plan.md`.
 
 ## Next exact action
