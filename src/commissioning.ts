@@ -1,6 +1,6 @@
+import { layoutTarget, REFERENCE_LAYOUT, type CellLayout } from './cellLayout'
 import {
   HOME_TARGET,
-  INFEED_PICK_TARGET,
   solveRobotIk,
   type Vec3,
 } from './simulation'
@@ -9,6 +9,8 @@ import { getSweptSegmentClearance, translateBox, type AxisAlignedBox } from './c
 export type RepairId = 'lifted-approach' | 'side-entry'
 
 export interface CommissioningConfiguration {
+  layout?: CellLayout
+  transferLift?: number
   fixtureShiftMm: number
   repairId: RepairId | null
 }
@@ -103,7 +105,7 @@ const BASELINE_CLEARANCE_MM = 84
 const BASELINE_CYCLE_SECONDS = 24
 const MINIMUM_APPROVED_CLEARANCE_MM = 50
 const MAXIMUM_APPROVED_CYCLE_SECONDS = 25.5
-export const INFEED_FIXTURE_ORIGIN: Vec3 = [-1.55, 0, 1.15]
+export const INFEED_FIXTURE_ORIGIN: Vec3 = REFERENCE_LAYOUT.infeed
 export const P02_SWEEP_RADIUS_METERS = 0.0555
 export const P02_KEEP_OUT_LOCAL_BOUNDS: AxisAlignedBox = {
   min: [0.28, 0.62, -0.1794],
@@ -121,14 +123,14 @@ function shiftTarget(target: Vec3, fixtureShiftMm: number): Vec3 {
 
 function getApproachTarget(pickTarget: Vec3, repairId: RepairId | null): Vec3 {
   if (repairId === 'lifted-approach') {
-    return [pickTarget[0], 1.02, pickTarget[2]]
+    return [pickTarget[0], pickTarget[1] + 0.345, pickTarget[2]]
   }
 
   if (repairId === 'side-entry') {
-    return [pickTarget[0] - 0.0165, 0.88, pickTarget[2] + 0.15]
+    return [pickTarget[0] - 0.0165, pickTarget[1] + 0.205, pickTarget[2] + 0.15]
   }
 
-  return [pickTarget[0], 0.88, pickTarget[2]]
+  return [pickTarget[0], pickTarget[1] + 0.205, pickTarget[2]]
 }
 
 function getCycleSeconds(fixtureShiftMm: number, repairId: RepairId | null) {
@@ -140,10 +142,21 @@ function getCycleSeconds(fixtureShiftMm: number, repairId: RepairId | null) {
 }
 
 function getModifiedWaypointIds(config: CommissioningConfiguration): readonly string[] {
-  if (config.fixtureShiftMm === 0 && config.repairId === null) return []
-  if (config.repairId === 'side-entry') return ['infeed-frame', 'infeed-approach', 'infeed-pick']
-  if (config.repairId === 'lifted-approach') return ['infeed-frame', 'infeed-approach']
-  return ['infeed-frame', 'infeed-pick']
+  const layout = config.layout ?? REFERENCE_LAYOUT
+  const changed: string[] = []
+  if (layout.infeed.some((value, axis) => value !== REFERENCE_LAYOUT.infeed[axis])) {
+    changed.push('infeed-frame', 'infeed-approach', 'infeed-pick')
+  }
+  if (layout.outfeed.some((value, axis) => value !== REFERENCE_LAYOUT.outfeed[axis])) {
+    changed.push('outfeed-frame', 'outfeed-approach', 'outfeed-place')
+  }
+  if (config.fixtureShiftMm !== 0 || config.repairId !== null) {
+    if (config.repairId === 'side-entry') changed.push('infeed-frame', 'infeed-approach', 'infeed-pick')
+    else if (config.repairId === 'lifted-approach') changed.push('infeed-frame', 'infeed-approach')
+    else changed.push('infeed-frame', 'infeed-pick')
+  }
+  if (config.transferLift) changed.push('transfer-around-base', 'cnc-door-align')
+  return [...new Set(changed)]
 }
 
 /**
@@ -152,16 +165,18 @@ function getModifiedWaypointIds(config: CommissioningConfiguration): readonly st
  * calculations or controller-ready commissioning evidence.
  */
 export function evaluateCommissioning(config: CommissioningConfiguration): CommissioningEvaluation {
+  const layout = config.layout ?? REFERENCE_LAYOUT
+  const referencePick = layoutTarget(layout, 'infeed')
   const pickTarget = config.repairId
-    ? shiftTarget(INFEED_PICK_TARGET, config.fixtureShiftMm)
-    : INFEED_PICK_TARGET
+    ? shiftTarget(referencePick, config.fixtureShiftMm)
+    : referencePick
   const approachTarget = getApproachTarget(pickTarget, config.repairId)
   const pathPoints: readonly Vec3[] = [HOME_TARGET, approachTarget, pickTarget]
   const fixtureOffset: Vec3 = [config.fixtureShiftMm / 1000, 0, 0]
   const keepOut = translateBox(P02_KEEP_OUT_LOCAL_BOUNDS, [
-    INFEED_FIXTURE_ORIGIN[0] + fixtureOffset[0],
-    INFEED_FIXTURE_ORIGIN[1],
-    INFEED_FIXTURE_ORIGIN[2],
+    layout.infeed[0] + fixtureOffset[0],
+    layout.infeed[1],
+    layout.infeed[2],
   ])
   const clearance = getSweptSegmentClearance(approachTarget, pickTarget, keepOut, P02_SWEEP_RADIUS_METERS)
   const minimumClearanceMm = round(clearance.minimumClearanceMm)
@@ -245,7 +260,7 @@ export function evaluateCommissioning(config: CommissioningConfiguration): Commi
     ],
     revisionDelta: {
       fromRevision: 7,
-      toRevision: config.fixtureShiftMm === 0 && config.repairId === null ? 7 : 8,
+      toRevision: getModifiedWaypointIds(config).length === 0 ? 7 : 8,
       fixtureShiftMm: config.fixtureShiftMm,
       repairId: config.repairId,
       modifiedWaypointIds: getModifiedWaypointIds(config),

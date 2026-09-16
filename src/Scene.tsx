@@ -1,16 +1,20 @@
+import { CELL_BODY_IDS, FENCE_PANELS } from './cellBodies'
+import { searchLayouts, type SearchRequest } from './layoutSearch'
+import { tableSlot, TABLE_SIZE, TABLE_TOP_Y, TABLE_LEGS, type CellLayout } from './cellLayout'
+import { geometryForLayout, rehearsePlan, type PlanningRequest } from './pathPlanning'
 import { ContactShadows, Grid, Line, OrbitControls } from '@react-three/drei'
 import { Canvas, ThreeEvent } from '@react-three/fiber'
-import { Suspense, useMemo } from 'react'
+import { Suspense, useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
+import { createCncContactMonitor } from './cncContact'
 import { CncMachine } from './CncMachine'
 import {
   FINISHED_WORKPIECE_COLOR,
   RAW_WORKPIECE_COLOR,
   WORKPIECE_HEIGHT,
   WORKPIECE_RADIUS,
-  WORKPIECE_TABLE_CENTER_Y,
 } from './workpiece'
-import { INFEED_FIXTURE_ORIGIN, P02_KEEP_OUT_LOCAL_BOUNDS } from './commissioning'
+import { P02_KEEP_OUT_LOCAL_BOUNDS } from './commissioning'
 import { sampleMotion, type MotionPlan, type Vec3 } from './simulation'
 import type { CellObject, RunState } from './types'
 import { Ur20Robot } from './Ur20Robot'
@@ -18,6 +22,9 @@ import { Ur20Robot } from './Ur20Robot'
 import type { MotionTelemetry } from './cycleAcceptance'
 
 interface SceneProps {
+  layout: CellLayout
+  planningRequest: React.RefObject<PlanningRequest | null>
+  searchRequest: React.RefObject<SearchRequest | null>
   telemetry: React.RefObject<MotionTelemetry | null>
   motionToken: string
   selected: CellObject
@@ -45,8 +52,6 @@ const cobalt = '#245df3'
 const amber = '#f08a24'
 const danger = '#e54835'
 const success = '#2f9e75'
-const infeedBaseX = INFEED_FIXTURE_ORIGIN[0]
-const infeedZ = INFEED_FIXTURE_ORIGIN[2]
 const p02KeepOutCenter: Vec3 = [
   (P02_KEEP_OUT_LOCAL_BOUNDS.min[0] + P02_KEEP_OUT_LOCAL_BOUNDS.max[0]) / 2,
   (P02_KEEP_OUT_LOCAL_BOUNDS.min[1] + P02_KEEP_OUT_LOCAL_BOUNDS.max[1]) / 2,
@@ -65,7 +70,7 @@ function select(event: ThreeEvent<MouseEvent>, onSelect: () => void) {
 
 function SelectionHalo({ radius = 0.72 }: { radius?: number }) {
   return (
-    <mesh rotation-x={-Math.PI / 2} position-y={0.015}>
+    <mesh userData={{ contactIgnored: true }} rotation-x={-Math.PI / 2} position-y={0.015}>
       <ringGeometry args={[radius, radius + 0.025, 64]} />
       <meshBasicMaterial color={cobalt} transparent opacity={0.9} />
     </mesh>
@@ -73,6 +78,8 @@ function SelectionHalo({ radius = 0.72 }: { radius?: number }) {
 }
 
 interface PartTableProps extends SelectableProps {
+  layout: CellLayout
+  cncContact: ReturnType<typeof createCncContactMonitor>
   kind: 'infeed' | 'outfeed'
   faultInjected?: boolean
   rawRemoved?: boolean
@@ -81,6 +88,7 @@ interface PartTableProps extends SelectableProps {
 }
 
 function PartTable({
+  layout, cncContact,
   kind,
   selected,
   onSelect,
@@ -89,37 +97,40 @@ function PartTable({
   finishedPlaced = false,
   fixtureShiftMeters = 0,
 }: PartTableProps) {
-  const positionX = infeedBaseX + (kind === 'infeed' ? fixtureShiftMeters : 0)
-  const positionZ = kind === 'infeed' ? infeedZ : -1.15
+  const root = useRef<THREE.Group>(null)
+  useEffect(() => {
+    if (root.current) cncContact.registerTable(kind, root.current)
+    return () => cncContact.unregisterTable(kind)
+  }, [cncContact, kind, layout, fixtureShiftMeters])
+  const positionX = layout[kind][0] + (kind === 'infeed' ? fixtureShiftMeters : 0)
+  const positionZ = layout[kind][2]
   const partIndices = kind === 'infeed'
-    ? [0, 1, 2, 3, 4, 5].filter((index) => !(rawRemoved && index === 2))
-    : [0, 1, 2, ...(finishedPlaced ? [5] : [])]
+    ? [0, 1, 2, 3, 4, 5]
+    : [0, 1, 2, 5]
 
   return (
-    <group position-x={positionX} position-z={positionZ} onClick={(event) => select(event, onSelect)}>
+    <group ref={root} name={`${kind}-table`} position-x={positionX} position-y={layout[kind][1]} position-z={positionZ} onClick={(event) => select(event, onSelect)}>
       {selected && <SelectionHalo radius={0.84} />}
-      <mesh position-y={0.56} castShadow receiveShadow>
-        <boxGeometry args={[1.42, 0.15, 1.08]} />
+      <mesh name={`${kind}-tabletop`} userData={{ supportSlot: tableSlot(kind === 'infeed' ? 2 : 5) }} position-y={TABLE_TOP_Y} castShadow receiveShadow>
+        <boxGeometry args={TABLE_SIZE} />
         <meshStandardMaterial color={kind === 'infeed' && faultInjected ? '#d7a06c' : steel} roughness={0.5} />
       </mesh>
-      {[[-0.56, -0.42], [0.56, -0.42], [-0.56, 0.42], [0.56, 0.42]].map(([x, z]) => (
-        <mesh key={`${x}-${z}`} position={[x, 0.27, z]} castShadow>
+      {TABLE_LEGS.map(([x, z]) => (
+        <mesh name={`${kind}-leg`} key={`${x}-${z}`} position={[x, 0.27, z]} castShadow>
           <boxGeometry args={[0.08, 0.55, 0.08]} />
           <meshStandardMaterial color={graphite} />
         </mesh>
       ))}
       {partIndices.map((index) => {
-        const column = index % 3
-        const row = Math.floor(index / 3)
         return (
-          <mesh key={index} position={[-0.42 + column * 0.42, WORKPIECE_TABLE_CENTER_Y, -0.23 + row * 0.46]} castShadow>
+          <mesh name={`${kind}-stock-${index}`} userData={{stockRole: kind === 'infeed' && index === 2 ? 'source' : kind === 'outfeed' && index === 5 ? 'placed' : 'loose'}} visible={kind === 'infeed' ? !(rawRemoved && index === 2) : index !== 5 || finishedPlaced} key={index} position={tableSlot(index)} castShadow>
             <cylinderGeometry args={[WORKPIECE_RADIUS, WORKPIECE_RADIUS, WORKPIECE_HEIGHT, 32]} />
             <meshStandardMaterial color={kind === 'infeed' ? RAW_WORKPIECE_COLOR : FINISHED_WORKPIECE_COLOR} metalness={0.56} roughness={0.31} />
           </mesh>
         )
       })}
       {kind === 'infeed' && faultInjected && (
-        <mesh position={[0.72, 0.75, 0]} rotation-x={Math.PI / 2}>
+        <mesh userData={{ contactIgnored: true }} position={[0.72, 0.75, 0]} rotation-x={Math.PI / 2}>
           <ringGeometry args={[0.12, 0.16, 32]} />
           <meshBasicMaterial color={amber} />
         </mesh>
@@ -128,20 +139,20 @@ function PartTable({
   )
 }
 
-function InfeedRevisionGhost() {
+function InfeedRevisionGhost({ layout }: { layout: CellLayout }) {
   return (
-    <group position-x={infeedBaseX} position-z={infeedZ}>
-      <mesh position-y={0.56}>
-        <boxGeometry args={[1.42, 0.15, 1.08]} />
+    <group position-x={layout.infeed[0]} position-y={layout.infeed[1]} position-z={layout.infeed[2]}>
+      <mesh position-y={TABLE_TOP_Y}>
+        <boxGeometry args={TABLE_SIZE} />
         <meshBasicMaterial color={cobalt} wireframe transparent opacity={0.24} depthWrite={false} />
       </mesh>
-      {[[-0.56, -0.42], [0.56, -0.42], [-0.56, 0.42], [0.56, 0.42]].map(([x, z]) => (
+      {TABLE_LEGS.map(([x, z]) => (
         <mesh key={`${x}-${z}`} position={[x, 0.27, z]}>
           <boxGeometry args={[0.08, 0.55, 0.08]} />
           <meshBasicMaterial color={cobalt} wireframe transparent opacity={0.18} depthWrite={false} />
         </mesh>
       ))}
-      <mesh rotation-x={-Math.PI / 2} position-y={0.02}>
+      <mesh userData={{ contactIgnored: true }} rotation-x={-Math.PI / 2} position-y={0.02}>
         <ringGeometry args={[0.79, 0.82, 64]} />
         <meshBasicMaterial color={cobalt} transparent opacity={0.32} depthWrite={false} />
       </mesh>
@@ -149,23 +160,46 @@ function InfeedRevisionGhost() {
   )
 }
 
-function SafetyScanner({ faultInjected }: Pick<SceneProps, 'faultInjected'>) {
+function SafetyScanner({ faultInjected, cncContact }: Pick<SceneProps, 'faultInjected'> & {cncContact: ReturnType<typeof createCncContactMonitor>}) {
+  const root = useRef<THREE.Group>(null)
+  useEffect(() => {
+    cncContact.registerCellBody('scanner', root.current!)
+    return () => cncContact.unregisterCellBody('scanner')
+  }, [cncContact])
   return (
-    <group position={[0.78, 0, 2.55]}>
-      <mesh position-y={0.12} castShadow>
+    <group ref={root} name="scanner" position={[0.78, 0, 2.55]}>
+      <mesh name="ScannerHousing" position-y={0.12} castShadow>
         <boxGeometry args={[0.24, 0.24, 0.24]} />
         <meshStandardMaterial color={graphite} />
       </mesh>
-      <mesh position-y={0.26}>
+      <mesh name="ScannerLens" position-y={0.26}>
         <sphereGeometry args={[0.055, 20, 20]} />
         <meshBasicMaterial color={faultInjected ? '#f04d35' : '#44b58d'} />
       </mesh>
-      <mesh rotation-x={-Math.PI / 2} position-y={0.02}>
+      <mesh userData={{ contactIgnored: true }} rotation-x={-Math.PI / 2} position-y={0.02}>
         <circleGeometry args={[2.1, 64, 0, Math.PI]} />
         <meshBasicMaterial color={faultInjected ? '#f04d35' : cobalt} transparent opacity={0.065} side={THREE.DoubleSide} />
       </mesh>
     </group>
   )
+}
+
+function CellBoundary({cncContact}: {cncContact: ReturnType<typeof createCncContactMonitor>}) {
+  const root = useRef<THREE.Group>(null)
+  useEffect(() => {
+    for (const id of ['floor', ...FENCE_PANELS.map(panel => panel.id)]) cncContact.registerCellBody(id, root.current!.getObjectByName(id)!)
+    return () => { for (const id of ['floor', ...FENCE_PANELS.map(panel => panel.id)]) cncContact.unregisterCellBody(id) }
+  }, [cncContact])
+  return <group ref={root}>
+    <mesh name="floor" position-y={-0.09} receiveShadow>
+      <boxGeometry args={[10, 0.1, 8]} />
+      <meshStandardMaterial color="#eef1f0" roughness={0.92} />
+    </mesh>
+    {FENCE_PANELS.map(panel => <mesh key={panel.id} name={panel.id} position={panel.position}>
+      <boxGeometry args={panel.size} />
+      <meshStandardMaterial color="#7d8c89" transparent opacity={0.12} depthWrite={false} />
+    </mesh>)}
+  </group>
 }
 
 function CellLoadingFallback() {
@@ -182,6 +216,7 @@ function CellLoadingFallback() {
 }
 
 function Cell({
+  layout, planningRequest, searchRequest,
   telemetry,
   motionToken,
   selected,
@@ -197,6 +232,8 @@ function Cell({
   showRevisionGhost,
   motionPlan,
 }: SceneProps) {
+  const infeedBaseX = layout.infeed[0]
+  const infeedZ = layout.infeed[2]
   const motion = sampleMotion(progress, runState, motionPlan)
   const fixtureShiftMeters = fixtureShiftMm / 1000
   const baselinePathPoints = useMemo(
@@ -216,7 +253,7 @@ function Cell({
       new THREE.Vector3(infeedBaseX, 0.82, infeedZ),
       new THREE.Vector3(infeedBaseX + fixtureShiftMeters, 0.82, infeedZ),
     ],
-    [fixtureShiftMeters],
+    [fixtureShiftMeters, infeedBaseX, infeedZ],
   )
   const pathChanged = useMemo(
     () => baselinePath.length !== activePath.length || baselinePath.some((point, index) => (
@@ -226,6 +263,14 @@ function Cell({
     )),
     [activePath, baselinePath],
   )
+  const cncContact = useMemo(() => createCncContactMonitor(2, CELL_BODY_IDS), [])
+  useEffect(() => {
+    if (import.meta.env.DEV) Object.assign(window, { __CELLFORGE_GEOMETRY__: () => cncContact.getGeometry() })
+    planningRequest.current = (plan, cancelled) => rehearsePlan(cncContact.getGeometry(), plan, cancelled)
+    searchRequest.current = (fixtureShiftMm, cancelled, onProgress) => searchLayouts(fixtureShiftMm,
+      candidate => rehearsePlan(geometryForLayout(cncContact.getGeometry(), candidate.layout, fixtureShiftMm), candidate.motionPlan, cancelled), cancelled, onProgress)
+    return () => { planningRequest.current = null; searchRequest.current = null }
+  }, [cncContact, planningRequest, searchRequest])
   const showBaselinePath = showRevisionGhost || pathState !== 'baseline' || pathChanged
   const activePathColor = pathState === 'blocked' ? danger : pathState === 'repaired' ? success : cobalt
 
@@ -241,19 +286,20 @@ function Cell({
         shadow-normalBias={0.04}
       />
       <directionalLight position={[5, 3, -4]} intensity={0.7} color="#c9ddff" />
-      <Ur20Robot telemetry={telemetry} motionToken={motionToken} progress={progress} paused={runState === 'paused' || runState === 'failed'} selected={selected === 'robot'} onSelect={(event) => select(event, () => onSelect('robot'))} motion={motion} />
-      <CncMachine paused={runState === 'paused' || runState === 'failed'} selected={selected === 'cnc'} onSelect={() => onSelect('cnc')} motion={motion} />
-      {showRevisionGhost && <InfeedRevisionGhost />}
+      <Ur20Robot cncContact={cncContact} telemetry={telemetry} motionToken={motionToken} progress={progress} paused={runState !== 'running'} selected={selected === 'robot'} onSelect={(event) => select(event, () => onSelect('robot'))} motion={motion} />
+      <CncMachine motionToken={motionToken} cncContact={cncContact} paused={runState !== 'running'} selected={selected === 'cnc'} onSelect={() => onSelect('cnc')} motion={motion} />
+      {showRevisionGhost && <InfeedRevisionGhost layout={layout} />}
       <PartTable
-        kind="infeed"
+        layout={layout} cncContact={cncContact} kind="infeed"
         selected={selected === 'infeed'}
         onSelect={() => onSelect('infeed')}
         faultInjected={faultInjected}
         rawRemoved={motion.rawRemoved}
         fixtureShiftMeters={fixtureShiftMeters}
       />
-      <PartTable kind="outfeed" selected={selected === 'outfeed'} onSelect={() => onSelect('outfeed')} finishedPlaced={motion.finishedPlaced} />
-      <SafetyScanner faultInjected={faultInjected} />
+      <PartTable layout={layout} cncContact={cncContact} kind="outfeed" selected={selected === 'outfeed'} onSelect={() => onSelect('outfeed')} finishedPlaced={motion.finishedPlaced} />
+      <SafetyScanner faultInjected={faultInjected} cncContact={cncContact} />
+      <CellBoundary cncContact={cncContact} />
 
       {showRevisionGhost && fixtureShiftMm !== 0 && (
         <group>
@@ -315,10 +361,6 @@ function Cell({
           </mesh>
         </>
       )}
-      <mesh rotation-x={-Math.PI / 2} position-y={-0.04} receiveShadow>
-        <planeGeometry args={[10, 8]} />
-        <meshStandardMaterial color="#eef1f0" roughness={0.92} />
-      </mesh>
       <Grid
         position={[0, -0.02, 0]}
         args={[10, 8]}

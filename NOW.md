@@ -1,30 +1,30 @@
 # CellForge handoff
 
-<!-- codex-handoff:start -->
-## CONTEXT FOR /work
+Updated September 16, 2026.
 
-**Last handoff**: 2026-09-09 22:38:21 CST
-**Branch**: `codex/trustworthy-cycle-verification`
-**Active ticket**: `None found`
-**Summary**: Trustworthy-cycle milestone complete and published in draft PR https://github.com/TrackerXXX23/cellforge/pull/12 (implementation e47e49f). Baseline and both repairs passed 241 measured poses; tracking/clearance/interruption gates, pause/resume, mobile layout and both exports verified. npm run check passed 40 tests and build; URDF sweep passed 723 poses. CI started. Evidence and limits: docs/trustworthy-cycle-verification.md. Recovery branch remains at a6db462. No merge or deployment authorized.
-**Next exact action**: Review draft PR #12 and its CI before authorizing promotion. Next product milestone: actual swept-motion collision coverage and continuity checks.
-**Blocker**: None
+## Current work
 
-**Git status at handoff**:
+User requested a public open-source release to accompany a Trener application.
+Release branch `codex/public-release` starts from develop and includes the
+latest stacked self/cell collision milestone (`bbeb915`, PRs #13–16).
+Original recovery checkout and feature branches are preserved.
 
-```text
- M NOW.md
-```
+Added MIT licence for original code, separate third-party asset notices,
+contributor instructions and a corrected README/demo guide. Refreshed lockfile
+removes the reported dependency advisories. No simulation source changes.
+Fresh clean install, 81 tests, typecheck and build pass; zero reported npm
+advisories. Automated full-history and issue/comment secret scans found no
+matches. See docs/public-release-review.md for scope and limits.
 
----
-<!-- codex-handoff:end -->
-## Current state
+## Next exact action
 
-- Active branch: `codex/trustworthy-cycle-verification`, based on `develop` after PR #11.
-- Trustworthy-cycle milestone implemented and browser-verified. Draft PR: https://github.com/TrackerXXX23/cellforge/pull/12 targeting `develop`; no merge authorization.
-- See [verification evidence](docs/trustworthy-cycle-verification.md) for measured outcomes, reproduction, and scope.
-- Recovery branch `codex/recovery-before-trustworthy-cycle` remains untouched at `a6db4621056b9bea01ff7b15815493488395b642`.
+Finish browser acceptance, push the release PR to develop, verify CI and
+promote tested code to main for the user-requested public release. Keep
+third-party asset terms separate from the application licence. Verify the
+public repository anonymously before using its link in applications.
 
 ## Next product milestone
 
-Add actual swept-motion collision coverage and motion continuity checks. Current clearance evidence covers only the planned P02 tool envelope; full-arm/self-collision and hardware/runtime acknowledgement remain out of scope.
+Improve the rejected reference outfeed route and expand collision-aware
+candidate selection. Approximate geometry and absent hardware integration
+remain explicit limitations.

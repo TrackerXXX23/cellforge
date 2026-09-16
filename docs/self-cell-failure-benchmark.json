@@ -1,0 +1,200 @@
+{
+  "missing-floor": {
+    "method": "asset-rehearsal/v3-cell-contact",
+    "failure": "Planning geometry unavailable: robot, CNC, both tables and all cell bodies are required",
+    "acceptedSamples": 0,
+    "frames": 0,
+    "simulatedSeconds": 0,
+    "maxJointVelocity": 0,
+    "maxJointAcceleration": 0,
+    "maxJointJerk": 0,
+    "tcpTravelMeters": 0,
+    "coverage": "1441 measured poses; approximate swept arm/tool/payload bounds against CNC, tables, loose stock, scanner housing, floor and two boundary panels; non-adjacent robot links and tool/payload self-contact. Connected-link and internal gripper pairs excluded; named grasp and support contacts allowed. Excludes triangle-exact continuous collision, grasp forces, scanner protective-field logic and hardware certification."
+  },
+  "missing-scanner": {
+    "method": "asset-rehearsal/v3-cell-contact",
+    "failure": "Planning geometry unavailable: robot, CNC, both tables and all cell bodies are required",
+    "acceptedSamples": 0,
+    "frames": 0,
+    "simulatedSeconds": 0,
+    "maxJointVelocity": 0,
+    "maxJointAcceleration": 0,
+    "maxJointJerk": 0,
+    "tcpTravelMeters": 0,
+    "coverage": "1441 measured poses; approximate swept arm/tool/payload bounds against CNC, tables, loose stock, scanner housing, floor and two boundary panels; non-adjacent robot links and tool/payload self-contact. Connected-link and internal gripper pairs excluded; named grasp and support contacts allowed. Excludes triangle-exact continuous collision, grasp forces, scanner protective-field logic and hardware certification."
+  },
+  "missing-fence-back": {
+    "method": "asset-rehearsal/v3-cell-contact",
+    "failure": "Planning geometry unavailable: robot, CNC, both tables and all cell bodies are required",
+    "acceptedSamples": 0,
+    "frames": 0,
+    "simulatedSeconds": 0,
+    "maxJointVelocity": 0,
+    "maxJointAcceleration": 0,
+    "maxJointJerk": 0,
+    "tcpTravelMeters": 0,
+    "coverage": "1441 measured poses; approximate swept arm/tool/payload bounds against CNC, tables, loose stock, scanner housing, floor and two boundary panels; non-adjacent robot links and tool/payload self-contact. Connected-link and internal gripper pairs excluded; named grasp and support contacts allowed. Excludes triangle-exact continuous collision, grasp forces, scanner protective-field logic and hardware certification."
+  },
+  "missing-fence-right": {
+    "method": "asset-rehearsal/v3-cell-contact",
+    "failure": "Planning geometry unavailable: robot, CNC, both tables and all cell bodies are required",
+    "acceptedSamples": 0,
+    "frames": 0,
+    "simulatedSeconds": 0,
+    "maxJointVelocity": 0,
+    "maxJointAcceleration": 0,
+    "maxJointJerk": 0,
+    "tcpTravelMeters": 0,
+    "coverage": "1441 measured poses; approximate swept arm/tool/payload bounds against CNC, tables, loose stock, scanner housing, floor and two boundary panels; non-adjacent robot links and tool/payload self-contact. Connected-link and internal gripper pairs excluded; named grasp and support contacts allowed. Excludes triangle-exact continuous collision, grasp forces, scanner protective-field logic and hardware certification."
+  },
+  "missing-chuck-stock": {
+    "method": "asset-rehearsal/v3-cell-contact",
+    "failure": "Planning geometry unavailable: robot, CNC, both tables and all cell bodies are required",
+    "acceptedSamples": 0,
+    "frames": 0,
+    "simulatedSeconds": 0,
+    "maxJointVelocity": 0,
+    "maxJointAcceleration": 0,
+    "maxJointJerk": 0,
+    "tcpTravelMeters": 0,
+    "coverage": "1441 measured poses; approximate swept arm/tool/payload bounds against CNC, tables, loose stock, scanner housing, floor and two boundary panels; non-adjacent robot links and tool/payload self-contact. Connected-link and internal gripper pairs excluded; named grasp and support contacts allowed. Excludes triangle-exact continuous collision, grasp forces, scanner protective-field logic and hardware certification."
+  },
+  "floor": {
+    "method": "asset-rehearsal/v3-cell-contact",
+    "failure": "Planning blocked at sample 0: CNC swept contact: root-mesh_006 / floor",
+    "acceptedSamples": 0,
+    "frames": 1,
+    "simulatedSeconds": 0.016666666666666666,
+    "maxJointVelocity": 0,
+    "maxJointAcceleration": 0,
+    "maxJointJerk": 0,
+    "tcpTravelMeters": 0,
+    "coverage": "1441 measured poses; approximate swept arm/tool/payload bounds against CNC, tables, loose stock, scanner housing, floor and two boundary panels; non-adjacent robot links and tool/payload self-contact. Connected-link and internal gripper pairs excluded; named grasp and support contacts allowed. Excludes triangle-exact continuous collision, grasp forces, scanner protective-field logic and hardware certification.",
+    "failurePose": {
+      "sample": 0,
+      "joints": [
+        -0.48878478315100493,
+        -1.6057955044273755,
+        1.8150498294815105,
+        -1.8150498294815105,
+        -1.5707967186354286,
+        0
+      ]
+    }
+  },
+  "scanner": {
+    "method": "asset-rehearsal/v3-cell-contact",
+    "failure": "Planning blocked at sample 0: CNC swept contact: root-mesh_006 / ScannerHousing",
+    "acceptedSamples": 0,
+    "frames": 1,
+    "simulatedSeconds": 0.016666666666666666,
+    "maxJointVelocity": 0,
+    "maxJointAcceleration": 0,
+    "maxJointJerk": 0,
+    "tcpTravelMeters": 0,
+    "coverage": "1441 measured poses; approximate swept arm/tool/payload bounds against CNC, tables, loose stock, scanner housing, floor and two boundary panels; non-adjacent robot links and tool/payload self-contact. Connected-link and internal gripper pairs excluded; named grasp and support contacts allowed. Excludes triangle-exact continuous collision, grasp forces, scanner protective-field logic and hardware certification.",
+    "failurePose": {
+      "sample": 0,
+      "joints": [
+        -0.48878478315100493,
+        -1.6057955044273755,
+        1.8150498294815105,
+        -1.8150498294815105,
+        -1.5707967186354286,
+        0
+      ]
+    }
+  },
+  "fence-back": {
+    "method": "asset-rehearsal/v3-cell-contact",
+    "failure": "Planning blocked at sample 0: CNC swept contact: root-mesh_006 / fence-back",
+    "acceptedSamples": 0,
+    "frames": 1,
+    "simulatedSeconds": 0.016666666666666666,
+    "maxJointVelocity": 0,
+    "maxJointAcceleration": 0,
+    "maxJointJerk": 0,
+    "tcpTravelMeters": 0,
+    "coverage": "1441 measured poses; approximate swept arm/tool/payload bounds against CNC, tables, loose stock, scanner housing, floor and two boundary panels; non-adjacent robot links and tool/payload self-contact. Connected-link and internal gripper pairs excluded; named grasp and support contacts allowed. Excludes triangle-exact continuous collision, grasp forces, scanner protective-field logic and hardware certification.",
+    "failurePose": {
+      "sample": 0,
+      "joints": [
+        -0.48878478315100493,
+        -1.6057955044273755,
+        1.8150498294815105,
+        -1.8150498294815105,
+        -1.5707967186354286,
+        0
+      ]
+    }
+  },
+  "fence-right": {
+    "method": "asset-rehearsal/v3-cell-contact",
+    "failure": "Planning blocked at sample 0: CNC swept contact: root-mesh_006 / fence-right",
+    "acceptedSamples": 0,
+    "frames": 1,
+    "simulatedSeconds": 0.016666666666666666,
+    "maxJointVelocity": 0,
+    "maxJointAcceleration": 0,
+    "maxJointJerk": 0,
+    "tcpTravelMeters": 0,
+    "coverage": "1441 measured poses; approximate swept arm/tool/payload bounds against CNC, tables, loose stock, scanner housing, floor and two boundary panels; non-adjacent robot links and tool/payload self-contact. Connected-link and internal gripper pairs excluded; named grasp and support contacts allowed. Excludes triangle-exact continuous collision, grasp forces, scanner protective-field logic and hardware certification.",
+    "failurePose": {
+      "sample": 0,
+      "joints": [
+        -0.48878478315100493,
+        -1.6057955044273755,
+        1.8150498294815105,
+        -1.8150498294815105,
+        -1.5707967186354286,
+        0
+      ]
+    }
+  },
+  "loose-stock": {
+    "method": "asset-rehearsal/v3-cell-contact",
+    "failure": "Planning blocked at sample 0: CNC swept contact: root-mesh_006 / infeed-stock-0",
+    "acceptedSamples": 0,
+    "frames": 1,
+    "simulatedSeconds": 0.016666666666666666,
+    "maxJointVelocity": 0,
+    "maxJointAcceleration": 0,
+    "maxJointJerk": 0,
+    "tcpTravelMeters": 0,
+    "coverage": "1441 measured poses; approximate swept arm/tool/payload bounds against CNC, tables, loose stock, scanner housing, floor and two boundary panels; non-adjacent robot links and tool/payload self-contact. Connected-link and internal gripper pairs excluded; named grasp and support contacts allowed. Excludes triangle-exact continuous collision, grasp forces, scanner protective-field logic and hardware certification.",
+    "failurePose": {
+      "sample": 0,
+      "joints": [
+        -0.48878478315100493,
+        -1.6057955044273755,
+        1.8150498294815105,
+        -1.8150498294815105,
+        -1.5707967186354286,
+        0
+      ]
+    }
+  },
+  "self-contact": {
+    "method": "asset-rehearsal/v3-cell-contact",
+    "failure": "Planning blocked at sample 0: Self swept contact: base_link_inertia / upper_arm_link",
+    "acceptedSamples": 0,
+    "frames": 1,
+    "simulatedSeconds": 0.016666666666666666,
+    "maxJointVelocity": 0,
+    "maxJointAcceleration": 0,
+    "maxJointJerk": 0,
+    "tcpTravelMeters": 0,
+    "coverage": "1441 measured poses; approximate swept arm/tool/payload bounds against CNC, tables, loose stock, scanner housing, floor and two boundary panels; non-adjacent robot links and tool/payload self-contact. Connected-link and internal gripper pairs excluded; named grasp and support contacts allowed. Excludes triangle-exact continuous collision, grasp forces, scanner protective-field logic and hardware certification.",
+    "failurePose": {
+      "sample": 0,
+      "joints": [
+        -0.48878478315100493,
+        -1.6057955044273755,
+        1.8150498294815105,
+        -1.8150498294815105,
+        -1.5707967186354286,
+        0
+      ]
+    }
+  }
+}

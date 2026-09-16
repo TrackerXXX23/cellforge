@@ -1,3 +1,8 @@
+import { COLLISION_COVERAGE } from './cellBodies'
+import type { LayoutSearchResult, SearchRequest } from './layoutSearch'
+import { MAX_JOINT_ACCELERATION, MAX_JOINT_JERK } from './ur20Ik'
+import { LAYOUT_PRESETS, REFERENCE_LAYOUT, layoutTarget } from './cellLayout'
+import type { PlanningEvidence, PlanningRequest } from './pathPlanning'
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import {
   acceptsTelemetry, createCycleEvidence, CYCLE_SAMPLES, isCycleVerified, recordAcceptedSample,
@@ -24,8 +29,6 @@ const sequence: SequenceStep[] = [
   { id: 'unload', label: 'Unload finished part', target: 'Machine 01', duration: 6.4, accent: '#245df3' },
   { id: 'place', label: 'Place finished part', target: 'Outfeed B', duration: 4.2, accent: '#245df3' },
 ]
-
-const baselineEvaluation = evaluateCommissioning({ fixtureShiftMm: 0, repairId: null })
 
 const objectDetails: Record<CellObject, { name: string; eyebrow: string; specs: [string, string][] }> = {
   robot: {
@@ -72,6 +75,16 @@ function Icon({ name, size = 18 }: { name: 'play' | 'cube' | 'check' | 'warning'
 }
 
 export default function App() {
+  const [layout, setLayout] = useState(REFERENCE_LAYOUT)
+  const [transferLift, setTransferLift] = useState(0)
+  const [searching, setSearching] = useState(false)
+  const [searchProgress, setSearchProgress] = useState({done:0, total:0})
+  const [searchEvidence, setSearchEvidence] = useState<LayoutSearchResult | null>(null)
+  const searchRequest = useRef<SearchRequest | null>(null)
+  const [planning, setPlanning] = useState(false)
+  const [planningEvidence, setPlanningEvidence] = useState<(PlanningEvidence & { revisionKey: string }) | null>(null)
+  const planningRequest = useRef<PlanningRequest | null>(null)
+  const planningGeneration = useRef(0)
   const [selected, setSelected] = useState<CellObject>('robot')
   const [runState, setRunState] = useState<RunState>('ready')
   const [progress, setProgress] = useState(0)
@@ -85,31 +98,36 @@ export default function App() {
   const telemetry = useRef<MotionTelemetry | null>(null)
   const evidence = useRef<CycleEvidence | null>(null)
   const [runId, setRunId] = useState(0)
-  const revisionKey = JSON.stringify({ fixtureShiftMm, appliedRepair, version: 'ur20-cycle/v1' })
+  const revisionKey = JSON.stringify({ layout, fixtureShiftMm, appliedRepair, transferLift, version: 'ur20-cycle/v5-cell-contact' })
   const motionToken = `${revisionKey}:${runId}`
 
+  const baselineEvaluation = useMemo(() => evaluateCommissioning({ layout, fixtureShiftMm: 0, repairId: null }), [layout])
   const activeRepair = previewRepair ?? appliedRepair
   const activeEvaluation = useMemo(
-    () => evaluateCommissioning({ fixtureShiftMm, repairId: activeRepair }),
-    [activeRepair, fixtureShiftMm],
+    () => evaluateCommissioning({ layout, transferLift, fixtureShiftMm, repairId: activeRepair }),
+    [activeRepair, fixtureShiftMm, layout, transferLift],
   )
   const committedEvaluation = useMemo(
-    () => evaluateCommissioning({ fixtureShiftMm, repairId: appliedRepair }),
-    [appliedRepair, fixtureShiftMm],
+    () => evaluateCommissioning({ layout, transferLift, fixtureShiftMm, repairId: appliedRepair }),
+    [appliedRepair, fixtureShiftMm, layout, transferLift],
   )
   const motionPlan: MotionPlan = useMemo(() => ({
     infeedApproachTarget: committedEvaluation.approachTarget,
     infeedPickTarget: committedEvaluation.pickTarget,
-  }), [committedEvaluation.approachTarget, committedEvaluation.pickTarget])
+    outfeedPlaceTarget: layoutTarget(layout, 'outfeed'),
+    transferLift,
+  }), [committedEvaluation.approachTarget, committedEvaluation.pickTarget, layout, transferLift])
   const motion = sampleMotion(progress, runState, motionPlan)
   const activeStep = getActiveSequenceIndex(progress)
   const isChanged = fixtureShiftMm !== 0
+  const isLayoutChanged = layout.id !== REFERENCE_LAYOUT.id
+  const isDraft = isChanged || isLayoutChanged || transferLift !== 0
   const checksPassed = activeEvaluation.checks.filter((check) => check.status === 'pass').length
   const details = objectDetails[selected]
-  const canRun = committedEvaluation.deployable && previewRepair === null && !released
-  const canRelease = isChanged && appliedRepair !== null && runState === 'complete'
+  const canRun = committedEvaluation.deployable && previewRepair === null && !released && !planning && !searching
+  const canRelease = isDraft && (!isChanged || appliedRepair !== null) && runState === 'complete'
     && isCycleVerified(evidence.current, revisionKey) && committedEvaluation.deployable
-    && previewRepair === null && !released
+    && previewRepair === null && !released && planningEvidence?.revisionKey === revisionKey && planningEvidence.failure === null && planningEvidence.acceptedSamples === CYCLE_SAMPLES + 1
   const isExecutionActive = runState === 'running' || runState === 'paused'
 
   const activePhase: WorkflowPhase = released || runState === 'complete'
@@ -145,21 +163,30 @@ export default function App() {
       if (!result || result.revisionKey !== revisionKey) return
       result.elapsedSeconds += elapsed / 1000
       waitingMs.current += elapsed
+      if (telemetry.current?.token === motionToken && (telemetry.current.contactFailure || telemetry.current.continuityFailure)) {
+        result.failure = telemetry.current.contactFailure || telemetry.current.continuityFailure
+        setRunState('failed')
+        setToast(result.failure!)
+        return
+      }
       if (acceptsTelemetry(telemetry.current, motionToken, currentProgress, performance.now())
           && waitingMs.current >= committedEvaluation.cycleSeconds * 1000 / CYCLE_SAMPLES) {
         recordAcceptedSample(result, telemetry.current!)
         if (isCycleVerified(result, revisionKey)) {
           setRunState('complete')
-          setToast('Cycle verified · all 241 sampled UR20 poses accepted')
+          setToast('Cycle verified · all 1441 sampled UR20 poses accepted')
           return
         }
         currentProgress = result.acceptedSamples / CYCLE_SAMPLES
         setProgress(currentProgress)
-        waitingMs.current = 0
+        waitingMs.current = Math.min(
+          waitingMs.current - committedEvaluation.cycleSeconds * 1000 / CYCLE_SAMPLES,
+          committedEvaluation.cycleSeconds * 1000 / CYCLE_SAMPLES,
+        )
       } else if (waitingMs.current > 8000) {
         result.failure = `Motion acceptance timed out at ${(currentProgress * 100).toFixed(1)}% · check TCP tracking, solver and joint limits`
         setRunState('failed')
-        setToast(result.failure)
+        setToast(result.failure!)
         return
       }
       frame = requestAnimationFrame(tick)
@@ -190,6 +217,11 @@ export default function App() {
   }, [toast])
 
   function resetExecution() {
+    setSearching(false)
+    setSearchEvidence(null)
+    planningGeneration.current++
+    setPlanning(false)
+    setPlanningEvidence(null)
     waitingMs.current = 0
     evidence.current = null
     telemetry.current = null
@@ -200,6 +232,7 @@ export default function App() {
   }
 
   function recordFixtureChange() {
+    setTransferLift(0)
     setFixtureShiftMm(180)
     setPreviewRepair(null)
     setAppliedRepair(null)
@@ -209,6 +242,7 @@ export default function App() {
   }
 
   function restoreBaseline() {
+    setTransferLift(0)
     setFixtureShiftMm(0)
     setPreviewRepair(null)
     setAppliedRepair(null)
@@ -235,7 +269,46 @@ export default function App() {
     setToast(`${proposal?.label ?? 'Repair'} added to Revision 08`)
   }
 
-  function runSimulation() {
+  async function findBestLayout() {
+    const request = searchRequest.current
+    if (!request) { setToast('Search geometry is still loading'); return }
+    if (searching || planning || isExecutionActive || released) return
+    resetExecution()
+    const generation = planningGeneration.current
+    setSearching(true)
+    let result: LayoutSearchResult
+    try {
+      result = await request(fixtureShiftMm, () => generation !== planningGeneration.current,
+        (done, total) => { if (generation === planningGeneration.current) setSearchProgress({done,total}) })
+    } catch (error) {
+      if (generation !== planningGeneration.current) return
+      setSearching(false)
+      setToast(`Search failed: ${error instanceof Error ? error.message : String(error)}`)
+      return
+    }
+    if (generation !== planningGeneration.current) return
+    setSearching(false)
+    if (result.cancelled || !result.best) {
+      setSearchEvidence(result)
+      setToast('No passing candidate found · layout unchanged')
+      return
+    }
+    const winner = result.best.candidate
+    setLayout(winner.layout)
+    setAppliedRepair(winner.repairId)
+    setPreviewRepair(null)
+    setTransferLift(winner.motionPlan.transferLift ?? 0)
+    resetExecution()
+    setSearchEvidence(result)
+    setToast('Best passing layout and path applied · run to verify actual motion')
+  }
+
+  useEffect(() => {
+    if (import.meta.env.DEV) Object.assign(window, { __CELLFORGE_SEARCH__: searchEvidence })
+  }, [searchEvidence])
+
+  async function runSimulation() {
+    if (planning || searching || released) return
     if (previewRepair) {
       setToast('Apply or discard the preview before running the cycle')
       return
@@ -246,13 +319,37 @@ export default function App() {
       return
     }
 
+    const request = planningRequest.current
+    if (!request) { setToast('Planning geometry is still loading'); return }
+    const generation = ++planningGeneration.current
+    setPlanning(true)
+    setPlanningEvidence(null)
+    setRunState('ready')
+    setProgress(0)
+    evidence.current = null
+    let rehearsal: PlanningEvidence
+    try {
+      rehearsal = await request(motionPlan, () => generation !== planningGeneration.current)
+    } catch (error) {
+      if (generation !== planningGeneration.current) return
+      setPlanning(false)
+      setToast(`Planning failed: ${error instanceof Error ? error.message : String(error)}`)
+      return
+    }
+    if (generation !== planningGeneration.current) return
+    setPlanning(false)
+    setPlanningEvidence({ ...rehearsal, revisionKey })
+    if (rehearsal.failure || rehearsal.acceptedSamples !== CYCLE_SAMPLES + 1) {
+      setToast(rehearsal.failure ?? 'Planning coverage incomplete')
+      return
+    }
     waitingMs.current = 0
     evidence.current = createCycleEvidence(revisionKey)
     telemetry.current = null
     setRunId((id) => id + 1)
     setProgress(0)
     setRunState('running')
-    setToast(`Executing Revision ${isChanged ? '08' : '07'} against the validated motion plan`)
+    setToast(`Executing Revision ${isDraft ? '08' : '07'} against the validated motion plan`)
   }
 
   function toggleExecutionPause() {
@@ -270,21 +367,27 @@ export default function App() {
 
   function releaseRevision() {
     if (!canRelease) {
-      setToast(isChanged ? 'Release blocked · validate and run the repaired cycle first' : 'Record a change to create Revision 08')
+      setToast(isDraft ? 'Release blocked · validate and run this layout first' : 'Record a change to create Revision 08')
       return
     }
 
     const artifact = {
       schema: 'cellforge.job/v2',
       delivery: { status: 'local-export', runtimeAcknowledged: false },
-      cycleEvidence: { ...evidence.current, positionToleranceMm: 18, directionToleranceDegrees: 15, coverage: '241 sampled poses; planned P02 tool-envelope clearance only; no full-arm collision or hardware certification' },
+      layout,
+      planningEvidence,
+      searchEvidence,
+      motionLimits: { jointAccelerationRadS2: MAX_JOINT_ACCELERATION, jointJerkRadS3: MAX_JOINT_JERK },
+      cycleEvidence: { ...evidence.current, positionToleranceMm: 18, directionToleranceDegrees: 15, coverage: COLLISION_COVERAGE },
       job: 'OP-1042 · CNC housing',
       revision: 8,
       generatedAt: new Date().toISOString(),
-      change: committedEvaluation.revisionDelta,
+      change: { ...committedEvaluation.revisionDelta, layoutFrom: REFERENCE_LAYOUT, layoutTo: layout },
       motion: {
         approachTarget: committedEvaluation.approachTarget,
         pickTarget: committedEvaluation.pickTarget,
+        outfeedPlaceTarget: motionPlan.outfeedPlaceTarget,
+        transferLift,
         repairId: appliedRepair,
       },
       validation: {
@@ -312,7 +415,7 @@ export default function App() {
     setToast(entry.label)
   }
 
-  const stateTitle = released
+  const stateTitle = searching ? `Comparing candidates · ${searchProgress.done}/${searchProgress.total}` : planning ? 'Checking the full path before motion…' : planningEvidence?.failure ? planningEvidence.failure : released
     ? 'Revision 08 released'
     : runState === 'failed'
       ? evidence.current?.failure ?? 'Motion verification failed'
@@ -321,22 +424,22 @@ export default function App() {
       : runState === 'paused'
         ? `Paused · ${motion.action}`
         : runState === 'complete'
-          ? 'Cycle verified · 241 measured poses'
+          ? 'Cycle verified · 1441 measured poses'
           : previewRepair
             ? 'Previewing repair candidate'
             : appliedRepair
               ? 'Revision 08 ready to run'
               : isChanged
                 ? 'Revision 08 blocked'
-                : 'Revision 07 is commissioned'
+                : isDraft ? 'Layout/path candidate · run to verify' : 'Reference layout · run current checks'
 
   const releaseLabel = released
     ? 'Revision 08 released'
     : canRelease
       ? 'Release revision 08'
-      : isChanged
+      : isDraft
         ? 'Release blocked'
-        : 'Revision 07 validated'
+        : 'Revision 07 · recheck required'
 
   return (
     <main className="app-shell">
@@ -355,8 +458,8 @@ export default function App() {
               <span className="micro-label">CELLS / CNC-01</span>
               <strong>OP-1042 · CNC housing</strong>
             </div>
-            <span className={`revision-chip ${isChanged && !released ? 'draft' : 'validated'}`}>
-              REV {released ? '08 · RELEASED' : isChanged ? '08 · DRAFT' : '07 · VALIDATED'}
+            <span className={`revision-chip ${!released ? 'draft' : 'validated'}`}>
+              REV {released ? '08 · RELEASED' : isDraft ? '08 · DRAFT' : '07 · RECHECK'}
             </span>
           </div>
           <ol className="workflow-phases" aria-label="Commissioning workflow">
@@ -373,8 +476,8 @@ export default function App() {
         </div>
 
         <div className="header-actions">
-          <button className={`deploy-button ${isChanged && !canRelease ? 'blocked' : ''} ${!isChanged || released ? 'released' : ''}`} onClick={releaseRevision} disabled={released || !isChanged}>
-            <Icon name={!isChanged || released ? 'check' : canRelease ? 'download' : 'warning'} size={16} />
+          <button className={`deploy-button ${!canRelease && !released ? 'blocked' : ''} ${released ? 'released' : ''}`} onClick={releaseRevision} disabled={released || !isDraft}>
+            <Icon name={released ? 'check' : canRelease ? 'download' : 'warning'} size={16} />
             {releaseLabel}
           </button>
         </div>
@@ -385,15 +488,36 @@ export default function App() {
           <div className="revision-summary">
             <div className="panel-heading">
               <span className="micro-label">ACTIVE REVISION</span>
-              <span className={`revision ${isChanged && !released ? 'draft' : ''}`}>REV {isChanged ? '08' : '07'}</span>
+              <span className={`revision ${isDraft && !released ? 'draft' : ''}`}>REV {isDraft ? '08' : '07'}</span>
             </div>
             <div className="revision-copy">
-              <strong>{released ? 'Released revision' : isChanged ? 'Commissioning draft' : 'Commissioned baseline'}</strong>
-              <p>{released ? 'Local export · runtime not connected' : isChanged ? '1 layout change · 1 affected path' : 'Reference layout · replay to verify'}</p>
+              <strong>{released ? 'Released revision' : isDraft ? 'Commissioning draft' : 'Reference baseline'}</strong>
+              <p>{released ? 'Local export · runtime not connected' : isDraft ? 'Layout candidate · full cycle required' : 'Reference layout · replay to verify'}</p>
               {isChanged && <span>{released ? 'Revision 08 · local export record' : 'Compared with Revision 07'}</span>}
             </div>
           </div>
 
+          <div className="layout-controls">
+            <label htmlFor="table-layout">Table placement</label>
+            <select id="table-layout" value={layout.id} disabled={isExecutionActive || planning || searching || released} onChange={event => {
+              const candidate = LAYOUT_PRESETS.find(value => value.id === event.target.value)!
+              setLayout(candidate)
+              setTransferLift(0)
+              setFixtureShiftMm(0)
+              setPreviewRepair(null)
+              setAppliedRepair(null)
+              resetExecution()
+            }}>
+              {LAYOUT_PRESETS.map(value => <option key={value.id} value={value.id}>{value.label}</option>)}
+            </select>
+            <p>{layout.id === 'compact' ? 'Both tables move 150 mm inward on X and Z. Full-path check required.' : 'Original commissioning layout.'}</p>
+            <button className="search-layout-button" disabled={isExecutionActive || planning || searching || released} onClick={findBestLayout}>
+              {searching ? `Comparing ${searchProgress.done}/${searchProgress.total}…` : 'Find best layout & path'}
+            </button>
+            {searchEvidence && <p>{searchEvidence.best ? `Selected ${searchEvidence.best.candidate.layout.label.toLowerCase()} · ${searchEvidence.best.candidate.motionPlan.transferLift ? 'raised' : 'standard'} transfer · ${searchEvidence.best.evidence!.simulatedSeconds.toFixed(1)} s rehearsal` : 'No passing candidate · layout unchanged'} · {searchEvidence.candidates.filter(value => value.failure === null).length}/{searchEvidence.candidates.length} passed</p>}
+            <p>Transfer height: {transferLift ? '+100 mm' : 'standard'} · joint jerk limit {MAX_JOINT_JERK} rad/s³</p>
+            <p role="status">{planning ? 'Rehearsing all 1441 poses…' : planningEvidence ? planningEvidence.failure ?? `Path checked · ${planningEvidence.simulatedSeconds.toFixed(1)} s rehearsal · ${planningEvidence.tcpTravelMeters.toFixed(2)} m TCP travel` : 'Run checks loaded geometry before moving.'}</p>
+          </div>
           <div className="section-label"><span>Sequence</span><span>{sequence.length} skills</span></div>
           <ol className="sequence-list">
             {sequence.map((step, index) => {
@@ -426,6 +550,9 @@ export default function App() {
           <SceneErrorBoundary>
             <Suspense fallback={<div className="scene-loading"><span /><strong>Loading cell digital twin</strong></div>}>
               <CommissioningScene
+                layout={layout}
+                planningRequest={planningRequest}
+                searchRequest={searchRequest}
                 selected={selected}
                 onSelect={setSelected}
                 telemetry={telemetry}
@@ -452,9 +579,9 @@ export default function App() {
             {isChanged && <span className="view-chip delta-chip">REV 07 → 08&nbsp;&nbsp; ΔX +180 mm</span>}
           </div>
 
-          <div className={`commissioning-ribbon ${pathState === 'blocked' || runState === 'failed' ? 'has-fault' : ''} ${pathState === 'repaired' ? 'has-repair' : ''}`}>
+          <div className={`commissioning-ribbon ${pathState === 'blocked' || runState === 'failed' || planningEvidence?.failure ? 'has-fault' : ''} ${pathState === 'repaired' ? 'has-repair' : ''}`}>
             <div className="ribbon-state">
-              <span className="micro-label">{pathState === 'blocked' ? 'VALIDATION BLOCKED' : previewRepair ? 'REPAIR PREVIEW' : runState === 'paused' ? 'CYCLE PAUSED · SPACE TO RESUME' : runState === 'failed' ? 'MOTION VERIFICATION FAILED' : runState === 'complete' ? 'CYCLE VERIFIED' : 'COMMISSIONING STATE'}</span>
+              <span className="micro-label">{planningEvidence?.failure ? 'PLANNING BLOCKED' : pathState === 'blocked' ? 'VALIDATION BLOCKED' : previewRepair ? 'REPAIR PREVIEW' : runState === 'paused' ? 'CYCLE PAUSED · SPACE TO RESUME' : runState === 'failed' ? 'MOTION VERIFICATION FAILED' : runState === 'complete' ? 'CYCLE VERIFIED' : 'COMMISSIONING STATE'}</span>
               <strong>{stateTitle}</strong>
             </div>
             <div className="progress-track"><span style={{ width: `${Math.max(3, progress * 100)}%` }} /></div>
@@ -464,7 +591,7 @@ export default function App() {
               <button className="run-button release-action" disabled><Icon name="check" size={16} />Revision released</button>
             ) : previewRepair ? (
               <button className="run-button preview-action" onClick={applyCandidate}><Icon name="check" size={16} />Apply repair</button>
-            ) : runState === 'complete' && isChanged ? (
+            ) : runState === 'complete' && isDraft ? (
               <button className="run-button release-action" onClick={releaseRevision}><Icon name="download" size={16} />Release Rev 08</button>
             ) : (
               <button
@@ -474,7 +601,7 @@ export default function App() {
                 aria-keyshortcuts={isExecutionActive ? 'Space' : undefined}
               >
                 <Icon name={canRun ? 'play' : 'warning'} size={16} />
-                {canRun ? (runState === 'running' ? 'Pause · Space' : runState === 'paused' ? 'Resume · Space' : isChanged ? 'Run repaired cycle' : 'Replay baseline') : 'Resolve P02'}
+                {searching ? 'Comparing paths…' : planning ? 'Checking path…' : canRun ? (runState === 'running' ? 'Pause · Space' : runState === 'paused' ? 'Resume · Space' : isChanged ? 'Run repaired cycle' : isDraft ? 'Run layout candidate' : 'Replay baseline') : 'Resolve P02'}
               </button>
             )}
           </div>
@@ -490,12 +617,12 @@ export default function App() {
               </div>
               <div className="spec-grid">
                 {details.specs.map(([label, value]) => (
-                  <div key={label}><span>{label}</span><strong>{value}</strong></div>
+                  <div key={label}><span>{label}</span><strong>{label === 'Position X' ? `${Math.round((layout.infeed[0] + fixtureShiftMm / 1000) * 1000)} mm` : value}</strong></div>
                 ))}
               </div>
               <div className="baseline-evidence">
-                <span className="micro-label">COMMISSIONED EVIDENCE</span>
-                <strong>Baseline preflight passes</strong>
+                <span className="micro-label">P02 PREFLIGHT</span>
+                <strong>P02 preflight passes · full path checked on run</strong>
                 <p>{baselineEvaluation.cycleSeconds.toFixed(1)} s nominal cycle · 84 mm P02 clearance · {checksPassed}/{activeEvaluation.checks.length} checks passed</p>
               </div>
               <div className="change-action">
@@ -539,7 +666,7 @@ export default function App() {
                   <div className="section-label"><span>Recovery options</span><span>Constraint-derived</span></div>
                   <div className="repair-list">
                     {recoveryProposals.map((proposal, index) => {
-                      const evaluation = evaluateCommissioning({ fixtureShiftMm, repairId: proposal.id })
+                      const evaluation = evaluateCommissioning({ layout, transferLift, fixtureShiftMm, repairId: proposal.id })
                       const selectedProposal = previewRepair === proposal.id
                       return (
                         <button key={proposal.id} className={`repair-card ${selectedProposal ? 'selected' : ''}`} onClick={() => previewCandidate(proposal.id)}>
@@ -572,7 +699,8 @@ export default function App() {
           )}
           <div className="baseline-evidence">
             <span className="micro-label">VERIFICATION SCOPE</span>
-            <p>241 sampled TCP poses · 18 mm / 15° · joint limits. Clearance covers the planned P02 tool envelope only; full-arm collisions are not checked.</p>
+            <p>1441 measured TCP poses · 18 mm / 15° · joint limits. Full-path rehearsal and live swept bounds cover non-adjacent robot links, CNC, tables, stock, scanner housing, floor and boundary panels. Connected joints and named grasp/support contacts are excluded. Approximate geometry; protective-field logic, grasp forces and hardware acknowledgement are not checked.</p>
+            <p>© 2023 Universal Robots A/S. Use hereof is subject to Universal Robots A/S’ <a href="/robots/ur20/ur_description/meshes/ur20/LICENSE.txt" target="_blank" rel="noreferrer">Terms and Conditions for Use of Graphical Documentation</a>.</p>
           </div>
         </aside>
       </section>
@@ -582,7 +710,7 @@ export default function App() {
         <div>Robot <strong>UR20</strong></div>
         <div>Controller <strong>Local prototype</strong></div>
         <div className="statusbar-spacer" />
-        <div>Revision <strong>{released ? '08 released' : isChanged ? '08 draft' : '07 validated'}</strong></div>
+        <div>Revision <strong>{released ? '08 released' : isDraft ? '08 draft' : '07 recheck required'}</strong></div>
         <div className="coordinate-readout">X {fixtureShiftMm.toFixed(1)}&nbsp;&nbsp; Y 0000.0&nbsp;&nbsp; Z 0000.0</div>
       </footer>
 

@@ -1,6 +1,6 @@
 import type { RunState } from './types'
 import { THREE_JAW_TCP_OFFSET } from './eoat'
-import { WORKPIECE_TABLE_CENTER_Y } from './workpiece'
+import { layoutTarget, REFERENCE_LAYOUT } from './cellLayout'
 
 export type Vec3 = readonly [number, number, number]
 export type PayloadState = 'raw' | 'finished' | null
@@ -14,6 +14,7 @@ export interface MotionState {
   doorOpen: boolean
   machineRunning: boolean
   rawRemoved: boolean
+  graspContact: 'source' | 'placed' | 'chuck' | null
   partAtMachine: boolean
   partFinished: boolean
   finishedPlaced: boolean
@@ -31,7 +32,7 @@ export interface JointSolution {
 interface MotionKeyframe {
   at: number
   target?: Vec3
-  targetKey?: 'infeed-approach' | 'infeed-pick'
+  targetKey?: 'infeed-approach' | 'infeed-pick' | 'outfeed-approach' | 'outfeed-place'
   toolDirection: Vec3
   action: string
 }
@@ -39,6 +40,8 @@ interface MotionKeyframe {
 export interface MotionPlan {
   infeedApproachTarget: Vec3
   infeedPickTarget: Vec3
+  outfeedPlaceTarget?: Vec3
+  transferLift?: number
 }
 
 export const CYCLE_DURATION_SECONDS = 24
@@ -56,10 +59,10 @@ export const sequenceBoundaries = [
 ] as const
 
 export const HOME_TARGET: Vec3 = [0.55, 1.15, 0.25]
-export const INFEED_PICK_TARGET: Vec3 = [-1.13, WORKPIECE_TABLE_CENTER_Y, 0.92]
-export const INFEED_APPROACH_TARGET: Vec3 = [-1.13, WORKPIECE_TABLE_CENTER_Y + 0.3, 0.92]
+export const INFEED_PICK_TARGET: Vec3 = layoutTarget(REFERENCE_LAYOUT, 'infeed')
+export const INFEED_APPROACH_TARGET: Vec3 = [INFEED_PICK_TARGET[0], INFEED_PICK_TARGET[1] + 0.3, INFEED_PICK_TARGET[2]]
 export const CNC_CHUCK_TARGET: Vec3 = [1.34, 1.06, -0.25]
-export const OUTFEED_PLACE_TARGET: Vec3 = [-1.13, WORKPIECE_TABLE_CENTER_Y, -0.92]
+export const OUTFEED_PLACE_TARGET: Vec3 = layoutTarget(REFERENCE_LAYOUT, 'outfeed')
 
 export const BASELINE_MOTION_PLAN: MotionPlan = {
   infeedApproachTarget: INFEED_APPROACH_TARGET,
@@ -76,18 +79,21 @@ const keyframes: MotionKeyframe[] = [
   { at: 0.21, targetKey: 'infeed-pick', toolDirection: [0, -1, 0], action: 'Verifying raw-part grip' },
   { at: 0.27, targetKey: 'infeed-approach', toolDirection: [0, -1, 0], action: 'Lifting raw part vertically' },
   { at: 0.305, target: [0.4, 1.2, 0.8], toolDirection: [0, -1, 0], action: 'Routing around robot base to CNC' },
-  { at: 0.34, target: [0.72, 1.55, -0.25], toolDirection: [1, 0, 0], action: 'Moving to CNC approach' },
+  { at: 0.325, target: [0.4, 1.2, -0.25], toolDirection: [0, -1, 0], action: 'Aligning outside CNC door' },
+  { at: 0.35, target: [0.72, 1.06, -0.25], toolDirection: [1, 0, 0], action: 'Moving to CNC approach' },
   { at: 0.4, target: CNC_CHUCK_TARGET, toolDirection: [1, 0, 0], action: 'Loading CNC chuck' },
   { at: 0.46, target: CNC_CHUCK_TARGET, toolDirection: [1, 0, 0], action: 'Releasing raw part' },
-  { at: 0.51, target: [0.72, 1.62, -0.25], toolDirection: [1, 0, 0], action: 'Clearing CNC door' },
-  { at: 0.57, target: [0.72, 1.62, -0.25], toolDirection: [1, 0, 0], action: 'Running machine handshake' },
-  { at: 0.61, target: [0.72, 1.55, -0.25], toolDirection: [1, 0, 0], action: 'Returning to CNC approach' },
+  { at: 0.51, target: [0.65, 1.06, -0.25], toolDirection: [1, 0, 0], action: 'Clearing CNC door' },
+  { at: 0.57, target: [0.65, 1.06, -0.25], toolDirection: [1, 0, 0], action: 'Running machine handshake' },
+  { at: 0.61, target: [0.65, 1.06, -0.25], toolDirection: [1, 0, 0], action: 'Returning to CNC approach' },
   { at: 0.65, target: CNC_CHUCK_TARGET, toolDirection: [1, 0, 0], action: 'Twisting three jaws onto finished part' },
   { at: 0.68, target: CNC_CHUCK_TARGET, toolDirection: [1, 0, 0], action: 'Confirming finished-part grip' },
-  { at: 0.7, target: [0.72, 1.55, -0.25], toolDirection: [1, 0, 0], action: 'Unloading CNC' },
-  { at: 0.8, target: [-1.13, 0.88, -0.92], toolDirection: [0, -1, 0], action: 'Moving to outfeed approach' },
-  { at: 0.84, target: OUTFEED_PLACE_TARGET, toolDirection: [0, -1, 0], action: 'Descending to outfeed slot' },
-  { at: 0.86, target: OUTFEED_PLACE_TARGET, toolDirection: [0, -1, 0], action: 'Releasing finished part' },
+  { at: 0.7, target: [0.65, 1.06, -0.25], toolDirection: [1, 0, 0], action: 'Unloading CNC' },
+  { at: 0.73, target: [0.4, 1.2, -0.25], toolDirection: [0, -1, 0], action: 'Reorienting outside CNC door' },
+  { at: 0.76, target: [0.4, 1.2, -0.9], toolDirection: [0, -1, 0], action: 'Routing clear of wrist to outfeed' },
+  { at: 0.8, targetKey: 'outfeed-approach', toolDirection: [0, -1, 0], action: 'Moving to outfeed approach' },
+  { at: 0.84, targetKey: 'outfeed-place', toolDirection: [0, -1, 0], action: 'Descending to outfeed slot' },
+  { at: 0.86, targetKey: 'outfeed-place', toolDirection: [0, -1, 0], action: 'Releasing finished part' },
   { at: 0.92, target: [-0.3, 1.15, -0.9], toolDirection: [0, -1, 0], action: 'Returning around robot base' },
   { at: 0.96, target: [0.55, 1.15, -0.7], toolDirection: [0, -1, 0], action: 'Returning around robot base' },
   { at: 1, target: HOME_TARGET, toolDirection: [0, -1, 0], action: 'Returning home' },
@@ -96,6 +102,12 @@ const keyframes: MotionKeyframe[] = [
 function resolveTarget(frame: MotionKeyframe, plan: MotionPlan): Vec3 {
   if (frame.targetKey === 'infeed-approach') return plan.infeedApproachTarget
   if (frame.targetKey === 'infeed-pick') return plan.infeedPickTarget
+  const outfeed = plan.outfeedPlaceTarget ?? OUTFEED_PLACE_TARGET
+  if (frame.targetKey === 'outfeed-place') return outfeed
+  if (frame.targetKey === 'outfeed-approach') return [outfeed[0], outfeed[1] + 0.205, outfeed[2]]
+  if (frame.target && frame.at >= 0.305 && frame.at <= 0.325) {
+    return [frame.target[0], frame.target[1] + (plan.transferLift ?? 0), frame.target[2]]
+  }
   return frame.target ?? HOME_TARGET
 }
 
@@ -143,7 +155,7 @@ export function sampleMotion(
 
   const carryingRaw = normalized >= 0.19 && normalized < 0.46
   const carryingFinished = normalized >= 0.68 && normalized < 0.86
-  const doorOpen = normalized < 0.49 || (normalized >= 0.575 && normalized < 0.78)
+  const doorOpen = normalized < 0.52 || (normalized >= 0.575 && normalized < 0.78)
 
   return {
     target: interpolateTarget(resolveTarget(from, plan), resolveTarget(to, plan), segmentProgress),
@@ -155,8 +167,9 @@ export function sampleMotion(
       || (normalized >= 0.65 && normalized < 0.68),
     carrying: carryingRaw ? 'raw' : carryingFinished ? 'finished' : null,
     doorOpen,
-    machineRunning: normalized >= 0.51 && normalized < 0.575,
+    machineRunning: normalized >= 0.55 && normalized < 0.575,
     rawRemoved: normalized >= 0.19,
+    graspContact: normalized >= 0.115 && normalized < 0.21 ? 'source' : normalized >= 0.84 && normalized < 0.92 ? 'placed' : (normalized >= 0.4 && normalized < 0.52) || (normalized >= 0.61 && normalized < 0.7) ? 'chuck' : null,
     partAtMachine: normalized >= 0.46 && normalized < 0.68,
     partFinished: normalized >= 0.56,
     finishedPlaced: normalized >= 0.86,

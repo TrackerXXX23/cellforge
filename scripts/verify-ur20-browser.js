@@ -35,9 +35,6 @@ async (page) => {
       const failures = []
       for (let index = 0; index <= CYCLE_SAMPLES; index += 1) {
         const motion = sampleMotion(index / CYCLE_SAMPLES, 'running', plan)
-        if (['Moving to outfeed approach', 'Descending to outfeed slot', 'Releasing finished part'].includes(motion.action)) {
-          robot.setJointValues(config.UR20_OUTFEED_SEED_JOINTS)
-        }
         const error = ik.solveUr20IkTarget(robot, tcp, motion.target, motion.toolDirection, workspace)
         const validJoints = config.UR20_JOINT_NAMES.every((name) => {
           const [lower, upper] = config.UR20_COMMISSIONING_LIMITS[name]

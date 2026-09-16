@@ -1,5 +1,5 @@
 import { useFrame } from '@react-three/fiber'
-import { useRef, type RefObject } from 'react'
+import { useEffect, useRef, type RefObject } from 'react'
 import * as THREE from 'three'
 import {
   THREE_JAW_AXIAL_TRAVEL,
@@ -61,13 +61,13 @@ interface JawProps {
 function Jaw({ angle, jawRef }: JawProps) {
   return (
     <group rotation-z={angle}>
-      <group ref={jawRef} position={[THREE_JAW_OPEN_RADIUS, 0, -THREE_JAW_AXIAL_TRAVEL]}>
-        <mesh position-z={0.108} castShadow receiveShadow>
-          <boxGeometry args={[0.028, 0.026, 0.024]} />
+      <group name="GripperJaw" ref={jawRef} position={[THREE_JAW_OPEN_RADIUS, 0, -THREE_JAW_AXIAL_TRAVEL]}>
+        <mesh name="GripperJawCarrier" position-z={0.072} castShadow receiveShadow>
+          <boxGeometry args={[0.028, 0.026, 0.032]} />
           <primitive object={jawMaterial} attach="material" />
         </mesh>
-        <mesh position={[0, 0, 0.137]} castShadow receiveShadow>
-          <boxGeometry args={[0.012, 0.025, 0.058]} />
+        <mesh name="GripperContactPad" position={[0, 0, 0.125]} castShadow receiveShadow>
+          <boxGeometry args={[0.012, 0.025, 0.082]} />
           <primitive object={contactMaterial} attach="material" />
         </mesh>
       </group>
@@ -76,6 +76,7 @@ function Jaw({ angle, jawRef }: JawProps) {
 }
 
 interface ThreeJawGripperProps {
+  motionToken: string
   paused: boolean
   motion: MotionState
   tcpRef: RefObject<THREE.Object3D | null>
@@ -96,11 +97,19 @@ function dampJaw(
   )
 }
 
-export function ThreeJawGripper({ motion, tcpRef, paused }: ThreeJawGripperProps) {
+export function ThreeJawGripper({ motionToken, motion, tcpRef, paused }: ThreeJawGripperProps) {
   const rotorRef = useRef<THREE.Group>(null)
   const firstJawRef = useRef<THREE.Group>(null)
   const secondJawRef = useRef<THREE.Group>(null)
   const thirdJawRef = useRef<THREE.Group>(null)
+
+  useEffect(() => {
+    rotorRef.current!.rotation.z = 0
+    for (const ref of [firstJawRef, secondJawRef, thirdJawRef]) {
+      ref.current!.position.x = THREE_JAW_OPEN_RADIUS
+      ref.current!.position.z = -THREE_JAW_AXIAL_TRAVEL
+    }
+  }, [motionToken])
 
   useFrame((_, delta) => {
     if (paused) return
@@ -117,7 +126,7 @@ export function ThreeJawGripper({ motion, tcpRef, paused }: ThreeJawGripperProps
     dampJaw(firstJawRef, jawRadius, jawAxialOffset, delta)
     dampJaw(secondJawRef, jawRadius, jawAxialOffset, delta)
     dampJaw(thirdJawRef, jawRadius, jawAxialOffset, delta)
-  })
+  }, -1.5)
 
   return (
     <group
@@ -150,7 +159,7 @@ export function ThreeJawGripper({ motion, tcpRef, paused }: ThreeJawGripperProps
         <cylinderGeometry args={[0.052, 0.052, 0.012, 48]} />
         <primitive object={rotorMaterial} attach="material" />
       </mesh>
-      <group ref={rotorRef}>
+      <group name="GripperRotor" ref={rotorRef}>
         <mesh position-z={0.082} rotation-x={Math.PI / 2} castShadow receiveShadow>
           <cylinderGeometry args={[0.041, 0.041, 0.012, 48]} />
           <primitive object={bodyMaterial} attach="material" />
@@ -166,7 +175,7 @@ export function ThreeJawGripper({ motion, tcpRef, paused }: ThreeJawGripperProps
       <mesh
         position-z={THREE_JAW_TCP_OFFSET}
         rotation-x={Math.PI / 2}
-        visible={motion.carrying !== null}
+        name="CarriedWorkpiece" visible={motion.carrying !== null}
         castShadow
       >
         <cylinderGeometry args={[WORKPIECE_RADIUS, WORKPIECE_RADIUS, WORKPIECE_HEIGHT, 32]} />

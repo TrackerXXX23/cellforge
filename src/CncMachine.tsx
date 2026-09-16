@@ -1,6 +1,6 @@
 import { useGLTF } from '@react-three/drei'
 import { ThreeEvent, useFrame } from '@react-three/fiber'
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import {
   CNC_ASSET_NODES,
@@ -19,10 +19,14 @@ import {
   WORKPIECE_RADIUS,
 } from './workpiece'
 
+import type { CncContactMonitor } from './cncContact'
+
 const cobalt = '#245df3'
 const cutawayOpacity = 0.14
 
 interface CncMachineProps {
+  motionToken: string
+  cncContact: CncContactMonitor
   paused: boolean
   motion: MotionState
   selected: boolean
@@ -75,7 +79,12 @@ function setLampState(node: THREE.Object3D, active: boolean) {
   })
 }
 
-export function CncMachine({ motion, selected, onSelect, paused }: CncMachineProps) {
+export function CncMachine({ motionToken, motion, selected, onSelect, paused, cncContact }: CncMachineProps) {
+  const workpieceRef = useRef<THREE.Mesh>(null)
+  useEffect(() => {
+    cncContact.registerCellBody('chuck-stock', workpieceRef.current!)
+    return () => cncContact.unregisterCellBody('chuck-stock')
+  }, [cncContact])
   const { scene } = useGLTF(CNC_ASSET_URL)
   const machineScene = useMemo(() => {
     const instance = scene.clone(true)
@@ -92,15 +101,18 @@ export function CncMachine({ motion, selected, onSelect, paused }: CncMachinePro
       stackGreen: requireNode(machineScene, CNC_ASSET_NODES.stackGreen),
     }
   }, [machineScene])
+  const spindleHomeY = useMemo(() => nodes.spindle.position.y, [nodes.spindle])
   const shellMaterials = useMemo(() => collectMaterials(nodes.shell), [nodes.shell])
 
   useEffect(() => {
+    cncContact.registerMachine(machineScene)
+    if (import.meta.env.DEV) Object.assign(window, { __CELLFORGE_CNC__: machineScene })
     machineScene.traverse((object) => {
       if (!(object instanceof THREE.Mesh)) return
       object.castShadow = true
       object.receiveShadow = true
     })
-  }, [machineScene])
+  }, [machineScene, cncContact])
 
   useEffect(() => {
     for (const material of shellMaterials) {
@@ -116,12 +128,21 @@ export function CncMachine({ motion, selected, onSelect, paused }: CncMachinePro
     setLampState(nodes.stackGreen, motion.machineRunning)
   }, [motion.machineRunning, nodes.stackAmber, nodes.stackGreen])
 
+  useEffect(() => {
+    nodes.door.position.x = CNC_DOOR_OPEN_OFFSET
+    nodes.spindle.position.y = spindleHomeY + 0.44
+    machineScene.updateWorldMatrix(true, true)
+  }, [motionToken, nodes, spindleHomeY, machineScene])
+
   useFrame((_, delta) => {
     if (paused) return
     const doorTarget = motion.doorOpen ? CNC_DOOR_OPEN_OFFSET : 0
     nodes.door.position.x = THREE.MathUtils.damp(nodes.door.position.x, doorTarget, 8, delta)
+    const spindleTarget = spindleHomeY + (motion.machineRunning ? 0.14 : 0.44)
+    nodes.spindle.position.y = THREE.MathUtils.damp(nodes.spindle.position.y, spindleTarget, 8, delta)
     if (motion.machineRunning) nodes.spindle.rotation.y += delta * 18
-  })
+    machineScene.updateWorldMatrix(true, true)
+  }, -2)
 
   function handleSelect(event: ThreeEvent<MouseEvent>) {
     event.stopPropagation()
@@ -148,7 +169,7 @@ export function CncMachine({ motion, selected, onSelect, paused }: CncMachinePro
         distance={2.5}
         decay={2}
       />
-      <mesh
+      <mesh ref={workpieceRef} name="ChuckWorkpiece" userData={{stockRole:'chuck'}}
         position={CNC_WORKPIECE_LOCAL_POSITION}
         rotation-z={Math.PI / 2}
         visible={motion.partAtMachine}
