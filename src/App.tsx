@@ -700,6 +700,7 @@ export default function App() {
           <div className="baseline-evidence">
             <span className="micro-label">VERIFICATION SCOPE</span>
             <p>1441 measured TCP poses · 18 mm / 15° · joint limits. Full-path rehearsal and live swept bounds cover non-adjacent robot links, CNC, tables, stock, scanner housing, floor and boundary panels. Connected joints and named grasp/support contacts are excluded. Approximate geometry; protective-field logic, grasp forces and hardware acknowledgement are not checked.</p>
+            <p>© 2023 Universal Robots A/S. Use hereof is subject to Universal Robots A/S’ <a href="/robots/ur20/ur_description/meshes/ur20/LICENSE.txt" target="_blank" rel="noreferrer">Terms and Conditions for Use of Graphical Documentation</a>.</p>
           </div>
         </aside>
       </section>
