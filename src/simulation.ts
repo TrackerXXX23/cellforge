@@ -79,12 +79,9 @@ const keyframes: MotionKeyframe[] = [
   { at: 0.19, targetKey: 'infeed-pick', toolDirection: [0, -1, 0], action: 'Twisting three jaws down onto raw part' },
   { at: 0.21, targetKey: 'infeed-pick', toolDirection: [0, -1, 0], action: 'Verifying raw-part grip' },
   { at: 0.27, targetKey: 'infeed-approach', toolDirection: [0, -1, 0], action: 'Lifting raw part vertically' },
-  { at: 0.285, target: [-0.45, 1.25, 0.95], toolDirection: [0, -1, 0], action: 'Lifting clear of the infeed fixture' },
-  { at: 0.31, target: [0.35, 1.3, 0.75], toolDirection: [0, -1, 0], action: 'Staging clear of the control panel' },
-  { at: 0.345, target: [0.35, 1.3, -0.75], toolDirection: [0, -1, 0], action: 'Routing behind the robot base' },
-  { at: 0.365, target: [0.45, 1.28, -0.72], toolDirection: [0, -1, 0], action: 'Entering the CNC aisle' },
-  { at: 0.39, target: [0.62, 1.1, -0.25], toolDirection: [1, 0, 0], action: 'Aligning outside the CNC door' },
-  { at: 0.42, target: [0.78, 1.06, -0.25], toolDirection: [1, 0, 0], action: 'Moving to CNC approach' },
+  { at: 0.305, target: [0.4, 1.2, 0.8], toolDirection: [0, -1, 0], action: 'Routing around robot base to CNC' },
+  { at: 0.345, target: [0.4, 1.2, -0.25], toolDirection: [0, -1, 0], action: 'Aligning outside CNC door' },
+  { at: 0.405, target: [0.72, 1.06, -0.25], toolDirection: [1, 0, 0], action: 'Reorienting for CNC approach' },
   { at: 0.455, target: CNC_CHUCK_TARGET, toolDirection: [1, 0, 0], action: 'Loading CNC chuck' },
   { at: 0.47, target: CNC_CHUCK_TARGET, toolDirection: [1, 0, 0], action: 'Releasing raw part' },
   { at: 0.51, target: [0.65, 1.06, -0.25], toolDirection: [1, 0, 0], action: 'Clearing CNC door' },
@@ -109,7 +106,7 @@ function resolveTarget(frame: MotionKeyframe, plan: MotionPlan): Vec3 {
   const outfeed = plan.outfeedPlaceTarget ?? OUTFEED_PLACE_TARGET
   if (frame.targetKey === 'outfeed-place') return outfeed
   if (frame.targetKey === 'outfeed-approach') return [outfeed[0], outfeed[1] + 0.205, outfeed[2]]
-  if (frame.target && frame.at >= 0.285 && frame.at <= 0.365) {
+  if (frame.target && frame.at >= 0.305 && frame.at <= 0.345) {
     return [frame.target[0], frame.target[1] + (plan.transferLift ?? 0), frame.target[2]]
   }
   return frame.target ?? HOME_TARGET

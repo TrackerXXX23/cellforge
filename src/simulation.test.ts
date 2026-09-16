@@ -76,17 +76,23 @@ describe('machine-tending motion plan', () => {
     expect(sampleMotion(0.82, 'running').doorOpen).toBe(false)
   })
 
-  it('routes loading through the aisle side before entering the CNC', () => {
-    const staging = sampleMotion(0.31, 'running')
-    const behindBase = sampleMotion(0.345, 'running')
-    const aisle = sampleMotion(0.365, 'running')
-    const doorAlignment = sampleMotion(0.39, 'running')
+  it('reorients for the CNC only after reaching the clear outside-door pose', () => {
+    const highClearance = sampleMotion(0.305, 'running')
+    const outsideDoor = sampleMotion(0.345, 'running')
+    const approach = sampleMotion(0.405, 'running')
 
-    expect(staging.target[0]).toBeGreaterThan(0)
-    expect(behindBase.target[2]).toBeLessThan(-0.7)
-    expect(aisle.target[2]).toBeLessThan(-0.7)
-    expect(doorAlignment.target).toEqual([0.62, 1.1, -0.25])
-    expect(doorAlignment.toolDirection).toEqual([1, 0, 0])
+    expect(highClearance.target[0]).toBeCloseTo(0.4)
+    expect(highClearance.target[1]).toBeCloseTo(1.2)
+    expect(highClearance.target[2]).toBeCloseTo(0.8)
+    expect(highClearance.toolDirection).toEqual([0, -1, 0])
+    expect(outsideDoor.target[0]).toBeCloseTo(0.4)
+    expect(outsideDoor.target[1]).toBeCloseTo(1.2)
+    expect(outsideDoor.target[2]).toBeCloseTo(-0.25)
+    expect(outsideDoor.toolDirection).toEqual([0, -1, 0])
+    expect(approach.target[0]).toBeCloseTo(0.72)
+    expect(approach.target[1]).toBeCloseTo(1.06)
+    expect(approach.target[2]).toBeCloseTo(-0.25)
+    expect(approach.toolDirection).toEqual([1, 0, 0])
   })
 
   it('orients the tool down at fixtures and into the CNC chuck', () => {

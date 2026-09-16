@@ -3,11 +3,11 @@
 <!-- codex-handoff:start -->
 ## CONTEXT FOR /work
 
-**Last handoff**: 2026-09-16 16:50:06 CST
+**Last handoff**: 2026-09-16 16:59:00 CST
 **Branch**: `codex/play-first-demo`
 **Active ticket**: `None found`
-**Summary**: Fixed the jerky CNC load in local commit cc9e707. The robot now stages on the aisle side, crosses behind the base away from the operator controls, aligns outside the door, then enters axially; quintic easing removes acceleration discontinuities. Browser acceptance completed all 1,441 measured poses with zero console errors. The reference layout remains blocked by upper-arm/base contact at pose 1147, moved-fixture recovery still finds a passing candidate, and npm run check passes 82 tests plus build. Screenshot: output/playwright/demo-polish-loading-clearance.png. No push/deploy/merge/promotion performed.
-**Next exact action**: Keep commits 23cf327 and cc9e707 local. Wait for explicit user approval before any push, deployment, merge, promotion, or release because Vercel auto-deploys pushes.
+**Summary**: Superseded the wide CNC-loading detour from cc9e707 after user review found it mechanically worse. The replacement restores the compact robot-side transfer, keeps the tool vertical through clearance, performs the wrist reorientation outside the CNC door over a longer eased segment, and enters the chuck axially. The full 1,441-pose planner passes; measured motion crossed loading and machining into unloading with no runtime errors, under 0.96 rad/s observed joint speed, and 21 mm maximum TCP tracking error during the audited reorientation. The reference layout remains blocked by upper-arm/base contact at pose 1147, moved-fixture recovery still finds a passing candidate, and npm run check passes 82 tests plus build. Screenshot: output/playwright/cnc-loading-reorientation.png. No push/deploy/merge/promotion performed.
+**Next exact action**: Keep this branch local. Wait for explicit user approval before any push, deployment, merge, promotion, or release because Vercel auto-deploys pushes.
 **Blocker**: None
 
 **Git status at handoff**:
@@ -34,9 +34,11 @@ door is closed; pause and reset stop or home it. Machine interior view exposes
 the animated spindle and finished stock remains visually distinct. Recovery
 uses the existing bounded layout/path search.
 
-Commit `cc9e707` smooths Loading CNC with zero-acceleration endpoint easing
-and a control-panel-clear route: aisle-side staging, continuous rotation behind
-the base, outside-door alignment, then straight axial entry.
+The wide aisle-side CNC-loading route in commit `cc9e707` was rejected after
+user review because its large base swing and extra settle points looked less
+mechanical and less fluid. The replacement keeps the quintic endpoint easing
+but restores a compact robot-side transfer: vertical tool through clearance,
+a longer outside-door wrist reorientation, then straight axial chuck entry.
 
 Local browser acceptance at `http://127.0.0.1:5173` verified:
 
@@ -50,10 +52,17 @@ Local browser acceptance at `http://127.0.0.1:5173` verified:
 - optional machine-interior view plus desktop and 390 px mobile layouts;
 - zero console errors after fresh reload (existing Three.js warnings remain).
 
+The revised CNC load passed the full 1,441-pose planner. A live joint audit
+through the changed segment observed less than 0.96 rad/s joint speed, no
+runtime or continuity failure, 21 mm maximum TCP tracking error during the
+reorientation, and successful progression through machining into unloading.
+The blocked reference still fails at measured pose 1147 and moved-fixture
+recovery still applies a passing bounded-search result.
+
 Screenshots are local in `output/playwright/demo-polish-desktop.png`,
 `demo-polish-machining-paused.png`, `demo-polish-machine-interior.png`,
 `demo-polish-complete.png`, `demo-polish-mobile.png`, and
-`demo-polish-loading-clearance.png`. `npm run check` passes typecheck, all 82
+`cnc-loading-reorientation.png`. `npm run check` passes typecheck, all 82
 tests, and the production build. Free-text job
 instructions remain a documented future idea in `docs/demo-polish-plan.md`.
 
